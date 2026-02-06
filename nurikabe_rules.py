@@ -310,7 +310,7 @@ class NurikabeSolver:
                     q.append(n)
         return count == len(cells)
 
-    def analyze_island_extensions(self, isl) -> Tuple[Set[Tuple[int, int]], Set[Tuple[int, int]]]:
+    def analyze_island_extensions(self, isl) -> Optional[Tuple[Set[Tuple[int, int]], Set[Tuple[int, int]]]]:
         """
         Performs a brute-force search for all valid shapes of the given island.
         Returns:
@@ -438,7 +438,7 @@ class NurikabeSolver:
 
         if too_complex:
             # If too complex, we can't trust the results.
-            return set(), set()
+            return None
             
         if common_added is None:
             # No solutions found
@@ -449,42 +449,54 @@ class NurikabeSolver:
     def try_rule_island_global_bottleneck(self) -> Optional[StepResult]:
         # "Brute Force" Intersection Rule
         for isl in self.model.islands:
-            union_set, common_set = self.analyze_island_extensions(isl)
+            result = self.analyze_island_extensions(isl)
+            if result is None:
+                continue
+            union_set, common_set = result
             
+            changed_list = []
+            bit = self.model.bit(isl.island_id)
+            
+            # 1. Pruning: Remove island from cells that are NEVER part of any valid extension
+            # We need to know the fixed_core to distinguish "part of core" from "extension"
+            # Re-identifying fixed core is safe and fast enough.
+            fixed_core = set()
+            for r in range(self.model.rows):
+                for c in range(self.model.cols):
+                    if not self.model.black_possible[r][c] and self.model.owners[r][c] == bit:
+                        fixed_core.add((r, c))
+            
+            for r in range(self.model.rows):
+                for c in range(self.model.cols):
+                    if (r, c) in fixed_core:
+                        continue
+                    if self.model.owners[r][c] & bit:
+                        if (r, c) not in union_set:
+                            # This cell allows 'bit' but is not in any valid extension -> prune it
+                            if self.model.remove_owner(r, c, isl.island_id):
+                                changed_list.append((r, c))
+
+            # 2. Bottleneck: Force cells that are in ALL valid extensions
             if common_set:
-                changed_list = []
-                bit = self.model.bit(isl.island_id)
                 for r, c in common_set:
                     if self.model.manual_mark[r][c] == BLACK: 
-                        # Contradiction? or just already handled?
                         continue
-                    # Just check if we are learning something new
-                    # If it's already forced land and owned by us, nothing new.
-                    # But force_land handles that check.
                     
-                    # We need to verify if this changes state.
-                    # force_land returns true if changed.
-                    # But we also need to set owner.
-                    
-                    old_mark = self.model.manual_mark[r][c]
-                    
-                    # We must set force_land AND restrict owner to this island
-                    # because it is mandatory for THIS island.
                     if self.model.force_land(r, c):
-                        changed_list.append((r, c))
+                        if (r, c) not in changed_list:
+                             changed_list.append((r, c))
                     
-                    # Also ensure it is owned by this island
                     if self.model.owners[r][c] != bit:
                         self.model.owners[r][c] = bit
                         if (r, c) not in changed_list:
                             changed_list.append((r, c))
 
-                if changed_list:
-                    return StepResult(
-                        changed_cells=changed_list,
-                        message=f"Brute force analysis found {len(changed_list)} mandatory cells for Island {isl.island_id}.",
-                        rule="G7b Global Brute Force Intersection"
-                    )
+            if changed_list:
+                return StepResult(
+                    changed_cells=changed_list,
+                    message=f"Brute force analysis for Island {isl.island_id}: pruned unreachable candidates / enforced bottlenecks.",
+                    rule="G7b Global Brute Force Intersection & Pruning"
+                )
 
         return None
 

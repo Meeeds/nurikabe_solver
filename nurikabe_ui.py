@@ -351,9 +351,10 @@ def main() -> None:
     editor_state = EditorState(10, 10)
     
     # UI Elements (Main)
-    btn_edit_grid = Button(pygame.Rect(20, 20, 140, 40), "Setup Grid")
-    btn_step = Button(pygame.Rect(180, 20, 130, 40), "Step")
-    btn_reset = Button(pygame.Rect(330, 20, 160, 40), "Reset Domains")
+    btn_edit_grid = Button(pygame.Rect(20, 20, 135, 40), "Setup Grid")
+    btn_step = Button(pygame.Rect(160, 20, 70, 40), "Step")
+    btn_step10 = Button(pygame.Rect(235, 20, 95, 40), "10Steps")
+    btn_reset = Button(pygame.Rect(340, 20, 170, 40), "Reset Domains")
     
     # Debug Button
     btn_debug = Button(pygame.Rect(20, 700, 250, 40), "Test Rule G7b (0/0)")
@@ -411,6 +412,11 @@ def main() -> None:
                 if btn_step.clicked(event):
                     solver.step()
                     debug_view_cells = set()
+
+                if btn_step10.clicked(event):
+                    for i in range(0,10):
+                        solver.step()
+                        debug_view_cells = set()
                 
                 if btn_reset.clicked(event):
                     model.reset_domains_from_manual()
@@ -422,7 +428,14 @@ def main() -> None:
                     isl = model.islands[debug_island_index]
                     
                     # Analyze
-                    union_set, common_set = solver.analyze_island_extensions(isl)
+                    result = solver.analyze_island_extensions(isl)
+                    if result is None:
+                        union_set, common_set = set(), set()
+                        msg_suffix = " (Too complex)"
+                    else:
+                        union_set, common_set = result
+                        msg_suffix = ""
+                        
                     debug_view_cells = union_set
                     
                     # Also include the intersection in a specialized way? 
@@ -430,7 +443,7 @@ def main() -> None:
                     # But finding the "bottleneck" (common_set) is the rule's goal. 
                     # Let's highlight union. Common ones will naturally be in union.
                     
-                    msg = f"Island {isl.island_id} (size {isl.clue}): {len(union_set)} valid potential cells. "
+                    msg = f"Island {isl.island_id} (size {isl.clue}): {len(union_set)} valid potential cells.{msg_suffix} "
                     if common_set:
                         msg += f"Found {len(common_set)} mandatory cells (BOTTLENECK)!"
                     else:
@@ -458,6 +471,7 @@ def main() -> None:
             # Draw MAIN
             btn_edit_grid.draw(screen, font, mouse_pos)
             btn_step.draw(screen, font, mouse_pos)
+            btn_step10.draw(screen, font, mouse_pos)
             btn_reset.draw(screen, font, mouse_pos)
             btn_debug.draw(screen, font, mouse_pos)
             
