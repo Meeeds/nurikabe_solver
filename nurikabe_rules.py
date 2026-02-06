@@ -519,7 +519,7 @@ class NurikabeSolver:
                                 q.append((nr, nc))
                     black_components.append(comp)
 
-        if not black_components:
+        if len(black_components) < 2:
             return None
 
         # 2. Potential sea consists of all cells that are not certain land
@@ -529,48 +529,74 @@ class NurikabeSolver:
                 if not self.model.is_land_certain(r, c):
                     potential_sea.add((r, c))
 
-        # 3. For each component, check if it's forced to use a specific cell to connect to the rest
-        for comp in black_components:
-            comp_set = set(comp)
-            others = potential_sea - comp_set
-            if not others:
+        # Helper to find which other components are reachable from a start_comp given a forbidden cell
+        def get_reachable_components(start_comp: List[Tuple[int, int]], forbidden: Optional[Tuple[int, int]]) -> Set[int]:
+            reachable_comp_indices = set()
+            q = [start_comp[0]]
+            seen = {start_comp[0]}
+            if forbidden:
+                seen.add(forbidden)
+            
+            # Map cells to component index for fast lookup
+            # We can build this once outside, but passing it in is cleaner
+            # Optimization: Pre-build cell->comp_index map
+            pass 
+            
+            # BFS
+            idx = 0
+            while idx < len(q):
+                curr = q[idx]
+                idx += 1
+                
+                # Check if this cell belongs to another component
+                if curr in cell_to_comp_idx:
+                    c_idx = cell_to_comp_idx[curr]
+                    if c_idx != start_comp_idx:
+                        reachable_comp_indices.add(c_idx)
+                
+                for nr, nc in self.model.neighbors4(*curr):
+                    if (nr, nc) in potential_sea and (nr, nc) not in seen:
+                        seen.add((nr, nc))
+                        q.append((nr, nc))
+            return reachable_comp_indices
+
+        # Map every black cell to its component index
+        cell_to_comp_idx = {}
+        for idx, comp in enumerate(black_components):
+            for cell in comp:
+                cell_to_comp_idx[cell] = idx
+
+        # 3. Analyze connectivity
+        for i, comp in enumerate(black_components):
+            start_comp_idx = i
+            
+            # Find baseline reachable components (no forbidden cell)
+            # Optimization: If we already know components are partitioned, we can skip this BFS?
+            # But simpler to just run it to be robust against complex shapes.
+            baseline_reachable = get_reachable_components(comp, None)
+            
+            if not baseline_reachable:
                 continue
 
-            # Find candidates: neighbors of the component that could be black
+            # Identify candidates: Unknown neighbors of this component
             candidates = set()
             for r, c in comp:
                 for nr, nc in self.model.neighbors4(r, c):
-                    if (nr, nc) in others:
+                    if not self.model.is_black_certain(nr, nc) and not self.model.is_land_certain(nr, nc):
                         candidates.add((nr, nc))
 
             for cand in candidates:
-                # Test connectivity if 'cand' was removed from potential sea
-                remaining_potential = others - {cand}
+                # Test if blocking 'cand' reduces reachability
+                new_reachable = get_reachable_components(comp, cand)
                 
-                # BFS starting from the component to see if it can reach ANY other potential cell
-                q = [comp[0]]
-                seen = {comp[0]}
-                can_reach_rest = False
-                idx = 0
-                while idx < len(q):
-                    curr = q[idx]
-                    idx += 1
-                    if curr in remaining_potential:
-                        can_reach_rest = True
-                        break
-                    for nr, nc in self.model.neighbors4(*curr):
-                        if (nr, nc) not in seen and ((nr, nc) in comp_set or (nr, nc) in remaining_potential):
-                            seen.add((nr, nc))
-                            q.append((nr, nc))
-                
-                if not can_reach_rest:
-                    # 'cand' is a mandatory bridge for this component to stay connected
+                if len(new_reachable) < len(baseline_reachable):
+                    # We lost contact with at least one component!
                     tr, tc = cand
                     if self.model.manual_mark[tr][tc] != BLACK:
                         self.model.force_black(tr, tc)
                         return StepResult(
                             changed_cells=[(tr, tc)],
-                            message=f"Sea component at {comp[0]} must include ({tr},{tc}) to stay connected to the rest of the potential sea.",
+                            message=f"Sea component at {comp[0]} must include ({tr},{tc}) to connect to other black components.",
                             rule="G9 Black Connectivity: mandatory bridge"
                         )
         return None
