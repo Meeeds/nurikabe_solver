@@ -1,0 +1,362 @@
+from typing import Optional, Set, List, Tuple
+from nurikabe_model import NurikabeModel, StepResult, BLACK
+
+class NurikabeSolver:
+    def __init__(self, model: NurikabeModel) -> None:
+        self.model = model
+
+    def step(self) -> Optional[StepResult]:
+        # Priority order:
+        # 1) Anti-2x2: 3 blacks -> force land (G4)
+        res = self.try_rule_anti_2x2_force_land()
+        if res:
+            self.model.last_step = res
+            return res
+
+        # 2) Neighbor of two fixed different owners -> force black (G1 strong)
+        res = self.try_rule_common_neighbor_two_fixed_owners_black()
+        if res:
+            self.model.last_step = res
+            return res
+
+        # 3) Land adjacency with fixed owner propagates owner (G2 safe form)
+        res = self.try_rule_land_cluster_unification()
+        if res:
+            self.model.last_step = res
+            return res
+
+        # 4) Closure of complete islands: remove owner from neighbors (G3)
+        res = self.try_rule_close_complete_island()
+        if res:
+            self.model.last_step = res
+            return res
+
+        # 5) Empty owners -> black certain (G6) (as an explicit step)
+        res = self.try_rule_empty_owners_becomes_black()
+        if res:
+            self.model.last_step = res
+            return res
+
+        # 6) Mandatory expansion (bottleneck or unique neighbor)
+        res = self.try_rule_island_mandatory_expansion()
+        if res:
+            self.model.last_step = res
+            return res
+
+        # 8) Sea connectivity: mandatory bridge for black components (G9)
+        res = self.try_rule_black_mandatory_expansion()
+        if res:
+            self.model.last_step = res
+            return res
+
+        # 9) Island near completion: common neighbor of 2 last candidates -> black (G10)
+        res = self.try_rule_island_completion_common_neighbor_black()
+        if res:
+            self.model.last_step = res
+            return res
+
+        self.model.last_step = StepResult([], "No applicable rule found.", "None")
+        return self.model.last_step
+
+    def try_rule_anti_2x2_force_land(self) -> Optional[StepResult]:
+        for r in range(self.model.rows - 1):
+            for c in range(self.model.cols - 1):
+                cells = [(r, c), (r + 1, c), (r, c + 1), (r + 1, c + 1)]
+                blacks = [(rr, cc) for (rr, cc) in cells if self.model.is_black_certain(rr, cc)]
+                if len(blacks) == 3:
+                    # the remaining cell forced land
+                    for rr, cc in cells:
+                        if not self.model.is_black_certain(rr, cc):
+                            if self.model.is_clue(rr, cc):
+                                continue
+                            if self.model.black_possible[rr][cc]:
+                                self.model.force_land(rr, cc)
+                                return StepResult(
+                                    changed_cells=[(rr, cc)],
+                                    message=f"Forced land to avoid a 2x2 black pool at block ({r},{c}).",
+                                    rule="G4 Anti-2x2: 3 blacks -> land"
+                                )
+        return None
+
+    def try_rule_common_neighbor_two_fixed_owners_black(self) -> Optional[StepResult]:
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if self.model.is_clue(r, c) or self.model.is_black_certain(r, c):
+                    continue
+                fixed: Set[int] = set()
+                for rr, cc in self.model.neighbors4(r, c):
+                    fo = self.model.fixed_owner(rr, cc)
+                    if fo is not None:
+                        fixed.add(fo)
+                if len(fixed) >= 2:
+                    # touches at least two distinct fixed islands -> must be black
+                    changed = self.model.force_black(r, c)
+                    if changed:
+                        ids = sorted(list(fixed))[:3]
+                        return StepResult(
+                            changed_cells=[(r, c)],
+                            message=f"Forced black because cell touches multiple distinct fixed islands {ids}.",
+                            rule="G1 Separation: neighbor of >=2 fixed owners -> black"
+                        )
+        return None
+
+    def try_rule_land_cluster_unification(self) -> Optional[StepResult]:
+        visited = [[False for _ in range(self.model.cols)] for _ in range(self.model.rows)]
+        K = len(self.model.islands)
+        full_mask = (1 << K) - 1
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if self.model.is_land_certain(r, c) and not visited[r][c]:
+                    # Find the connected component of land cells
+                    component = []
+                    q = [(r, c)]
+                    visited[r][c] = True
+                    common_mask = full_mask
+                    idx = 0
+                    while idx < len(q):
+                        curr_r, curr_c = q[idx]
+                        idx += 1
+                        component.append((curr_r, curr_c))
+                        common_mask &= self.model.owners[curr_r][curr_c]
+                        for nr, nc in self.model.neighbors4(curr_r, curr_c):
+                            if self.model.is_land_certain(nr, nc) and not visited[nr][nc]:
+                                visited[nr][nc] = True
+                                q.append((nr, nc))
+                    # Apply the intersection mask to all cells in this cluster
+                    for cr, cc in component:
+                        if self.model.owners[cr][cc] != common_mask:
+                            self.model.owners[cr][cc] = common_mask
+                            return StepResult(
+                                changed_cells=[(cr, cc)],
+                                message=f"Unified land cluster at {component[0]} with intersection of potential owners.",
+                                rule="G2 Unification: land cluster domain intersection"
+                            )
+        return None
+
+    def try_rule_close_complete_island(self) -> Optional[StepResult]:
+        for isl in self.model.islands:
+            iid = isl.island_id
+            clue = isl.clue
+            bit = self.model.bit(iid)
+            
+            # 1. Get all cells definitively belonging to this island
+            island_cells = []
+            for r in range(self.model.rows):
+                for c in range(self.model.cols):
+                    if not self.model.black_possible[r][c] and self.model.owners[r][c] == bit:
+                        island_cells.append((r, c))
+            
+            # 2. If the island is complete, neighbors that are NOT in the island must be black
+            if len(island_cells) == clue:
+                for r, c in island_cells:
+                    for rr, cc in self.model.neighbors4(r, c):
+                        # ONLY target neighbors that are NOT already part of this island
+                        if (rr, cc) not in island_cells:
+                            if self.model.is_clue(rr, cc):
+                                continue
+                            if not self.model.is_black_certain(rr, cc):
+                                self.model.force_black(rr, cc)
+                                return StepResult(
+                                    changed_cells=[(rr, cc)],
+                                    message=f"Island {iid} is complete ({clue}/{clue}); neighbor ({rr},{cc}) must be black.",
+                                    rule="G3 Closure: complete island forces black neighbors"
+                                )
+        return None
+
+    def try_rule_empty_owners_becomes_black(self) -> Optional[StepResult]:
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if self.model.is_clue(r, c):
+                    continue
+                if self.model.owners[r][c] == 0 and self.model.black_possible[r][c] and self.model.manual_mark[r][c] != BLACK:
+                    self.model.manual_mark[r][c] = BLACK
+                    return StepResult(
+                        changed_cells=[(r, c)],
+                        message="Owners domain became empty; forced black (no island can own this cell).",
+                        rule="G6 Empty domain -> black"
+                    )
+        return None
+
+    def try_rule_island_mandatory_expansion(self) -> Optional[StepResult]:
+        for isl in self.model.islands:
+            iid = isl.island_id
+            clue = isl.clue
+            bit = self.model.bit(iid)
+            
+            # 1. Identify current connected component for this island
+            sr, sc = isl.pos
+            component = {(sr, sc)}
+            stack = [(sr, sc)]
+            while stack:
+                r, c = stack.pop()
+                for nr, nc in self.model.neighbors4(r, c):
+                    if (nr, nc) not in component:
+                        # Cell belongs to island iid if it's land and uniquely owned by bit
+                        if not self.model.black_possible[nr][nc] and self.model.owners[nr][nc] == bit:
+                            component.add((nr, nc))
+                            stack.append((nr, nc))
+            
+            if len(component) >= clue:
+                continue
+                
+            # 2. Find all cells this island could potentially occupy
+            potential = set()
+            for r in range(self.model.rows):
+                for c in range(self.model.cols):
+                    if not self.model.is_black_certain(r, c) and (self.model.owners[r][c] & bit):
+                        potential.add((r, c))
+            
+            # 3. Check neighbors of the current component for bottlenecks
+            neighbors = set()
+            for r, c in component:
+                for nr, nc in self.model.neighbors4(r, c):
+                    if (nr, nc) in potential and (nr, nc) not in component:
+                        neighbors.add((nr, nc))
+            
+            for n in neighbors:
+                # Test if island can reach 'clue' size WITHOUT using neighbor 'n'
+                test_potential = potential - {n}
+                q = list(component)
+                seen = set(component)
+                reached_count = 0
+                idx = 0
+                while idx < len(q):
+                    curr = q[idx]
+                    idx += 1
+                    reached_count += 1
+                    if reached_count >= clue: break
+                    for nn in self.model.neighbors4(*curr):
+                        if nn in test_potential and nn not in seen:
+                            seen.add(nn)
+                            q.append(nn)
+                
+                if reached_count < clue:
+                    # 'n' is mandatory for island iid to ever reach its size
+                    tr, tc = n
+                    self.model.force_land(tr, tc)
+                    self.model.owners[tr][tc] = bit
+                    return StepResult(
+                        changed_cells=[(tr, tc)],
+                        message=f"Island {iid} must include ({tr},{tc}) to reach size {clue} (bottleneck detected).",
+                        rule="G7 Generic Mandatory Expansion"
+                    )
+        return None
+
+    def try_rule_black_mandatory_expansion(self) -> Optional[StepResult]:
+        # 1. Identify all connected components of current black cells
+        visited = [[False for _ in range(self.model.cols)] for _ in range(self.model.rows)]
+        black_components = []
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if self.model.is_black_certain(r, c) and not visited[r][c]:
+                    comp = []
+                    q = [(r, c)]
+                    visited[r][c] = True
+                    while q:
+                        curr_r, curr_c = q.pop(0)
+                        comp.append((curr_r, curr_c))
+                        for nr, nc in self.model.neighbors4(curr_r, curr_c):
+                            if self.model.is_black_certain(nr, nc) and not visited[nr][nc]:
+                                visited[nr][nc] = True
+                                q.append((nr, nc))
+                    black_components.append(comp)
+
+        if not black_components:
+            return None
+
+        # 2. Potential sea consists of all cells that are not certain land
+        potential_sea = set()
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if not self.model.is_land_certain(r, c):
+                    potential_sea.add((r, c))
+
+        # 3. For each component, check if it's forced to use a specific cell to connect to the rest
+        for comp in black_components:
+            comp_set = set(comp)
+            others = potential_sea - comp_set
+            if not others:
+                continue
+
+            # Find candidates: neighbors of the component that could be black
+            candidates = set()
+            for r, c in comp:
+                for nr, nc in self.model.neighbors4(r, c):
+                    if (nr, nc) in others:
+                        candidates.add((nr, nc))
+
+            for cand in candidates:
+                # Test connectivity if 'cand' was removed from potential sea
+                remaining_potential = others - {cand}
+                
+                # BFS starting from the component to see if it can reach ANY other potential cell
+                q = [comp[0]]
+                seen = {comp[0]}
+                can_reach_rest = False
+                idx = 0
+                while idx < len(q):
+                    curr = q[idx]
+                    idx += 1
+                    if curr in remaining_potential:
+                        can_reach_rest = True
+                        break
+                    for nr, nc in self.model.neighbors4(*curr):
+                        if (nr, nc) not in seen and ((nr, nc) in comp_set or (nr, nc) in remaining_potential):
+                            seen.add((nr, nc))
+                            q.append((nr, nc))
+                
+                if not can_reach_rest:
+                    # 'cand' is a mandatory bridge for this component to stay connected
+                    tr, tc = cand
+                    if self.model.manual_mark[tr][tc] != BLACK:
+                        self.model.force_black(tr, tc)
+                        return StepResult(
+                            changed_cells=[(tr, tc)],
+                            message=f"Sea component at {comp[0]} must include ({tr},{tc}) to stay connected to the rest of the potential sea.",
+                            rule="G9 Black Connectivity: mandatory bridge"
+                        )
+        return None
+
+    def try_rule_island_completion_common_neighbor_black(self) -> Optional[StepResult]:
+        for isl in self.model.islands:
+            iid = isl.island_id
+            clue = isl.clue
+            bit = self.model.bit(iid)
+            
+            sr, sc = isl.pos
+            component = {(sr, sc)}
+            stack = [(sr, sc)]
+            while stack:
+                r, c = stack.pop()
+                for nr, nc in self.model.neighbors4(r, c):
+                    if (nr, nc) not in component:
+                        if not self.model.black_possible[nr][nc] and self.model.owners[nr][nc] == bit:
+                            component.add((nr, nc))
+                            stack.append((nr, nc))
+            
+            if len(component) != clue - 1:
+                continue
+            
+            candidates = set()
+            for r, c in component:
+                for nr, nc in self.model.neighbors4(r, c):
+                    if (nr, nc) not in component and not self.model.is_black_certain(nr, nc):
+                        if not self.model.is_clue(nr, nc) and (self.model.owners[nr][nc] & bit):
+                            candidates.add((nr, nc))
+            
+            if len(candidates) == 2:
+                c_list = list(candidates)
+                n1 = set(self.model.neighbors4(*c_list[0]))
+                n2 = set(self.model.neighbors4(*c_list[1]))
+                common = n1 & n2
+                
+                for xr, xc in common:
+                    if (xr, xc) not in component and (xr, xc) not in candidates:
+                        if self.model.black_possible[xr][xc] and self.model.manual_mark[xr][xc] != BLACK:
+                            self.model.force_black(xr, xc)
+                            return StepResult(
+                                changed_cells=[(xr, xc)],
+                                message=f"Island {iid} needs 1 cell; either {c_list[0]} or {c_list[1]} will complete it. Their common neighbor ({xr},{xc}) must be black.",
+                                rule="G10 Island Completion: common neighbor of last candidates -> black"
+                            )
+        return None

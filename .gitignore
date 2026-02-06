@@ -1,1 +1,4 @@
 .vscode/
+*.pyc
+gemini.sh
+Dockerfile
