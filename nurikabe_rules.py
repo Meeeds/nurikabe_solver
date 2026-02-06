@@ -657,7 +657,9 @@ class NurikabeSolver:
                                 is_obstacle = False
                                 if self.model.is_black_certain(nr, nc):
                                     is_obstacle = True
-                                elif self.model.is_land_certain(nr, nc) and (self.model.owners[nr][nc] & bit) == 0:
+                                elif (self.model.owners[nr][nc] & bit) == 0:
+                                    # If the cell cannot possibly belong to this island (bit not in owners),
+                                    # it is an obstacle for reachability, even if it is currently Unknown.
                                     is_obstacle = True
 
                                 if not is_obstacle:
