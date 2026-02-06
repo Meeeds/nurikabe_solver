@@ -254,6 +254,22 @@ class NurikabeSolver:
                     )
         return None
 
+    def _is_connected(self, cells: Set[Tuple[int, int]]) -> bool:
+        if not cells:
+            return True
+        start = next(iter(cells))
+        q = [start]
+        seen = {start}
+        count = 0
+        while q:
+            curr = q.pop()
+            count += 1
+            for n in self.model.neighbors4(*curr):
+                if n in cells and n not in seen:
+                    seen.add(n)
+                    q.append(n)
+        return count == len(cells)
+
     def analyze_island_extensions(self, isl) -> Tuple[Set[Tuple[int, int]], Set[Tuple[int, int]]]:
         """
         Performs a brute-force search for all valid shapes of the given island.
@@ -300,6 +316,8 @@ class NurikabeSolver:
 
         current_size = len(fixed_core)
         if current_size >= clue:
+            # Even if full, check connectivity. If disconnected, it's invalid, 
+            # but we can't "extend" it. Just return empty.
             return set(), set()
         
         needed = clue - current_size
@@ -339,6 +357,11 @@ class NurikabeSolver:
             curr_added, curr_frontier = stack.pop()
             
             if len(curr_added) == needed:
+                # Validate connectivity of the WHOLE shape (fixed_core + curr_added)
+                # This handles cases where fixed_core is disconnected and we must bridge it.
+                if not self._is_connected(fixed_core | curr_added):
+                    continue
+
                 # Found a valid configuration
                 if common_added is None:
                     common_added = set(curr_added)
