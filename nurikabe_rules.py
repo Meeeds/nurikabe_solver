@@ -524,80 +524,105 @@ class NurikabeSolver:
 
         # 2. Potential sea consists of all cells that are not certain land
         potential_sea = set()
+        candidates = []
         for r in range(self.model.rows):
             for c in range(self.model.cols):
                 if not self.model.is_land_certain(r, c):
                     potential_sea.add((r, c))
+                    if not self.model.is_black_certain(r, c):
+                        candidates.append((r, c))
 
-        # Helper to find which other components are reachable from a start_comp given a forbidden cell
-        def get_reachable_components(start_comp: List[Tuple[int, int]], forbidden: Optional[Tuple[int, int]]) -> Set[int]:
-            reachable_comp_indices = set()
-            q = [start_comp[0]]
-            seen = {start_comp[0]}
-            if forbidden:
-                seen.add(forbidden)
-            
-            # Map cells to component index for fast lookup
-            # We can build this once outside, but passing it in is cleaner
-            # Optimization: Pre-build cell->comp_index map
-            pass 
-            
-            # BFS
-            idx = 0
-            while idx < len(q):
-                curr = q[idx]
-                idx += 1
-                
-                # Check if this cell belongs to another component
-                if curr in cell_to_comp_idx:
-                    c_idx = cell_to_comp_idx[curr]
-                    if c_idx != start_comp_idx:
-                        reachable_comp_indices.add(c_idx)
-                
-                for nr, nc in self.model.neighbors4(*curr):
-                    if (nr, nc) in potential_sea and (nr, nc) not in seen:
-                        seen.add((nr, nc))
-                        q.append((nr, nc))
-            return reachable_comp_indices
+        if not candidates:
+            return None
 
-        # Map every black cell to its component index
+        # Map each black cell to its component index for fast lookup
         cell_to_comp_idx = {}
         for idx, comp in enumerate(black_components):
             for cell in comp:
                 cell_to_comp_idx[cell] = idx
 
-        # 3. Analyze connectivity
-        for i, comp in enumerate(black_components):
-            start_comp_idx = i
+        # Helper BFS to find reachable component INDICES from a start cell
+        def get_reachable_component_indices(start_cell: Tuple[int, int], forbidden: Optional[Tuple[int, int]]) -> Set[int]:
+            reached_comp_indices = set()
             
-            # Find baseline reachable components (no forbidden cell)
-            # Optimization: If we already know components are partitioned, we can skip this BFS?
-            # But simpler to just run it to be robust against complex shapes.
-            baseline_reachable = get_reachable_components(comp, None)
+            # Optimization: If start_cell itself belongs to a component, add it immediately
+            if start_cell in cell_to_comp_idx:
+                reached_comp_indices.add(cell_to_comp_idx[start_cell])
+
+            q = [start_cell]
+            seen = {start_cell}
+            if forbidden:
+                seen.add(forbidden)
             
-            if not baseline_reachable:
-                continue
-
-            # Identify candidates: Unknown neighbors of this component
-            candidates = set()
-            for r, c in comp:
-                for nr, nc in self.model.neighbors4(r, c):
-                    if not self.model.is_black_certain(nr, nc) and not self.model.is_land_certain(nr, nc):
-                        candidates.add((nr, nc))
-
-            for cand in candidates:
-                # Test if blocking 'cand' reduces reachability
-                new_reachable = get_reachable_components(comp, cand)
+            idx = 0
+            while idx < len(q):
+                curr = q[idx]
+                idx += 1
                 
-                if len(new_reachable) < len(baseline_reachable):
-                    # We lost contact with at least one component!
+                # If we hit a black cell, record its component
+                if curr in cell_to_comp_idx:
+                    reached_comp_indices.add(cell_to_comp_idx[curr])
+                
+                for nr, nc in self.model.neighbors4(*curr):
+                    if (nr, nc) in potential_sea and (nr, nc) not in seen:
+                        seen.add((nr, nc))
+                        q.append((nr, nc))
+            return reached_comp_indices
+
+        # 3. Group components into partitions (sets of component indices that can reach each other)
+        # We can do this by picking the first cell of each component and running BFS
+        # To avoid redundant work, we track which components have been assigned a partition
+        comp_partitions = [] # List of sets of component indices
+        assigned_comps = set()
+        
+        for i in range(len(black_components)):
+            if i in assigned_comps:
+                continue
+            
+            # BFS from component i to find all connected components
+            reached = get_reachable_component_indices(black_components[i][0], None)
+            comp_partitions.append(reached)
+            assigned_comps.update(reached)
+
+        # Filter partitions that have < 2 components (no connectivity to protect)
+        active_partitions = [p for p in comp_partitions if len(p) >= 2]
+        
+        if not active_partitions:
+            return None
+
+        # 4. Iterate over ALL unknown potential sea cells
+        # For each candidate, check if it breaks ANY active partition
+        for cand in candidates:
+            # We only need to check partitions that rely on 'cand'. 
+            # How to know? We don't easily. So check all active partitions.
+            # Optimization: Check if 'cand' is reachable from the partition at all? 
+            # If not reachable, it can't be a cut vertex.
+            
+            # Let's just iterate partitions.
+            for partition in active_partitions:
+                # Pick a representative component from the partition
+                start_comp_idx = next(iter(partition))
+                start_cell = black_components[start_comp_idx][0]
+                
+                # Check reachability with 'cand' blocked
+                # Note: We simulate 'cand' as blocked.
+                reachable_indices = get_reachable_component_indices(start_cell, cand)
+                
+                # Check if we lost any components in this partition
+                # We only care about components that were originally in THIS partition
+                original_count = len(partition)
+                # Intersection of found indices with the original partition indices
+                found_count = len(reachable_indices & partition)
+                
+                if found_count < original_count:
+                    # Split detected!
                     tr, tc = cand
                     if self.model.manual_mark[tr][tc] != BLACK:
                         self.model.force_black(tr, tc)
                         return StepResult(
                             changed_cells=[(tr, tc)],
-                            message=f"Sea component at {comp[0]} must include ({tr},{tc}) to connect to other black components.",
-                            rule="G9 Black Connectivity: mandatory bridge"
+                            message=f"Global Sea Connectivity: Cell ({tr},{tc}) is a mandatory articulation point.",
+                            rule="G9 Global Black Connectivity (Articulation Point)"
                         )
         return None
 
