@@ -25,43 +25,49 @@ class NurikabeSolver:
             self.model.last_step = res
             return res
 
-        # 3) Land adjacency with fixed owner propagates owner (G2 safe form)
+        # 3) Neighbor of Land must share potential owners (Separation)
+        res = self.try_rule_neighbor_of_fixed_restriction()
+        if res:
+            self.model.last_step = res
+            return res
+
+        # 4) Land adjacency with fixed owner propagates owner (G2 safe form)
         res = self.try_rule_land_cluster_unification()
         if res:
             self.model.last_step = res
             return res
 
-        # 4) Closure of complete islands: remove owner from neighbors (G3)
+        # 5) Closure of complete islands: remove owner from neighbors (G3)
         res = self.try_rule_close_complete_island()
         if res:
             self.model.last_step = res
             return res
 
-        # 5) Empty owners -> black certain (G6) (as an explicit step)
+        # 6) Empty owners -> black certain (G6) (as an explicit step)
         res = self.try_rule_empty_owners_becomes_black()
         if res:
             self.model.last_step = res
             return res
 
-        # 6) Mandatory expansion (bottleneck or unique neighbor)
+        # 7) Mandatory expansion (bottleneck or unique neighbor)
         res = self.try_rule_island_mandatory_expansion()
         if res:
             self.model.last_step = res
             return res
 
-        # 7) Global Bottleneck: check all potential cells, not just neighbors
+        # 8) Global Bottleneck: check all potential cells, not just neighbors
         res = self.try_rule_island_global_bottleneck()
         if res:
             self.model.last_step = res
             return res
 
-        # 8) Sea connectivity: mandatory bridge for black components (G9)
+        # 9) Sea connectivity: mandatory bridge for black components (G9)
         res = self.try_rule_black_mandatory_expansion()
         if res:
             self.model.last_step = res
             return res
 
-        # 9) Island near completion: common neighbor of 2 last candidates -> black (G10)
+        # 10) Island near completion: common neighbor of 2 last candidates -> black (G10)
         res = self.try_rule_island_completion_common_neighbor_black()
         if res:
             self.model.last_step = res
@@ -69,6 +75,40 @@ class NurikabeSolver:
 
         self.model.last_step = StepResult([], "No applicable rule found.", "None")
         return self.model.last_step
+
+    def try_rule_neighbor_of_fixed_restriction(self) -> Optional[StepResult]:
+        """
+        G1b Separation (Proactive): 
+        If a cell (r,c) is adjacent to a Land cell (nr,nc), then (r,c) cannot belong to 
+        an island 'k' unless (nr,nc) can also belong to 'k'.
+        Logic: owners[r][c] &= owners[nr][nc] (for all Land neighbors)
+        """
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if self.model.is_clue(r, c) or self.model.is_black_certain(r, c):
+                    continue
+                
+                # Combine masks from all LAND neighbors
+                allowed_mask = -1 # All bits set (conceptually)
+                # In Python -1 is infinite 1s. We can use the actual full mask or just handle logic.
+                # Let's use current owners as base to avoid infinite bits issue with -1
+                
+                has_restriction = False
+                combined_neighbor_mask = (1 << len(self.model.islands)) - 1
+                
+                for nr, nc in self.model.neighbors4(r, c):
+                    if self.model.is_land_certain(nr, nc):
+                        combined_neighbor_mask &= self.model.owners[nr][nc]
+                        has_restriction = True
+                
+                if has_restriction:
+                    if self.model.restrict_owners_intersection(r, c, combined_neighbor_mask):
+                        return StepResult(
+                            changed_cells=[(r, c)],
+                            message=f"Restricted potential owners of ({r},{c}) to match adjacent Land cells.",
+                            rule="G1b Separation: match neighbor owners"
+                        )
+        return None
 
     def try_rule_anti_2x2_force_land(self) -> Optional[StepResult]:
         for r in range(self.model.rows - 1):
@@ -305,8 +345,9 @@ class NurikabeSolver:
             
             touches_other = False
             for nr, nc in self.model.neighbors4(r, c):
-                fo = self.model.fixed_owner(nr, nc)
-                if fo is not None and fo != iid:
+                # Check if neighbor is Land and CANNOT be this island
+                # If it's Land and doesn't include our bit, it belongs to others.
+                if self.model.is_land_certain(nr, nc) and (self.model.owners[nr][nc] & bit) == 0:
                     touches_other = True
                     break
             
@@ -616,12 +657,8 @@ class NurikabeSolver:
                                 is_obstacle = False
                                 if self.model.is_black_certain(nr, nc):
                                     is_obstacle = True
-                                elif self.model.is_clue(nr, nc) and (nr, nc) != isl.pos: # Should be covered by fixed check but safer
+                                elif self.model.is_land_certain(nr, nc) and (self.model.owners[nr][nc] & bit) == 0:
                                     is_obstacle = True
-                                else:
-                                    fo = self.model.fixed_owner(nr, nc)
-                                    if fo is not None and fo != iid:
-                                        is_obstacle = True
 
                                 if not is_obstacle:
                                     reachable.add((nr, nc))

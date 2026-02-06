@@ -579,7 +579,7 @@ def main() -> None:
                 msg_surf = font.render(editor_state.message, True, (200, 0, 0))
                 screen.blit(msg_surf, (20, 110))
             
-            info_txt = font.render("Editor Mode: Click cell to type number. 0 or Backspace to clear.", True, (50, 50, 50))
+            info_txt = font.render("Editor Mode: Click cell to type number. \n 0 or Backspace to clear.", True, (50, 50, 50))
             screen.blit(info_txt, (20, 150))
             
             draw_editor_grid(screen, font, editor_state, grid_origin, cell_size)
