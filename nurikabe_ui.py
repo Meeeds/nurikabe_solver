@@ -6,8 +6,8 @@ Features:
 - Main Mode: Play manually (toggle cell states), Step (auto-solve), Reset.
 
 Controls (Main):
-- Left click: cycle Unknown -> Black -> Land -> Unknown
-- Right click: cycle Unknown -> Land -> Black -> Unknown
+- Left click: cycle Unknown -> Land -> Black -> Unknown
+- Right click: Display debug info (owners/black possible)
 - Buttons: Edit Grid, Step, Reset
 
 Controls (Editor):
@@ -399,9 +399,13 @@ def main() -> None:
                         r = (my - gy) // cell_size
                         if 0 <= r < model.rows and 0 <= c < model.cols:
                             if event.button == 1:
-                                model.cycle_manual_mark(r, c, forward=True)
-                            elif event.button == 3:
+                                # Cycle: Unknown -> Land -> Black -> Unknown
                                 model.cycle_manual_mark(r, c, forward=False)
+                            elif event.button == 3:
+                                # Debug info: show potential owners and black possibility
+                                owners = model.bitset_to_ids(model.owners[r][c])
+                                msg = f"Cell ({r},{c}): Owners={owners}, BlackPossible={model.black_possible[r][c]}"
+                                model.last_step = StepResult([], msg, "Debug Info")
 
             # Draw MAIN
             btn_edit_grid.draw(screen, font, mouse_pos)
