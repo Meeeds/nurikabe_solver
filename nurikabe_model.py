@@ -240,9 +240,6 @@ class NurikabeModel:
                     self.black_possible[r][c] = True
                     self.manual_mark[r][c] = UNKNOWN
 
-        # apply initial pruning by distance (G5)
-        self.apply_distance_pruning_all()
-
         # clues cannot be adjacent orthogonally to another clue (validation)
         # we won't fail hard; we'll just record a last_step message.
         for isl in self.islands:
@@ -294,8 +291,6 @@ class NurikabeModel:
                     self.force_black(r, c)
                 elif mark == LAND:
                     self.force_land(r, c)
-        # Re-run pruning to account for new black walls and land constraints
-        self.apply_distance_pruning_all()
 
     def island_size_assigned(self, island_id: int) -> int:
         """Count land certain cells whose owner singleton is island_id."""

@@ -7,6 +7,12 @@ class NurikabeSolver:
 
     def step(self) -> Optional[StepResult]:
         # Priority order:
+        # 0) Distance pruning (G5)
+        res = self.try_rule_distance_pruning()
+        if res:
+            self.model.last_step = res
+            return res
+
         # 1) Anti-2x2: 3 blacks -> force land (G4)
         res = self.try_rule_anti_2x2_force_land()
         if res:
@@ -359,4 +365,46 @@ class NurikabeSolver:
                                 message=f"Island {iid} needs 1 cell; either {c_list[0]} or {c_list[1]} will complete it. Their common neighbor ({xr},{xc}) must be black.",
                                 rule="G10 Island Completion: common neighbor of last candidates -> black"
                             )
+        return None
+
+    def try_rule_distance_pruning(self) -> Optional[StepResult]:
+        changed_cells = []
+        for isl in self.model.islands:
+            iid = isl.island_id
+            limit = isl.clue
+            sr, sc = isl.pos
+            bit = self.model.bit(iid)
+            
+            # BFS to find all cells reachable by this island
+            # Considering certain black cells as obstacles
+            reachable = {(sr, sc)}
+            queue = [(sr, sc, 0)]
+            idx = 0
+            while idx < len(queue):
+                r, c, d = queue[idx]
+                idx += 1
+                if d < limit - 1:
+                    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                        nr, nc = r + dr, c + dc
+                        if self.model.in_bounds(nr, nc):
+                            if (nr, nc) not in reachable:
+                                # Obstacles: clues of OTHER islands, or certain black cells
+                                if not self.model.is_black_certain(nr, nc) and not (self.model.is_clue(nr, nc) and (nr, nc) != (sr, sc)):
+                                    reachable.add((nr, nc))
+                                    queue.append((nr, nc, d + 1))
+            
+            # Prune this island bit from all cells it cannot reach
+            for r in range(self.model.rows):
+                for c in range(self.model.cols):
+                    if (r, c) not in reachable:
+                        if self.model.owners[r][c] & bit:
+                            self.model.owners[r][c] &= ~bit
+                            changed_cells.append((r, c))
+        
+        if changed_cells:
+            return StepResult(
+                changed_cells=list(set(changed_cells)),
+                message="Pruned potential owners based on distance from clues.",
+                rule="G5 Distance Pruning"
+            )
         return None
