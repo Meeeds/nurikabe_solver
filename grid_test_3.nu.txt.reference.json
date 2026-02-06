@@ -1,0 +1,125 @@
+{
+  "final_grid": [
+    [
+      "CLUE(2)",
+      "LAND(1)",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "BLACK",
+      "UNKNOWN",
+      "CLUE(2)"
+    ],
+    [
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(2)",
+      "UNKNOWN",
+      "BLACK",
+      "UNKNOWN"
+    ],
+    [
+      "BLACK",
+      "CLUE(2)",
+      "BLACK",
+      "UNKNOWN",
+      "CLUE(7)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "BLACK",
+      "UNKNOWN",
+      "BLACK"
+    ],
+    [
+      "BLACK",
+      "LAND(4)",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "BLACK",
+      "BLACK",
+      "LAND(8)",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)",
+      "BLACK",
+      "CLUE(3)",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(10)",
+      "BLACK",
+      "CLUE(2)",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "BLACK",
+      "CLUE(3)",
+      "BLACK",
+      "UNKNOWN"
+    ],
+    [
+      "CLUE(2)",
+      "BLACK",
+      "BLACK",
+      "CLUE(4)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "LAND(9)",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "BLACK",
+      "BLACK",
+      "LAND(11)",
+      "LAND(11)",
+      "UNKNOWN",
+      "BLACK",
+      "UNKNOWN",
+      "BLACK",
+      "UNKNOWN",
+      "LAND(14)"
+    ],
+    [
+      "BLACK",
+      "CLUE(1)",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "UNKNOWN",
+      "CLUE(2)",
+      "BLACK",
+      "CLUE(4)",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "rules_triggered": {
+    "G1 Separation: neighbor of >=2 fixed owners -> black": 6,
+    "G10 Island Completion: common neighbor of last candidates -> black": 2,
+    "G1b Separation: match neighbor owners": 26,
+    "G4 Anti-2x2: 3 blacks -> land": 3,
+    "G5 Distance Pruning (Enhanced)": 15,
+    "G6 Empty domain -> black": 18,
+    "G7 Generic Mandatory Expansion": 3,
+    "G7b Global Brute Force Intersection & Pruning": 2,
+    "G9 Global Black Connectivity (Articulation Point)": 6
+  },
+  "steps_total": 81
+}
