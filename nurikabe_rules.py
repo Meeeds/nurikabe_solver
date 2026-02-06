@@ -388,8 +388,18 @@ class NurikabeSolver:
                         nr, nc = r + dr, c + dc
                         if self.model.in_bounds(nr, nc):
                             if (nr, nc) not in reachable:
-                                # Obstacles: clues of OTHER islands, or certain black cells
-                                if not self.model.is_black_certain(nr, nc) and not (self.model.is_clue(nr, nc) and (nr, nc) != (sr, sc)):
+                                # Obstacles: clues of OTHER islands, certain black cells, or cells owned by OTHER islands
+                                is_obstacle = False
+                                if self.model.is_black_certain(nr, nc):
+                                    is_obstacle = True
+                                elif self.model.is_clue(nr, nc) and (nr, nc) != (sr, sc):
+                                    is_obstacle = True
+                                else:
+                                    fo = self.model.fixed_owner(nr, nc)
+                                    if fo is not None and fo != iid:
+                                        is_obstacle = True
+
+                                if not is_obstacle:
                                     reachable.add((nr, nc))
                                     queue.append((nr, nc, d + 1))
             
