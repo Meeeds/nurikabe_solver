@@ -369,21 +369,46 @@ class NurikabeSolver:
 
     def try_rule_distance_pruning(self) -> Optional[StepResult]:
         changed_cells = []
+        
+        # Pre-compute fixed cells for each island to optimize
+        fixed_cells_by_island = {isl.island_id: [] for isl in self.model.islands}
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if not self.model.black_possible[r][c] and self.model.owners[r][c] != 0:
+                    # Check if singleton owner
+                    iid = self.model.owners_singleton(r, c)
+                    if iid is not None:
+                         if iid in fixed_cells_by_island:
+                             fixed_cells_by_island[iid].append((r, c))
+
         for isl in self.model.islands:
             iid = isl.island_id
-            limit = isl.clue
-            sr, sc = isl.pos
+            clue = isl.clue
             bit = self.model.bit(iid)
             
-            # BFS to find all cells reachable by this island
-            # Considering certain black cells as obstacles
-            reachable = {(sr, sc)}
-            queue = [(sr, sc, 0)]
+            # Start BFS from ALL cells currently fixed to this island
+            # Note: The clue cell itself is always fixed owner, so it's included.
+            current_fixed = fixed_cells_by_island[iid]
+            current_size = len(current_fixed)
+            
+            # Remaining capacity for expansion
+            remaining = clue - current_size
+            if remaining < 0:
+                # Contradiction, but we can't solve it here. Just skip pruning.
+                continue
+                
+            reachable = set(current_fixed)
+            queue = [(r, c, 0) for r, c in current_fixed]
+            
             idx = 0
             while idx < len(queue):
                 r, c, d = queue[idx]
                 idx += 1
-                if d < limit - 1:
+                
+                # If we have reached the limit of expansion from the current core, stop.
+                # 'd' is the number of EXTRA cells needed to reach here from the core.
+                # If d == remaining, we can include this cell but no further neighbors.
+                if d < remaining:
                     for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                         nr, nc = r + dr, c + dc
                         if self.model.in_bounds(nr, nc):
@@ -392,7 +417,7 @@ class NurikabeSolver:
                                 is_obstacle = False
                                 if self.model.is_black_certain(nr, nc):
                                     is_obstacle = True
-                                elif self.model.is_clue(nr, nc) and (nr, nc) != (sr, sc):
+                                elif self.model.is_clue(nr, nc) and (nr, nc) != isl.pos: # Should be covered by fixed check but safer
                                     is_obstacle = True
                                 else:
                                     fo = self.model.fixed_owner(nr, nc)
@@ -414,7 +439,7 @@ class NurikabeSolver:
         if changed_cells:
             return StepResult(
                 changed_cells=list(set(changed_cells)),
-                message="Pruned potential owners based on distance from clues.",
-                rule="G5 Distance Pruning"
+                message="Pruned potential owners based on reachability from current island components.",
+                rule="G5 Distance Pruning (Enhanced)"
             )
         return None
