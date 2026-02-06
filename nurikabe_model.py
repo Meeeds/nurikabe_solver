@@ -315,9 +315,12 @@ class NurikabeModel:
 
         # Apply to domain/black_possible immediately (local "manual constraint")
         if new_mark == UNKNOWN:
-            # "unknown" means revert to permissive: black possible, owners stay as-is
+            # "unknown" means revert to permissive: black possible
             self.black_possible[r][c] = True
-            # owners unchanged; if it was emptied by black, keep empty (user can Reset to rebuild)
+            # if owners was emptied (due to being black), we should try to restore potential owners
+            # otherwise it stays "impossible" which isn't what "unknown" implies for the user.
+            if self.owners[r][c] == 0:
+                 self.owners[r][c] = self.get_potential_owners_mask(r, c)
         elif new_mark == BLACK:
             self.force_black(r, c)
         elif new_mark == LAND:
