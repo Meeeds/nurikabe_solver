@@ -49,6 +49,12 @@ class NurikabeSolver:
             self.model.last_step = res
             return res
 
+        # 7) Global Bottleneck: check all potential cells, not just neighbors
+        res = self.try_rule_island_global_bottleneck()
+        if res:
+            self.model.last_step = res
+            return res
+
         # 8) Sea connectivity: mandatory bridge for black components (G9)
         res = self.try_rule_black_mandatory_expansion()
         if res:
@@ -246,6 +252,176 @@ class NurikabeSolver:
                         message=f"Island {iid} must include ({tr},{tc}) to reach size {clue} (bottleneck detected).",
                         rule="G7 Generic Mandatory Expansion"
                     )
+        return None
+
+    def analyze_island_extensions(self, isl) -> Tuple[Set[Tuple[int, int]], Set[Tuple[int, int]]]:
+        """
+        Performs a brute-force search for all valid shapes of the given island.
+        Returns:
+            (union_of_extensions, intersection_of_extensions)
+            union: Set of cells that appear in AT LEAST ONE valid completion (excluding the fixed core).
+            intersection: Set of cells that appear in ALL valid completions (excluding the fixed core).
+        """
+        MAX_STATES = 50000
+        iid = isl.island_id
+        clue = isl.clue
+        bit = self.model.bit(iid)
+
+        # 1. Identify fixed core and potential cells
+        fixed_core = set()
+        potential = set()
+        
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if not self.model.black_possible[r][c] and self.model.owners[r][c] == bit:
+                    fixed_core.add((r, c))
+                if not self.model.is_black_certain(r, c) and (self.model.owners[r][c] & bit):
+                    potential.add((r, c))
+
+        # Filter potential: Must not touch any other island's fixed cells
+        # This prevents the shape from violating the "islands must not touch" rule.
+        # We only filter cells that are NOT in the fixed_core (to avoid breaking the core itself in case of existing contradiction).
+        filtered_potential = set()
+        for r, c in potential:
+            if (r, c) in fixed_core:
+                filtered_potential.add((r, c))
+                continue
+            
+            touches_other = False
+            for nr, nc in self.model.neighbors4(r, c):
+                fo = self.model.fixed_owner(nr, nc)
+                if fo is not None and fo != iid:
+                    touches_other = True
+                    break
+            
+            if not touches_other:
+                filtered_potential.add((r, c))
+        potential = filtered_potential
+
+        current_size = len(fixed_core)
+        if current_size >= clue:
+            return set(), set()
+        
+        needed = clue - current_size
+        candidates = list(potential - fixed_core)
+        if len(candidates) < needed:
+            return set(), set()
+
+        # Adjacency map for potential cells
+        adj = {p: [] for p in potential}
+        for r, c in potential:
+            for nr, nc in self.model.neighbors4(r, c):
+                if (nr, nc) in potential:
+                    adj[(r, c)].append((nr, nc))
+
+        # Initial frontier: neighbors of fixed_core in potential
+        initial_frontier = set()
+        for r, c in fixed_core:
+            for nr, nc in adj[(r, c)]:
+                if (nr, nc) not in fixed_core:
+                    initial_frontier.add((nr, nc))
+
+        stack = [(frozenset(), frozenset(initial_frontier))]
+        visited_states = {frozenset()}
+        
+        common_added = None
+        union_added = set()
+        
+        states_visited = 0
+        too_complex = False
+        
+        while stack:
+            states_visited += 1
+            if states_visited > MAX_STATES:
+                too_complex = True
+                break
+            
+            curr_added, curr_frontier = stack.pop()
+            
+            if len(curr_added) == needed:
+                # Found a valid configuration
+                if common_added is None:
+                    common_added = set(curr_added)
+                else:
+                    common_added &= curr_added
+                
+                union_added.update(curr_added)
+                
+                # Optimization: if common_added is empty, we can stop tracking it, 
+                # but we MUST continue if we want the full Union for debug purposes.
+                # Since the primary goal of this function is now dual-purpose (rule + debug),
+                # we should continue. However, if 'too_complex' becomes true, we abort.
+                continue
+            
+            # Expand
+            frontier_list = sorted(list(curr_frontier))
+            for cell in frontier_list:
+                new_added = set(curr_added)
+                new_added.add(cell)
+                new_added_frozen = frozenset(new_added)
+                
+                if new_added_frozen in visited_states:
+                    continue
+                
+                new_frontier = set(curr_frontier)
+                new_frontier.remove(cell)
+                for n in adj[cell]:
+                    if n not in fixed_core and n not in new_added:
+                        new_frontier.add(n)
+                
+                visited_states.add(new_added_frozen)
+                stack.append((new_added_frozen, frozenset(new_frontier)))
+
+        if too_complex:
+            # If too complex, we can't trust the results.
+            return set(), set()
+            
+        if common_added is None:
+            # No solutions found
+            return set(), set()
+            
+        return union_added, common_added
+
+    def try_rule_island_global_bottleneck(self) -> Optional[StepResult]:
+        # "Brute Force" Intersection Rule
+        for isl in self.model.islands:
+            union_set, common_set = self.analyze_island_extensions(isl)
+            
+            if common_set:
+                changed_list = []
+                bit = self.model.bit(isl.island_id)
+                for r, c in common_set:
+                    if self.model.manual_mark[r][c] == BLACK: 
+                        # Contradiction? or just already handled?
+                        continue
+                    # Just check if we are learning something new
+                    # If it's already forced land and owned by us, nothing new.
+                    # But force_land handles that check.
+                    
+                    # We need to verify if this changes state.
+                    # force_land returns true if changed.
+                    # But we also need to set owner.
+                    
+                    old_mark = self.model.manual_mark[r][c]
+                    
+                    # We must set force_land AND restrict owner to this island
+                    # because it is mandatory for THIS island.
+                    if self.model.force_land(r, c):
+                        changed_list.append((r, c))
+                    
+                    # Also ensure it is owned by this island
+                    if self.model.owners[r][c] != bit:
+                        self.model.owners[r][c] = bit
+                        if (r, c) not in changed_list:
+                            changed_list.append((r, c))
+
+                if changed_list:
+                    return StepResult(
+                        changed_cells=changed_list,
+                        message=f"Brute force analysis found {len(changed_list)} mandatory cells for Island {isl.island_id}.",
+                        rule="G7b Global Brute Force Intersection"
+                    )
+
         return None
 
     def try_rule_black_mandatory_expansion(self) -> Optional[StepResult]:

@@ -330,7 +330,21 @@ def main() -> None:
     # Initialize with default small puzzle
     
 
-    model.parse_puzzle_text("2........2\n......2...\n.2..7.....\n..........\n......3.3.\n..2....3..\n2..4......\n..........\n.1....2.4.\n") 
+    model.parse_puzzle_text("""4 . . . . . . . . .
+. . . . . . . . . .
+. . 13 . . . . 4 . .
+. . . . . . . . . .
+2 . . . 1 . . . 3 .
+. 3 . . . 1 . . . .
+. . . . . . 1 . . .
+. . . . . . . . . .
+. 2 . . 3 . . . . 2
+6 . 2 . . 7 . . . .
+. . . . 7 . . . . .
+. . . . . . . . . .
+. . 2 . . . . . . .
+. . . . . . . . . .
+""") 
     solver = NurikabeSolver(model)
     
     # Editor State
@@ -341,6 +355,11 @@ def main() -> None:
     btn_step = Button(pygame.Rect(180, 20, 130, 40), "Step")
     btn_reset = Button(pygame.Rect(330, 20, 160, 40), "Reset Domains")
     
+    # Debug Button
+    btn_debug = Button(pygame.Rect(20, 700, 250, 40), "Test Rule G7b (0/0)")
+    debug_view_cells: Set[Tuple[int, int]] = set()
+    debug_island_index: int = -1
+
     msg_rect = pygame.Rect(20, 80, 470, 600)
     
     # UI Elements (Editor)
@@ -373,6 +392,10 @@ def main() -> None:
         screen.fill((240, 240, 240))
         
         if mode == MODE_MAIN:
+            # Update debug button text
+            total_islands = len(model.islands)
+            btn_debug.text = f"Test Rule G7b ({debug_island_index + 1}/{total_islands})"
+
             # Event handling for MAIN
             for event in events:
                 if btn_edit_grid.clicked(event):
@@ -383,13 +406,38 @@ def main() -> None:
                     inp_cols.text = str(editor_state.cols)
                     inp_cols.val = editor_state.cols
                     editor_state.message = ""
+                    debug_view_cells = set()
                     
                 if btn_step.clicked(event):
                     solver.step()
+                    debug_view_cells = set()
+                
                 if btn_reset.clicked(event):
                     model.reset_domains_from_manual()
                     model.last_step = StepResult([], "Domains rebuilt.", "Reset")
+                    debug_view_cells = set()
+                
+                if btn_debug.clicked(event) and total_islands > 0:
+                    debug_island_index = (debug_island_index + 1) % total_islands
+                    isl = model.islands[debug_island_index]
                     
+                    # Analyze
+                    union_set, common_set = solver.analyze_island_extensions(isl)
+                    debug_view_cells = union_set
+                    
+                    # Also include the intersection in a specialized way? 
+                    # For now just highlighting the union is what was asked ("every single possible island extension").
+                    # But finding the "bottleneck" (common_set) is the rule's goal. 
+                    # Let's highlight union. Common ones will naturally be in union.
+                    
+                    msg = f"Island {isl.island_id} (size {isl.clue}): {len(union_set)} valid potential cells. "
+                    if common_set:
+                        msg += f"Found {len(common_set)} mandatory cells (BOTTLENECK)!"
+                    else:
+                        msg += "No mandatory bottleneck found."
+                        
+                    model.last_step = StepResult(list(common_set) if common_set else [], msg, "Debug View")
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     # check grid clicks
                     gx, gy = grid_origin
@@ -411,6 +459,7 @@ def main() -> None:
             btn_edit_grid.draw(screen, font, mouse_pos)
             btn_step.draw(screen, font, mouse_pos)
             btn_reset.draw(screen, font, mouse_pos)
+            btn_debug.draw(screen, font, mouse_pos)
             
             # Message box
             pygame.draw.rect(screen, (255, 255, 255), msg_rect, border_radius=8)
@@ -437,7 +486,7 @@ def main() -> None:
                     screen.blit(font.render(cur_line, True, (0,0,0)), (msg_rect.x+10, y))
 
             # Draw Grid
-            highlight_cells = set(model.last_step.changed_cells) if model.last_step else set()
+            highlight_cells = (set(model.last_step.changed_cells) if model.last_step else set()) | debug_view_cells
             draw_main_grid(screen, font, small_font, model, grid_origin, cell_size, highlight_cells)
 
         elif mode == MODE_EDITOR:
