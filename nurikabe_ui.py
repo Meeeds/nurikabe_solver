@@ -18,6 +18,7 @@ Controls (Editor):
 
 import pygame
 import os
+import glob
 from typing import Tuple, Set, Optional, List
 from nurikabe_model import NurikabeModel, StepResult, UNKNOWN, BLACK, LAND
 from nurikabe_rules import NurikabeSolver
@@ -371,14 +372,16 @@ def main() -> None:
     inp_cols = NumberInput(pygame.Rect(200, 20, 50, 30), 10)
     
     btn_editor_load = Button(pygame.Rect(300, 15, 180, 40), "Load to Solver")
+    btn_editor_exit = Button(pygame.Rect(490, 15, 100, 40), "Exit")
+    nu_files: List[str] = []
 
     # File I/O
     lbl_file = font.render("File:", True, (0,0,0))
-    inp_filename = TextInput(pygame.Rect(80, 70, 200, 30), "grid.txt")
+    inp_filename = TextInput(pygame.Rect(80, 70, 200, 30), "grid.nu.txt")
     btn_save = Button(pygame.Rect(300, 70, 80, 30), "Save")
     btn_load_file = Button(pygame.Rect(390, 70, 80, 30), "Load")
     
-    grid_origin = (510, 20)
+    grid_origin = (510, 60)
     cell_size = 32
 
     running = True
@@ -408,6 +411,7 @@ def main() -> None:
                     inp_cols.val = editor_state.cols
                     editor_state.message = ""
                     debug_view_cells = set()
+                    nu_files = glob.glob("*.nu.txt")
                     
                 if btn_step.clicked(event):
                     solver.step()
@@ -523,9 +527,13 @@ def main() -> None:
                     mode = MODE_MAIN
                     solver = NurikabeSolver(model) # Re-init solver
 
+                if btn_editor_exit.clicked(event):
+                    mode = MODE_MAIN
+
                 if btn_save.clicked(event):
                     msg = save_to_file(inp_filename.text, editor_state)
                     editor_state.message = msg
+                    nu_files = glob.glob("*.nu.txt") # Refresh list
 
                 if btn_load_file.clicked(event):
                     msg = load_from_file(inp_filename.text, editor_state)
@@ -537,6 +545,21 @@ def main() -> None:
                         inp_cols.text = str(editor_state.cols)
                         inp_cols.val = editor_state.cols
                 
+                # Check clicks on nu_files list
+                fy = 200
+                for fname in nu_files:
+                    file_rect = pygame.Rect(20, fy, 250, 25)
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and file_rect.collidepoint(event.pos):
+                        inp_filename.text = fname
+                        msg = load_from_file(fname, editor_state)
+                        editor_state.message = msg
+                        if "Loaded" in msg:
+                            inp_rows.text = str(editor_state.rows)
+                            inp_rows.val = editor_state.rows
+                            inp_cols.text = str(editor_state.cols)
+                            inp_cols.val = editor_state.cols
+                    fy += 30
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     gx, gy = grid_origin
                     mx, my = event.pos
@@ -583,11 +606,27 @@ def main() -> None:
             inp_cols.draw(screen, font)
             
             btn_editor_load.draw(screen, font, mouse_pos)
+            btn_editor_exit.draw(screen, font, mouse_pos)
             
             screen.blit(lbl_file, (20, 75))
             inp_filename.draw(screen, font)
             btn_save.draw(screen, font, mouse_pos)
             btn_load_file.draw(screen, font, mouse_pos)
+
+            # Draw file list explorer
+            screen.blit(font.render("Available Puzzles (*.nu.txt):", True, (0,0,150)), (20, 175))
+            fy = 200
+            for fname in nu_files:
+                file_rect = pygame.Rect(20, fy, 250, 25)
+                # Hover effect
+                f_hover = file_rect.collidepoint(mouse_pos)
+                f_color = (0, 0, 255) if f_hover else (50, 50, 50)
+                if f_hover:
+                    pygame.draw.rect(screen, (220, 220, 255), file_rect)
+                
+                f_surf = small_font.render(fname, True, f_color)
+                screen.blit(f_surf, (file_rect.x + 5, file_rect.y + 5))
+                fy += 30
 
             if editor_state.message:
                 msg_surf = font.render(editor_state.message, True, (200, 0, 0))
