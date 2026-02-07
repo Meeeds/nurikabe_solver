@@ -3,6 +3,7 @@ import pygame
 from dataclasses import dataclass
 from typing import Tuple, Optional, List
 from nurikabe_model import NurikabeModel, BLACK, LAND
+import grid_style
 
 @dataclass
 class Camera:
@@ -39,7 +40,8 @@ def draw_grid(
     base_cell_size: int,
     font: pygame.font.Font,
     small_font: pygame.font.Font,
-    highlight: Optional[Tuple[int, int]] = None
+    highlight: Optional[Tuple[int, int]] = None,
+    affected_cells: Optional[List[Tuple[int, int]]] = None
 ) -> None:
     rows, cols = model.rows, model.cols
     if rows == 0 or cols == 0:
@@ -70,24 +72,27 @@ def draw_grid(
             rect = pygame.Rect(int(sx), int(sy), int(cell_size), int(cell_size))
 
             if model.is_clue(r, c):
-                pygame.draw.rect(screen, (245, 245, 245), rect)
+                pygame.draw.rect(screen, grid_style.COLOR_CLUE, rect)
             else:
                 mark = model.manual_mark[r][c]
                 if mark == BLACK:
-                    pygame.draw.rect(screen, (40, 40, 40), rect)
+                    pygame.draw.rect(screen, grid_style.COLOR_BLACK, rect)
                 elif mark == LAND:
-                    pygame.draw.rect(screen, (230, 230, 230), rect)
+                    pygame.draw.rect(screen, grid_style.COLOR_LAND, rect)
                 else:
-                    pygame.draw.rect(screen, (200, 200, 200), rect)
+                    pygame.draw.rect(screen, grid_style.COLOR_UNKNOWN, rect)
 
-            pygame.draw.rect(screen, (70, 70, 70), rect, 1)
+            pygame.draw.rect(screen, grid_style.COLOR_GRID_LINES, rect, 1)
 
             if highlight is not None and (r, c) == highlight:
-                pygame.draw.rect(screen, (20, 120, 220), rect, 3)
+                pygame.draw.rect(screen, grid_style.COLOR_EDITOR_HIGHLIGHT, rect, 3)
+
+            if affected_cells and (r, c) in affected_cells:
+                pygame.draw.rect(screen, grid_style.COLOR_SOLVER_HIGHLIGHT, rect, 4)
 
             if model.is_clue(r, c):
                 txt = str(model.clues[r][c])
-                surf = font.render(txt, True, (0, 0, 0))
+                surf = font.render(txt, True, grid_style.COLOR_TEXT_CLUE)
                 screen.blit(
                     surf,
                     (rect.x + (rect.width - surf.get_width()) // 2, rect.y + (rect.height - surf.get_height()) // 2)
@@ -95,7 +100,7 @@ def draw_grid(
                 if camera.zoom >= 1.0:
                     iid = model.island_by_pos.get((r, c))
                     if iid is not None:
-                        id_surf = small_font.render(str(iid), True, (90, 90, 90))
+                        id_surf = small_font.render(str(iid), True, grid_style.COLOR_TEXT_DEBUG)
                         screen.blit(id_surf, (rect.x + 3, rect.y + 2))
             else:
                 if camera.zoom >= 1.0:
@@ -106,7 +111,7 @@ def draw_grid(
                         txt = "*"
                     else:
                         txt = ",".join(str(x) for x in ids)
-                    surf = small_font.render(txt, True, (90, 90, 90))
+                    surf = small_font.render(txt, True, grid_style.COLOR_TEXT_DEBUG)
                     screen.blit(surf, (rect.x + 3, rect.y + 2))
 
 def pick_cell_from_mouse(model: NurikabeModel, camera: Camera, base_cell_size: int, mouse_pos: Tuple[int, int]) -> Optional[Tuple[int, int]]:

@@ -18,7 +18,7 @@ Controls (Editor):
 
 import os
 import glob
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Tuple, Optional, List, Dict, Any
 
 import pygame
@@ -28,6 +28,7 @@ from nurikabe_model import NurikabeModel, UNKNOWN, BLACK, LAND
 from nurikabe_rules import NurikabeSolver
 from nurikabe_worker import SolverWorker, WorkerCommand
 from nurikabe_drawing import Camera, draw_grid, pick_cell_from_mouse, clamp_int
+import grid_style
 
 
 # ----------------------------
@@ -61,6 +62,7 @@ class MainState:
     solver: NurikabeSolver = NurikabeSolver(NurikabeModel())
     debug_cell: Optional[Tuple[int, int]] = None
     last_step_msg: str = ""
+    affected_cells: List[Tuple[int, int]] = field(default_factory=list)
 
 
 # ----------------------------
@@ -402,6 +404,7 @@ def main() -> None:
                 rule = step.get("rule", "")
                 if msg or rule:
                     log_append(f"[{rule}] {msg}".strip())
+                state.affected_cells = step.get("changed_cells", [])
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -486,6 +489,7 @@ def main() -> None:
                         undo_stack.clear()
                         apply_worker_state(snap0)
                         state.solver = NurikabeSolver(state.model)
+                        state.affected_cells.clear()
                         sync_worker()
                         log_append("Reset to first undo snapshot.")
                     else:
@@ -583,6 +587,7 @@ def main() -> None:
                                     r, c = cell
                                     push_undo()
                                     cycle_mark(state.model, r, c)
+                                    state.affected_cells.clear()
                                     sync_worker()
                             else:
                                 if editor.grid is not None:
@@ -626,7 +631,7 @@ def main() -> None:
 
         ui_manager.update(time_delta)
 
-        screen.fill((30, 30, 30))
+        screen.fill(grid_style.COLOR_BG)
 
         highlight_cell = None
         if state.mode == MODE_EDITOR:
@@ -635,7 +640,11 @@ def main() -> None:
                 model_for_editor.load_grid(editor.grid)
             draw_grid(screen, model_for_editor, camera, base_cell_size, font, small_font, highlight=highlight_cell)
         else:
-            draw_grid(screen, state.model, camera, base_cell_size, font, small_font, highlight=highlight_cell)
+            draw_grid(
+                screen, state.model, camera, base_cell_size, font, small_font,
+                highlight=highlight_cell,
+                affected_cells=state.affected_cells
+            )
 
         ui_manager.draw_ui(screen)
 
