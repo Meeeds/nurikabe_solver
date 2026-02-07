@@ -123,7 +123,7 @@ class NurikabeModel:
         if self.owners[r][c] == 0:
             self.owners[r][c] = self.get_potential_owners_mask(r, c)
             changed = True
-            
+
         self.manual_mark[r][c] = LAND
         return changed
 
@@ -325,3 +325,56 @@ class NurikabeModel:
             self.force_black(r, c)
         elif new_mark == LAND:
             self.force_land(r, c)
+
+    def snapshot(self) -> Dict[str, object]:
+        """Return a fully self-contained, pickle-friendly snapshot of the current state.
+
+        Intended for:
+        - Undo/redo stacks (store snapshots)
+        - Background solving (send snapshots across processes)
+        """
+        last_step = None
+        if self.last_step is not None:
+            last_step = {
+                "changed_cells": list(self.last_step.changed_cells),
+                "message": self.last_step.message,
+                "rule": self.last_step.rule,
+            }
+        return {
+            "clues": [row[:] for row in self.clues],
+            "manual_mark": [row[:] for row in self.manual_mark],
+            "black_possible": [row[:] for row in self.black_possible],
+            "owners": [row[:] for row in self.owners],
+            "last_step": last_step,
+        }
+
+    def restore(self, state: Dict[str, object]) -> None:
+        """Restore a state previously produced by snapshot()."""
+        clues = state.get("clues")
+        if not isinstance(clues, list) or not clues or not isinstance(clues[0], list):
+            raise ValueError("Invalid snapshot: missing/invalid 'clues'.")
+
+        self.load_grid([[int(v) for v in row] for row in clues])
+
+        manual_mark = state.get("manual_mark")
+        black_possible = state.get("black_possible")
+        owners = state.get("owners")
+
+        if not (isinstance(manual_mark, list) and isinstance(black_possible, list) and isinstance(owners, list)):
+            raise ValueError("Invalid snapshot: missing arrays.")
+
+        self.manual_mark = [[int(v) for v in row] for row in manual_mark]
+        self.black_possible = [[bool(v) for v in row] for row in black_possible]
+        self.owners = [[int(v) for v in row] for row in owners]
+
+        last_step = state.get("last_step")
+        if last_step is None:
+            self.last_step = None
+        else:
+            if not isinstance(last_step, dict):
+                raise ValueError("Invalid snapshot: 'last_step' must be dict or None.")
+            self.last_step = StepResult(
+                changed_cells=[(int(r), int(c)) for (r, c) in last_step.get("changed_cells", [])],
+                message=str(last_step.get("message", "")),
+                rule=str(last_step.get("rule", "")),
+            )

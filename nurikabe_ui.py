@@ -16,12 +16,20 @@ Controls (Editor):
 - Button: Load to Solver
 """
 
-import pygame
 import os
 import glob
-from typing import Tuple, Set, Optional, List
+import math
+import queue
+import threading
+from dataclasses import dataclass
+from typing import Tuple, Optional, List, Dict, Any
+
+import pygame
+import pygame_gui
+
 from nurikabe_model import NurikabeModel, StepResult, UNKNOWN, BLACK, LAND
 from nurikabe_rules import NurikabeSolver
+
 
 # ----------------------------
 # UI Constants & Enums
@@ -29,618 +37,741 @@ from nurikabe_rules import NurikabeSolver
 MODE_MAIN = 0
 MODE_EDITOR = 1
 
+
 # ----------------------------
-# UI widgets
+# Camera (pan/zoom for the grid only)
 # ----------------------------
 
-class Button:
-    def __init__(self, rect: pygame.Rect, text: str) -> None:
-        self.rect = rect
-        self.text = text
-
-    def draw(self, screen: pygame.Surface, font: pygame.font.Font, mouse_pos: Tuple[int, int]) -> None:
-        hover = self.rect.collidepoint(mouse_pos)
-        color = (210, 210, 210) if hover else (190, 190, 190)
-        pygame.draw.rect(screen, color, self.rect, border_radius=8)
-        pygame.draw.rect(screen, (80, 80, 80), self.rect, 2, border_radius=8)
-        surf = font.render(self.text, True, (0, 0, 0))
-        screen.blit(surf, (self.rect.x + 10, self.rect.y + (self.rect.height - surf.get_height()) // 2))
-
-    def clicked(self, event: pygame.event.Event) -> bool:
-        return event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.rect.collidepoint(event.pos)
+DRAG_THRESHOLD_PX = 6
 
 
-class NumberInput:
-    def __init__(self, rect: pygame.Rect, initial_val: int) -> None:
-        self.rect = rect
-        self.text = str(initial_val)
-        self.val = initial_val
-        self.active = False
+@dataclass
+class Camera:
+    offset_x: float = 0.0
+    offset_y: float = 0.0
+    zoom: float = 1.0
 
-    def handle_event(self, event: pygame.event.Event) -> bool:
-        """Returns True if value changed."""
-        changed = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
-                self.active = True
-            else:
-                self.active = False
-        
-        if self.active and event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_BACKSPACE:
-                self.text = self.text[:-1]
-                if not self.text:
-                    self.val = 0
-                else:
-                    self.val = int(self.text)
-                changed = True
-            elif event.unicode.isdigit():
-                if len(self.text) < 2: # Limit to 2 digits
-                    self.text += event.unicode
-                    self.val = int(self.text)
-                    changed = True
-        return changed
+    def screen_to_world(self, sx: float, sy: float) -> Tuple[float, float]:
+        return (sx - self.offset_x) / self.zoom, (sy - self.offset_y) / self.zoom
 
-    def draw(self, screen: pygame.Surface, font: pygame.font.Font) -> None:
-        color = (255, 255, 255) if self.active else (230, 230, 230)
-        pygame.draw.rect(screen, color, self.rect, border_radius=4)
-        pygame.draw.rect(screen, (0, 0, 0) if self.active else (100, 100, 100), self.rect, 2, border_radius=4)
-        surf = font.render(self.text, True, (0, 0, 0))
-        # Center text
-        text_rect = surf.get_rect(center=self.rect.center)
-        screen.blit(surf, text_rect)
+    def world_to_screen(self, wx: float, wy: float) -> Tuple[float, float]:
+        return wx * self.zoom + self.offset_x, wy * self.zoom + self.offset_y
 
-class TextInput:
-    def __init__(self, rect: pygame.Rect, initial_text: str = "") -> None:
-        self.rect = rect
-        self.text = initial_text
-        self.active = False
+    def zoom_at(self, mouse_pos: Tuple[int, int], zoom_factor: float, min_zoom: float, max_zoom: float) -> None:
+        mx, my = mouse_pos
+        wx, wy = self.screen_to_world(mx, my)
 
-    def handle_event(self, event: pygame.event.Event) -> None:
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
-                self.active = True
-            else:
-                self.active = False
-        
-        if self.active and event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_BACKSPACE:
-                self.text = self.text[:-1]
-            elif event.key == pygame.K_RETURN:
-                self.active = False # Deactivate on enter
-            else:
-                if event.unicode and len(self.text) < 30: # Limit length
-                    self.text += event.unicode
+        new_zoom = self.zoom * zoom_factor
+        new_zoom = max(min_zoom, min(max_zoom, new_zoom))
+        if abs(new_zoom - self.zoom) < 1e-9:
+            return
 
-    def draw(self, screen: pygame.Surface, font: pygame.font.Font) -> None:
-        color = (255, 255, 255) if self.active else (230, 230, 230)
-        pygame.draw.rect(screen, color, self.rect, border_radius=4)
-        pygame.draw.rect(screen, (0, 0, 0) if self.active else (100, 100, 100), self.rect, 2, border_radius=4)
-        
-        # Render text with clipping if too long
-        surf = font.render(self.text, True, (0, 0, 0))
-        if surf.get_width() > self.rect.width - 10:
-             # simple clipping: show end
-             # Ideally we'd scroll, but this is simple
-             pass 
-        screen.blit(surf, (self.rect.x + 5, self.rect.y + (self.rect.height - surf.get_height()) // 2))
+        self.zoom = new_zoom
+        self.offset_x = mx - wx * self.zoom
+        self.offset_y = my - wy * self.zoom
 
+
+# ----------------------------
+# Worker thread for solving
+# ----------------------------
+
+@dataclass
+class WorkerCommand:
+    kind: str
+    payload: Optional[Dict[str, Any]] = None
+
+
+@dataclass
+class WorkerResult:
+    kind: str
+    payload: Dict[str, Any]
+
+
+class SolverWorker:
+    def __init__(self) -> None:
+        self._cmd_q: "queue.Queue[WorkerCommand]" = queue.Queue()
+        self._res_q: "queue.Queue[WorkerResult]" = queue.Queue()
+        self._stop_evt = threading.Event()
+        self._thread = threading.Thread(target=self._run, name="SolverWorker", daemon=True)
+
+        self._model = NurikabeModel()
+        self._solver = NurikabeSolver(self._model)
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop_evt.set()
+        try:
+            self._cmd_q.put_nowait(WorkerCommand(kind="stop"))
+        except queue.Full:
+            pass
+        self._thread.join(timeout=1.0)
+
+    def send(self, cmd: WorkerCommand) -> None:
+        self._cmd_q.put(cmd)
+
+    def try_recv(self) -> Optional[WorkerResult]:
+        try:
+            return self._res_q.get_nowait()
+        except queue.Empty:
+            return None
+
+    def _emit_state(self, kind: str, extra: Optional[Dict[str, Any]] = None) -> None:
+        payload: Dict[str, Any] = {"state": self._model.snapshot()}
+        if extra:
+            payload.update(extra)
+        self._res_q.put(WorkerResult(kind=kind, payload=payload))
+
+    def _run(self) -> None:
+        while not self._stop_evt.is_set():
+            try:
+                cmd = self._cmd_q.get(timeout=0.05)
+            except queue.Empty:
+                continue
+
+            if cmd.kind == "stop":
+                return
+
+            if cmd.kind == "sync_state":
+                state = (cmd.payload or {}).get("state")
+                if isinstance(state, dict):
+                    try:
+                        self._model.restore(state)
+                        self._solver = NurikabeSolver(self._model)
+                        self._emit_state("synced")
+                    except Exception as e:
+                        self._res_q.put(WorkerResult(kind="error", payload={"message": f"Restore failed: {e}"}))
+                continue
+
+            if cmd.kind == "step":
+                try:
+                    step_res = self._solver.step()
+                    extra = {
+                        "step_result": {
+                            "changed_cells": list(step_res.changed_cells),
+                            "message": step_res.message,
+                            "rule": step_res.rule,
+                        }
+                    }
+                    self._emit_state("stepped", extra=extra)
+                except Exception as e:
+                    self._res_q.put(WorkerResult(kind="error", payload={"message": f"Step failed: {e}"}))
+                continue
+
+            if cmd.kind == "reset":
+                try:
+                    s = (cmd.payload or {}).get("state")
+                    if isinstance(s, dict):
+                        self._model.restore(s)
+                        self._solver = NurikabeSolver(self._model)
+                        self._emit_state("reset_done")
+                    else:
+                        self._res_q.put(WorkerResult(kind="error", payload={"message": "Reset missing state."}))
+                except Exception as e:
+                    self._res_q.put(WorkerResult(kind="error", payload={"message": f"Reset failed: {e}"}))
+                continue
+
+            if cmd.kind == "load_grid":
+                try:
+                    grid = (cmd.payload or {}).get("grid")
+                    if isinstance(grid, list) and grid and isinstance(grid[0], list):
+                        self._model.load_grid([[int(v) for v in row] for row in grid])
+                        self._solver = NurikabeSolver(self._model)
+                        self._emit_state("loaded")
+                    else:
+                        self._res_q.put(WorkerResult(kind="error", payload={"message": "Load missing/invalid grid."}))
+                except Exception as e:
+                    self._res_q.put(WorkerResult(kind="error", payload={"message": f"Load failed: {e}"}))
+                continue
+
+
+# ----------------------------
+# App state
+# ----------------------------
+
+@dataclass
 class EditorState:
-    def __init__(self, rows: int = 10, cols: int = 10) -> None:
-        self.rows = rows
-        self.cols = cols
-        self.clues = [[0 for _ in range(cols)] for _ in range(rows)]
-        self.selected_cell: Optional[Tuple[int, int]] = None
-        self.message = ""
-        
-    def resize(self, r: int, c: int) -> None:
-        # Create new grid, copy old values where they fit
-        new_clues = [[0 for _ in range(c)] for _ in range(r)]
-        for i in range(min(self.rows, r)):
-            for j in range(min(self.cols, c)):
-                new_clues[i][j] = self.clues[i][j]
-        self.rows = r
-        self.cols = c
-        self.clues = new_clues
-        self.selected_cell = None
+    rows: int = 7
+    cols: int = 7
+    grid: Optional[List[List[int]]] = None
+    selected: Optional[Tuple[int, int]] = None
+    message: str = ""
+    puzzle_files: Optional[List[str]] = None
+    selected_file: Optional[str] = None
 
-    def from_model(self, model: NurikabeModel) -> None:
-        if model.rows > 0 and model.cols > 0:
-            self.rows = model.rows
-            self.cols = model.cols
-            self.clues = [row[:] for row in model.clues]
-        else:
-            self.rows = 10
-            self.cols = 10
-            self.clues = [[0 for _ in range(10)] for _ in range(10)]
-        self.selected_cell = None
-        self.message = ""
+
+@dataclass
+class MainState:
+    mode: int = MODE_MAIN
+    model: NurikabeModel = NurikabeModel()
+    solver: NurikabeSolver = NurikabeSolver(NurikabeModel())
+    debug_cell: Optional[Tuple[int, int]] = None
+    last_step_msg: str = ""
+
 
 # ----------------------------
 # Helpers
 # ----------------------------
 
-def save_to_file(filename: str, state: EditorState) -> str:
-    try:
-        with open(filename, 'w') as f:
-            for r in range(state.rows):
-                line = []
-                for c in range(state.cols):
-                    val = state.clues[r][c]
-                    if val == 0:
-                        line.append(".")
-                    else:
-                        line.append(str(val))
-                f.write(" ".join(line) + "\n")
-        return f"Saved to {filename}"
-    except Exception as e:
-        return f"Error saving: {e}"
+def clamp_int(v: int, lo: int, hi: int) -> int:
+    return max(lo, min(hi, v))
 
-def load_from_file(filename: str, state: EditorState) -> str:
-    if not os.path.exists(filename):
-        return f"File not found: {filename}"
-    try:
-        with open(filename, 'r') as f:
-            content = f.read()
-            
-        lines = [ln.strip() for ln in content.splitlines() if ln.strip()]
-        if not lines:
-            return "Empty file."
-            
-        grid = []
-        for ln in lines:
-            row = []
-            tokens = ln.replace(".", "0").split()
-            # If split didn't work (e.g. tight packing "..3.1"), handling that is complex here 
-            # without regex or parser logic from model. 
-            # Let's rely on model's parser logic logic by creating a temporary model?
-            # Or just implementing basic space-sep parsing which our save produces.
-            if len(tokens) == 0:
-                # Try char by char?
-                for ch in ln:
-                    if ch == '.' or ch == '0': row.append(0)
-                    elif ch.isdigit(): row.append(int(ch))
-            else:
-                for t in tokens:
-                    if t == '.' or t == '0': row.append(0)
-                    elif t.isdigit(): row.append(int(t))
-            grid.append(row)
-            
-        if not grid: return "No data found."
-        
-        # Verify rectangle
-        cols = len(grid[0])
-        rows = len(grid)
-        if any(len(r) != cols for r in grid):
-            return "Ragged rows in file."
-            
-        state.rows = rows
-        state.cols = cols
-        state.clues = grid
-        state.selected_cell = None
-        return f"Loaded {filename}"
-    except Exception as e:
-        return f"Error loading: {e}"
+
+def load_puzzle_files() -> List[str]:
+    files = []
+    for pat in ["puzzles/*.txt", "puzzles/*.puz", "puzzles/*.*"]:
+        files.extend(glob.glob(pat))
+    files = sorted(set(files))
+    return files
+
+
+def grid_default(rows: int, cols: int) -> List[List[int]]:
+    return [[0 for _ in range(cols)] for _ in range(rows)]
+
+
+def cycle_mark(model: NurikabeModel, r: int, c: int) -> None:
+    if model.is_clue(r, c):
+        return
+    mark = model.manual_mark[r][c]
+    if mark == UNKNOWN:
+        model.force_land(r, c)
+    elif mark == LAND:
+        model.force_black(r, c)
+    else:
+        model.manual_mark[r][c] = UNKNOWN
+        model.black_possible[r][c] = True
+        if model.owners[r][c] == 0:
+            model.owners[r][c] = model.get_potential_owners_mask(r, c)
+
+
+def format_debug_cell(model: NurikabeModel, r: int, c: int) -> str:
+    if not model.in_bounds(r, c):
+        return "Out of bounds."
+    if model.is_clue(r, c):
+        return f"Cell ({r},{c}) clue={model.clues[r][c]} island_id={model.island_by_pos.get((r,c), '-')}"
+    owners_bits = model.owners[r][c]
+    owners_ids = model.bitset_to_ids(owners_bits)
+    return (
+        f"Cell ({r},{c}) manual={model.manual_mark[r][c]} black_possible={model.black_possible[r][c]}\n"
+        f"owners_bits={owners_bits} owners_ids={owners_ids}\n"
+        f"is_black_certain={model.is_black_certain(r,c)} is_land_certain={model.is_land_certain(r,c)}"
+    )
+
+
+def html_escape(s: str) -> str:
+    return (
+        s.replace("&", "&amp;")
+         .replace("<", "&lt;")
+         .replace(">", "&gt;")
+         .replace('"', "&quot;")
+         .replace("'", "&#39;")
+    )
+
 
 # ----------------------------
-# Rendering Helpers
+# Rendering (grid only)
 # ----------------------------
 
-def draw_main_grid(
+def draw_grid(
     screen: pygame.Surface,
+    model: NurikabeModel,
+    camera: Camera,
+    base_cell_size: int,
     font: pygame.font.Font,
     small_font: pygame.font.Font,
-    model: NurikabeModel,
-    top_left: Tuple[int, int],
-    cell_size: int,
-    highlight: Set[Tuple[int, int]],
+    highlight: Optional[Tuple[int, int]] = None
 ) -> None:
-    ox, oy = top_left
-    for r in range(model.rows):
-        for c in range(model.cols):
-            x = ox + c * cell_size
-            y = oy + r * cell_size
-            rect = pygame.Rect(x, y, cell_size, cell_size)
+    rows, cols = model.rows, model.cols
+    if rows == 0 or cols == 0:
+        return
 
-            # base color
+    cell_size = base_cell_size * camera.zoom
+    if cell_size < 2:
+        return
+
+    sw, sh = screen.get_size()
+    left = -cell_size
+    top = -cell_size
+    right = sw + cell_size
+    bottom = sh + cell_size
+
+    wl, wt = camera.screen_to_world(left, top)
+    wr, wb = camera.screen_to_world(right, bottom)
+    c0 = clamp_int(int(math.floor(wl / base_cell_size)), 0, cols - 1)
+    r0 = clamp_int(int(math.floor(wt / base_cell_size)), 0, rows - 1)
+    c1 = clamp_int(int(math.ceil(wr / base_cell_size)), 0, cols - 1)
+    r1 = clamp_int(int(math.ceil(wb / base_cell_size)), 0, rows - 1)
+
+    for r in range(r0, r1 + 1):
+        for c in range(c0, c1 + 1):
+            wx = c * base_cell_size
+            wy = r * base_cell_size
+            sx, sy = camera.world_to_screen(wx, wy)
+            rect = pygame.Rect(int(sx), int(sy), int(cell_size), int(cell_size))
+
             if model.is_clue(r, c):
-                color = (235, 235, 255)
+                pygame.draw.rect(screen, (245, 245, 245), rect)
             else:
-                if model.is_black_certain(r, c) or model.manual_mark[r][c] == BLACK:
-                    color = (20, 20, 20)
-                elif not model.black_possible[r][c] or model.manual_mark[r][c] == LAND:
-                    color = (255, 255, 255)
+                mark = model.manual_mark[r][c]
+                if mark == BLACK:
+                    pygame.draw.rect(screen, (40, 40, 40), rect)
+                elif mark == LAND:
+                    pygame.draw.rect(screen, (230, 230, 230), rect)
                 else:
-                    color = (220, 220, 220)
+                    pygame.draw.rect(screen, (200, 200, 200), rect)
 
-            pygame.draw.rect(screen, color, rect)
+            pygame.draw.rect(screen, (70, 70, 70), rect, 1)
 
-            # highlight
-            if (r, c) in highlight:
-                pygame.draw.rect(screen, (255, 200, 0), rect, 4)
-            else:
-                pygame.draw.rect(screen, (90, 90, 90), rect, 1)
+            if highlight is not None and (r, c) == highlight:
+                pygame.draw.rect(screen, (20, 120, 220), rect, 3)
 
-            # clue text
             if model.is_clue(r, c):
-                val = model.clues[r][c]
-                surf = font.render(str(val), True, (0, 0, 0))
-                screen.blit(surf, (rect.x + (cell_size - surf.get_width()) // 2,
-                                   rect.y + (cell_size - surf.get_height()) // 2))
-                iid = model.island_by_pos[(r, c)]
-                id_surf = small_font.render(str(iid), True, (0, 0, 200))
-                screen.blit(id_surf, (rect.x + 3, rect.y + 2))
+                txt = str(model.clues[r][c])
+                surf = font.render(txt, True, (0, 0, 0))
+                screen.blit(
+                    surf,
+                    (rect.x + (rect.width - surf.get_width()) // 2, rect.y + (rect.height - surf.get_height()) // 2)
+                )
             else:
-                if not model.black_possible[r][c] and model.owners[r][c] != 0:
-                    single = model.owners_singleton(r, c)
-                    if single is not None:
-                        surf = small_font.render(str(single), True, (0, 0, 120))
-                        screen.blit(surf, (x + 3, y + 3))
+                if camera.zoom >= 1.2 and model.manual_mark[r][c] == UNKNOWN:
+                    bits = model.owners[r][c]
+                    cnt = bits.bit_count() if hasattr(int, "bit_count") else bin(bits).count("1")
+                    if cnt > 0:
+                        surf = small_font.render(str(cnt), True, (90, 90, 90))
+                        screen.blit(surf, (rect.x + 3, rect.y + 2))
 
-def draw_editor_grid(
-    screen: pygame.Surface,
-    font: pygame.font.Font,
-    state: EditorState,
-    top_left: Tuple[int, int],
-    cell_size: int
-) -> None:
-    ox, oy = top_left
-    for r in range(state.rows):
-        for c in range(state.cols):
-            x = ox + c * cell_size
-            y = oy + r * cell_size
-            rect = pygame.Rect(x, y, cell_size, cell_size)
-            
-            is_selected = (state.selected_cell == (r, c))
-            
-            bg_color = (255, 255, 220) if is_selected else (255, 255, 255)
-            pygame.draw.rect(screen, bg_color, rect)
-            
-            if is_selected:
-                pygame.draw.rect(screen, (0, 0, 255), rect, 3)
-            else:
-                pygame.draw.rect(screen, (150, 150, 150), rect, 1)
-            
-            val = state.clues[r][c]
-            if val > 0:
-                surf = font.render(str(val), True, (0, 0, 0))
-                screen.blit(surf, (rect.x + (cell_size - surf.get_width()) // 2,
-                                   rect.y + (cell_size - surf.get_height()) // 2))
+
+def pick_cell_from_mouse(model: NurikabeModel, camera: Camera, base_cell_size: int, mouse_pos: Tuple[int, int]) -> Optional[Tuple[int, int]]:
+    if model.rows == 0 or model.cols == 0:
+        return None
+    mx, my = mouse_pos
+    wx, wy = camera.screen_to_world(mx, my)
+    c = int(wx // base_cell_size)
+    r = int(wy // base_cell_size)
+    if 0 <= r < model.rows and 0 <= c < model.cols:
+        return (r, c)
+    return None
+
 
 # ----------------------------
-# Main app
+# Main
 # ----------------------------
 
 def main() -> None:
     pygame.init()
     pygame.display.set_caption("Nurikabe Assistant")
 
-    W, H = 1200, 800
-    screen = pygame.display.set_mode((W, H))
+    screen = pygame.display.set_mode((1200, 800), pygame.RESIZABLE)
     clock = pygame.time.Clock()
 
-    font = pygame.font.SysFont("consolas", 20)
-    small_font = pygame.font.SysFont("consolas", 14)
-    big_font = pygame.font.SysFont("consolas", 24)
+    font = pygame.font.SysFont("arial", 20)
+    small_font = pygame.font.SysFont("arial", 14)
 
-    # Application state
-    mode = MODE_MAIN
-    
-    # Model
-    model = NurikabeModel()
-    # Initialize with default small puzzle
-    
+    ui_manager = pygame_gui.UIManager(screen.get_size())
 
-    model.parse_puzzle_text("""4 . . . . . . . . .
-. . . . . . . . . .
-. . 13 . . . . 4 . .
-. . . . . . . . . .
-2 . . . 1 . . . 3 .
-. 3 . . . 1 . . . .
-. . . . . . 1 . . .
-. . . . . . . . . .
-. 2 . . 3 . . . . 2
-6 . 2 . . 7 . . . .
-. . . . 7 . . . . .
-. . . . . . . . . .
-. . 2 . . . . . . .
-. . . . . . . . . .
-""") 
-    solver = NurikabeSolver(model)
-    
-    # Editor State
-    editor_state = EditorState(10, 10)
-    
-    # UI Elements (Main)
-    btn_edit_grid = Button(pygame.Rect(20, 20, 135, 40), "Setup Grid")
-    btn_step = Button(pygame.Rect(160, 20, 70, 40), "Step")
-    btn_step10 = Button(pygame.Rect(235, 20, 95, 40), "10Steps")
-    btn_reset = Button(pygame.Rect(340, 20, 170, 40), "Reset Domains")
-    
-    # Debug Button
-    btn_debug = Button(pygame.Rect(20, 700, 250, 40), "Test Rule G7b (0/0)")
-    debug_view_cells: Set[Tuple[int, int]] = set()
-    debug_island_index: int = -1
+    controls_win = pygame_gui.elements.UIWindow(
+        pygame.Rect(20, 20, 260, 320),
+        ui_manager,
+        window_display_title="Controls",
+        resizable=True
+    )
+    log_win = pygame_gui.elements.UIWindow(
+        pygame.Rect(20, 360, 520, 360),
+        ui_manager,
+        window_display_title="Log",
+        resizable=True
+    )
+    editor_win = pygame_gui.elements.UIWindow(
+        pygame.Rect(300, 20, 340, 340),
+        ui_manager,
+        window_display_title="Editor",
+        visible=False,
+        resizable=True
+    )
 
-    msg_rect = pygame.Rect(20, 80, 470, 600)
-    
-    # UI Elements (Editor)
-    lbl_rows = font.render("Rows:", True, (0,0,0))
-    inp_rows = NumberInput(pygame.Rect(80, 20, 50, 30), 10)
-    
-    lbl_cols = font.render("Cols:", True, (0,0,0))
-    inp_cols = NumberInput(pygame.Rect(200, 20, 50, 30), 10)
-    
-    btn_editor_load = Button(pygame.Rect(300, 15, 180, 40), "Load to Solver")
-    btn_editor_exit = Button(pygame.Rect(490, 15, 100, 40), "Exit")
-    nu_files: List[str] = []
+    controls_win.set_minimum_dimensions((260, 320))
+    log_win.set_minimum_dimensions((520, 260))
+    editor_win.set_minimum_dimensions((340, 300))
 
-    # File I/O
-    lbl_file = font.render("File:", True, (0,0,0))
-    inp_filename = TextInput(pygame.Rect(80, 70, 200, 30), "grid.nu.txt")
-    btn_save = Button(pygame.Rect(300, 70, 80, 30), "Save")
-    btn_load_file = Button(pygame.Rect(390, 70, 80, 30), "Load")
-    
-    grid_origin = (510, 60)
-    cell_size = 32
+    btn_edit = pygame_gui.elements.UIButton(pygame.Rect(10, 10, 240, 36), "Edit Grid", ui_manager, container=controls_win)
+    btn_step = pygame_gui.elements.UIButton(pygame.Rect(10, 56, 240, 36), "Step", ui_manager, container=controls_win)
+    btn_10steps = pygame_gui.elements.UIButton(pygame.Rect(10, 102, 240, 36), "10Steps", ui_manager, container=controls_win)
+    btn_reset = pygame_gui.elements.UIButton(pygame.Rect(10, 148, 240, 36), "Reset", ui_manager, container=controls_win)
+
+    lbl_hint = pygame_gui.elements.UILabel(
+        pygame.Rect(10, 200, 240, 60),
+        "Pan: drag with LMB\nZoom: mouse wheel\nClick: release without drag",
+        ui_manager,
+        container=controls_win
+    )
+
+    log_box = pygame_gui.elements.UITextBox(
+        html_text="",
+        relative_rect=pygame.Rect(10, 10, -20, -60),
+        manager=ui_manager,
+        container=log_win,
+        anchors={"left": "left", "right": "right", "top": "top", "bottom": "bottom"}
+    )
+    btn_clear_log = pygame_gui.elements.UIButton(
+        pygame.Rect(10, -40, 120, 30),
+        "Clear",
+        ui_manager,
+        container=log_win,
+        anchors={"left": "left", "bottom": "bottom"}
+    )
+
+    lbl_rows = pygame_gui.elements.UILabel(pygame.Rect(10, 10, 60, 26), "Rows:", ui_manager, container=editor_win)
+    inp_rows = pygame_gui.elements.UITextEntryLine(pygame.Rect(70, 10, 80, 26), ui_manager, container=editor_win)
+    inp_rows.set_text("7")
+    lbl_cols = pygame_gui.elements.UILabel(pygame.Rect(160, 10, 60, 26), "Cols:", ui_manager, container=editor_win)
+    inp_cols = pygame_gui.elements.UITextEntryLine(pygame.Rect(220, 10, 80, 26), ui_manager, container=editor_win)
+    inp_cols.set_text("7")
+
+    btn_new = pygame_gui.elements.UIButton(pygame.Rect(10, 46, 140, 32), "New Grid", ui_manager, container=editor_win)
+    btn_load_to_solver = pygame_gui.elements.UIButton(pygame.Rect(160, 46, 140, 32), "Load To Solver", ui_manager, container=editor_win)
+
+    lbl_files = pygame_gui.elements.UILabel(pygame.Rect(10, 86, 290, 24), "Puzzle files (click to load):", ui_manager, container=editor_win)
+    files_list = pygame_gui.elements.UISelectionList(
+        relative_rect=pygame.Rect(10, 112, -20, -96),
+        item_list=[],
+        manager=ui_manager,
+        container=editor_win,
+        anchors={"left": "left", "right": "right", "top": "top", "bottom": "bottom"}
+    )
+    btn_close_editor = pygame_gui.elements.UIButton(
+        pygame.Rect(10, -42, -20, 32),
+        "Close Editor",
+        ui_manager,
+        container=editor_win,
+        anchors={"left": "left", "right": "right", "bottom": "bottom"}
+    )
+
+    state = MainState()
+    state.model = NurikabeModel()
+    state.solver = NurikabeSolver(state.model)
+
+    editor = EditorState()
+    editor.grid = grid_default(editor.rows, editor.cols)
+    editor.puzzle_files = load_puzzle_files()
+    files_list.set_item_list(editor.puzzle_files)
+
+    camera = Camera()
+    base_cell_size = 48
+
+    def center_camera_on_grid() -> None:
+        if state.model.rows == 0 or state.model.cols == 0:
+            return
+        sw, sh = screen.get_size()
+        grid_w = state.model.cols * base_cell_size
+        grid_h = state.model.rows * base_cell_size
+        camera.zoom = 1.0
+        camera.offset_x = (sw - grid_w) * 0.5
+        camera.offset_y = (sh - grid_h) * 0.5
+
+    log_lines: List[str] = []
+
+    def log_append(msg: str) -> None:
+        rolling_log_lines = 8
+        if not msg:
+            return
+        log_lines.append(msg)
+        if len(log_lines) > rolling_log_lines:
+            del log_lines[0:len(log_lines) - rolling_log_lines]
+        html = "<br>".join(html_escape(ln) for ln in log_lines)
+        log_box.set_text(html)
+
+    def log_clear() -> None:
+        log_lines.clear()
+        log_box.set_text("")
+
+    worker = SolverWorker()
+    worker.start()
+
+    undo_stack: List[Dict[str, object]] = []
+    max_undo = 200
+
+    def push_undo() -> None:
+        undo_stack.append(state.model.snapshot())
+        if len(undo_stack) > max_undo:
+            del undo_stack[:20]
+
+    def sync_worker() -> None:
+        worker.send(WorkerCommand(kind="sync_state", payload={"state": state.model.snapshot()}))
+        log_append("Synced UI state to worker.")
+
+    def apply_worker_state(snap: Dict[str, object]) -> None:
+        try:
+            state.model.restore(snap)
+        except Exception as e:
+            log_append(f"UI restore failed: {e}")
+
+    def is_over_ui(pos: Tuple[int, int]) -> bool:
+        for w in (controls_win, log_win, editor_win):
+            if w.visible and w.get_abs_rect().collidepoint(pos):
+                return True
+        return False
+
+    if editor.puzzle_files:
+        first = editor.puzzle_files[0]
+        try:
+            with open(first, "r", encoding="utf-8") as f:
+                txt = f.read()
+            tmp = NurikabeModel()
+            ok, msg = tmp.parse_puzzle_text(txt)
+            if ok:
+                editor.grid = [row[:] for row in tmp.clues]
+                editor.rows = tmp.rows
+                editor.cols = tmp.cols
+                inp_rows.set_text(str(editor.rows))
+                inp_cols.set_text(str(editor.cols))
+                log_append(f"Auto-loaded: {first}")
+            else:
+                log_append(f"Auto-load failed: {msg}")
+        except Exception as e:
+            log_append(f"Auto-load failed: {e}")
+
+    state.model.load_grid(editor.grid)
+    state.solver = NurikabeSolver(state.model)
+    center_camera_on_grid()
+    sync_worker()
+    log_append("Ready.")
+
+    panning = False
+    pan_last: Optional[Tuple[int, int]] = None
+    lmb_down_pos: Optional[Tuple[int, int]] = None
+    lmb_dragging = False
+    lmb_down_over_ui = False
+    lmb_down_mode = MODE_MAIN
 
     running = True
     while running:
-        mouse_pos = pygame.mouse.get_pos()
-        events = pygame.event.get()
-        
-        for event in events:
+        time_delta = clock.tick(60) / 1000.0
+
+        while True:
+            res = worker.try_recv()
+            if res is None:
+                break
+            if res.kind == "error":
+                log_append(res.payload.get("message", "Worker error."))
+                continue
+            if "state" in res.payload:
+                snap = res.payload["state"]
+                if isinstance(snap, dict):
+                    apply_worker_state(snap)
+            step = res.payload.get("step_result")
+            if isinstance(step, dict):
+                msg = step.get("message", "")
+                rule = step.get("rule", "")
+                if msg or rule:
+                    log_append(f"[{rule}] {msg}".strip())
+
+        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        
-        screen.fill((240, 240, 240))
-        
-        if mode == MODE_MAIN:
-            # Update debug button text
-            total_islands = len(model.islands)
-            btn_debug.text = f"Test Rule G7b ({debug_island_index + 1}/{total_islands})"
+                break
 
-            # Event handling for MAIN
-            for event in events:
-                if btn_edit_grid.clicked(event):
-                    mode = MODE_EDITOR
-                    editor_state.from_model(model)
-                    inp_rows.text = str(editor_state.rows)
-                    inp_rows.val = editor_state.rows
-                    inp_cols.text = str(editor_state.cols)
-                    inp_cols.val = editor_state.cols
-                    editor_state.message = ""
-                    debug_view_cells = set()
-                    nu_files = glob.glob("*.nu.txt")
-                    
-                if btn_step.clicked(event):
-                    solver.step()
-                    debug_view_cells = set()
+            if event.type == pygame.VIDEORESIZE:
+                screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+                ui_manager.set_window_resolution(event.size)
 
-                if btn_step10.clicked(event):
-                    for i in range(0,10):
-                        solver.step()
-                        debug_view_cells = set()
-                
-                if btn_reset.clicked(event):
-                    model.reset_domains_from_manual()
-                    model.last_step = StepResult([], "Domains rebuilt.", "Reset")
-                    debug_view_cells = set()
-                
-                if btn_debug.clicked(event) and total_islands > 0:
-                    debug_island_index = (debug_island_index + 1) % total_islands
-                    isl = model.islands[debug_island_index]
-                    
-                    # Analyze
-                    result = solver.analyze_island_extensions(isl)
-                    if result is None:
-                        union_set, common_set = set(), set()
-                        msg_suffix = " (Too complex)"
+            ui_manager.process_events(event)
+
+            if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == btn_clear_log:
+                    log_clear()
+
+                elif event.ui_element == btn_edit:
+                    editor_win.show()
+                    state.mode = MODE_EDITOR
+                    log_append("Editor opened.")
+
+                elif event.ui_element == btn_close_editor:
+                    editor_win.hide()
+                    state.mode = MODE_MAIN
+                    log_append("Editor closed.")
+
+                elif event.ui_element == btn_new:
+                    try:
+                        r = int(inp_rows.get_text().strip())
+                        c = int(inp_cols.get_text().strip())
+                        r = clamp_int(r, 1, 60)
+                        c = clamp_int(c, 1, 60)
+                        editor.rows, editor.cols = r, c
+                        editor.grid = grid_default(r, c)
+                        editor.selected = None
+                        log_append(f"New grid {r}x{c}.")
+                    except ValueError:
+                        log_append("Invalid rows/cols.")
+
+                elif event.ui_element == btn_load_to_solver:
+                    if editor.grid is not None:
+                        push_undo()
+                        state.model.load_grid(editor.grid)
+                        state.solver = NurikabeSolver(state.model)
+                        center_camera_on_grid()
+                        sync_worker()
+                        log_append("Grid loaded into solver.")
                     else:
-                        union_set, common_set = result
-                        msg_suffix = ""
-                        
-                    debug_view_cells = union_set
-                    
-                    # Also include the intersection in a specialized way? 
-                    # For now just highlighting the union is what was asked ("every single possible island extension").
-                    # But finding the "bottleneck" (common_set) is the rule's goal. 
-                    # Let's highlight union. Common ones will naturally be in union.
-                    
-                    msg = f"Island {isl.island_id} (size {isl.clue}): {len(union_set)} valid potential cells.{msg_suffix} "
-                    if common_set:
-                        msg += f"Found {len(common_set)} mandatory cells (BOTTLENECK)!"
-                    else:
-                        msg += "No mandatory bottleneck found."
-                        
-                    model.last_step = StepResult(list(common_set) if common_set else [], msg, "Debug View")
+                        log_append("No editor grid.")
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    # check grid clicks
-                    gx, gy = grid_origin
+                elif event.ui_element == btn_step:
+                    push_undo()
+                    worker.send(WorkerCommand(kind="step"))
+
+                elif event.ui_element == btn_10steps:
+                    push_undo()
+                    for _ in range(10):
+                        worker.send(WorkerCommand(kind="step"))
+
+                elif event.ui_element == btn_reset:
+                    if undo_stack:
+                        snap0 = undo_stack[0]
+                        undo_stack.clear()
+                        apply_worker_state(snap0)
+                        state.solver = NurikabeSolver(state.model)
+                        sync_worker()
+                        log_append("Reset to first undo snapshot.")
+                    else:
+                        log_append("Nothing to reset (undo empty).")
+
+            if event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
+                if event.ui_element == files_list:
+                    sel = event.text
+                    if isinstance(sel, str) and os.path.isfile(sel):
+                        try:
+                            with open(sel, "r", encoding="utf-8") as f:
+                                txt = f.read()
+                            tmp = NurikabeModel()
+                            ok, msg = tmp.parse_puzzle_text(txt)
+                            if ok:
+                                editor.grid = [row[:] for row in tmp.clues]
+                                editor.rows = tmp.rows
+                                editor.cols = tmp.cols
+                                inp_rows.set_text(str(editor.rows))
+                                inp_cols.set_text(str(editor.cols))
+                                log_append(f"Loaded file: {sel}")
+                            else:
+                                log_append(f"Load failed: {msg}")
+                        except Exception as e:
+                            log_append(f"File read failed: {e}")
+
+            if event.type == pygame.MOUSEWHEEL:
+                if not is_over_ui(pygame.mouse.get_pos()):
+                    if event.y > 0:
+                        camera.zoom_at(pygame.mouse.get_pos(), 1.1, 0.2, 6.0)
+                    elif event.y < 0:
+                        camera.zoom_at(pygame.mouse.get_pos(), 1.0 / 1.1, 0.2, 6.0)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 2:
+                    if not is_over_ui(event.pos):
+                        panning = True
+                        pan_last = event.pos
+
+                if event.button == 1:
+                    lmb_down_pos = event.pos
+                    lmb_dragging = False
+                    lmb_down_over_ui = is_over_ui(event.pos)
+                    lmb_down_mode = state.mode
+                    if not lmb_down_over_ui:
+                        pan_last = event.pos
+                        panning = False
+
+                if event.button == 3:
+                    if not is_over_ui(event.pos):
+                        cell = pick_cell_from_mouse(state.model, camera, base_cell_size, event.pos)
+                        if cell is not None:
+                            r, c = cell
+                            log_append(format_debug_cell(state.model, r, c))
+
+            if event.type == pygame.MOUSEMOTION:
+                if panning and pan_last is not None:
                     mx, my = event.pos
-                    if mx >= gx and my >= gy and model.rows > 0:
-                        c = (mx - gx) // cell_size
-                        r = (my - gy) // cell_size
-                        if 0 <= r < model.rows and 0 <= c < model.cols:
-                            if event.button == 1:
-                                # Cycle: Unknown -> Land -> Black -> Unknown
-                                model.cycle_manual_mark(r, c, forward=False)
-                            elif event.button == 3:
-                                # Debug info: show potential owners and black possibility
-                                owners = model.bitset_to_ids(model.owners[r][c])
-                                msg = f"Cell ({r},{c}): Owners={owners}, BlackPossible={model.black_possible[r][c]}"
-                                model.last_step = StepResult([], msg, "Debug Info")
+                    lx, ly = pan_last
+                    dx, dy = mx - lx, my - ly
+                    camera.offset_x += dx
+                    camera.offset_y += dy
+                    pan_last = event.pos
 
-            # Draw MAIN
-            btn_edit_grid.draw(screen, font, mouse_pos)
-            btn_step.draw(screen, font, mouse_pos)
-            btn_step10.draw(screen, font, mouse_pos)
-            btn_reset.draw(screen, font, mouse_pos)
-            btn_debug.draw(screen, font, mouse_pos)
-            
-            # Message box
-            pygame.draw.rect(screen, (255, 255, 255), msg_rect, border_radius=8)
-            pygame.draw.rect(screen, (100, 100, 100), msg_rect, 2, border_radius=8)
-            screen.blit(big_font.render("Log / Info", True, (0,0,0)), (msg_rect.x+10, msg_rect.y+10))
-            
-            if model.last_step:
-                rule_txt = font.render(f"Rule: {model.last_step.rule}", True, (0,0,150))
-                screen.blit(rule_txt, (msg_rect.x+10, msg_rect.y+50))
-                
-                # word wrap msg
-                y = msg_rect.y + 80
-                words = model.last_step.message.split(' ')
-                cur_line = ""
-                for w in words:
-                    test_line = cur_line + " " + w if cur_line else w
-                    if font.size(test_line)[0] < msg_rect.width - 20:
-                        cur_line = test_line
-                    else:
-                        screen.blit(font.render(cur_line, True, (0,0,0)), (msg_rect.x+10, y))
-                        y += 25
-                        cur_line = w
-                if cur_line:
-                    screen.blit(font.render(cur_line, True, (0,0,0)), (msg_rect.x+10, y))
-
-            # Draw Grid
-            highlight_cells = (set(model.last_step.changed_cells) if model.last_step else set()) | debug_view_cells
-            draw_main_grid(screen, font, small_font, model, grid_origin, cell_size, highlight_cells)
-
-        elif mode == MODE_EDITOR:
-            # Event handling for EDITOR
-            for event in events:
-                r_changed = inp_rows.handle_event(event)
-                c_changed = inp_cols.handle_event(event)
-                inp_filename.handle_event(event)
-                
-                if r_changed or c_changed:
-                    # Enforce limits 1-50
-                    r = max(1, min(50, inp_rows.val))
-                    c = max(1, min(50, inp_cols.val))
-                    if r != editor_state.rows or c != editor_state.cols:
-                        editor_state.resize(r, c)
-                
-                if btn_editor_load.clicked(event):
-                    model.load_grid(editor_state.clues)
-                    model.last_step = StepResult([], "Grid loaded from editor.", "Load")
-                    mode = MODE_MAIN
-                    solver = NurikabeSolver(model) # Re-init solver
-
-                if btn_editor_exit.clicked(event):
-                    mode = MODE_MAIN
-
-                if btn_save.clicked(event):
-                    msg = save_to_file(inp_filename.text, editor_state)
-                    editor_state.message = msg
-                    nu_files = glob.glob("*.nu.txt") # Refresh list
-
-                if btn_load_file.clicked(event):
-                    msg = load_from_file(inp_filename.text, editor_state)
-                    editor_state.message = msg
-                    if "Loaded" in msg:
-                        # Update inputs
-                        inp_rows.text = str(editor_state.rows)
-                        inp_rows.val = editor_state.rows
-                        inp_cols.text = str(editor_state.cols)
-                        inp_cols.val = editor_state.cols
-                
-                # Check clicks on nu_files list
-                fy = 200
-                for fname in nu_files:
-                    file_rect = pygame.Rect(20, fy, 250, 25)
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and file_rect.collidepoint(event.pos):
-                        inp_filename.text = fname
-                        msg = load_from_file(fname, editor_state)
-                        editor_state.message = msg
-                        if "Loaded" in msg:
-                            inp_rows.text = str(editor_state.rows)
-                            inp_rows.val = editor_state.rows
-                            inp_cols.text = str(editor_state.cols)
-                            inp_cols.val = editor_state.cols
-                    fy += 30
-
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    gx, gy = grid_origin
+                if lmb_down_pos is not None and not lmb_down_over_ui:
                     mx, my = event.pos
-                    # Check grid click
-                    if mx >= gx and my >= gy:
-                        c = (mx - gx) // cell_size
-                        r = (my - gy) // cell_size
-                        if 0 <= r < editor_state.rows and 0 <= c < editor_state.cols:
-                            editor_state.selected_cell = (r, c)
-                        else:
-                            editor_state.selected_cell = None
-                    # If clicked outside input boxes and grid, deselect
-                    elif not inp_rows.rect.collidepoint(event.pos) and not inp_cols.rect.collidepoint(event.pos) and not inp_filename.rect.collidepoint(event.pos):
-                         editor_state.selected_cell = None
-                         
-                if event.type == pygame.KEYDOWN and editor_state.selected_cell and not inp_filename.active:
-                    r, c = editor_state.selected_cell
-                    if event.unicode.isdigit():
-                        # Append digit? Or replace? Let's say we append unless 0. 
-                        # To keep it simple: if 0, clear. If digit, append if < 99.
-                        current_val = editor_state.clues[r][c]
-                        new_digit = int(event.unicode)
-                        if current_val == 0:
-                            editor_state.clues[r][c] = new_digit
-                        else:
-                            combined = int(str(current_val) + str(new_digit))
-                            if combined <= 999: # limit clue size
-                                editor_state.clues[r][c] = combined
-                    elif event.key == pygame.K_BACKSPACE:
-                        current_val = editor_state.clues[r][c]
-                        s = str(current_val)
-                        if len(s) > 1:
-                            editor_state.clues[r][c] = int(s[:-1])
-                        else:
-                            editor_state.clues[r][c] = 0
-                    elif event.key == pygame.K_DELETE or event.key == pygame.K_0:
-                        editor_state.clues[r][c] = 0
+                    sx, sy = lmb_down_pos
+                    if not lmb_dragging:
+                        if abs(mx - sx) >= DRAG_THRESHOLD_PX or abs(my - sy) >= DRAG_THRESHOLD_PX:
+                            lmb_dragging = True
+                            panning = True
+                            pan_last = event.pos
+                    else:
+                        if panning and pan_last is not None:
+                            lx, ly = pan_last
+                            dx, dy = mx - lx, my - ly
+                            camera.offset_x += dx
+                            camera.offset_y += dy
+                            pan_last = event.pos
 
-            # Draw EDITOR
-            screen.blit(lbl_rows, (20, 25))
-            inp_rows.draw(screen, font)
-            
-            screen.blit(lbl_cols, (140, 25))
-            inp_cols.draw(screen, font)
-            
-            btn_editor_load.draw(screen, font, mouse_pos)
-            btn_editor_exit.draw(screen, font, mouse_pos)
-            
-            screen.blit(lbl_file, (20, 75))
-            inp_filename.draw(screen, font)
-            btn_save.draw(screen, font, mouse_pos)
-            btn_load_file.draw(screen, font, mouse_pos)
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 2:
+                    panning = False
+                    pan_last = None
 
-            # Draw file list explorer
-            screen.blit(font.render("Available Puzzles (*.nu.txt):", True, (0,0,150)), (20, 175))
-            fy = 200
-            for fname in nu_files:
-                file_rect = pygame.Rect(20, fy, 250, 25)
-                # Hover effect
-                f_hover = file_rect.collidepoint(mouse_pos)
-                f_color = (0, 0, 255) if f_hover else (50, 50, 50)
-                if f_hover:
-                    pygame.draw.rect(screen, (220, 220, 255), file_rect)
-                
-                f_surf = small_font.render(fname, True, f_color)
-                screen.blit(f_surf, (file_rect.x + 5, file_rect.y + 5))
-                fy += 30
+                if event.button == 1:
+                    if lmb_down_pos is not None and not lmb_down_over_ui:
+                        if not lmb_dragging:
+                            if lmb_down_mode == MODE_MAIN:
+                                cell = pick_cell_from_mouse(state.model, camera, base_cell_size, event.pos)
+                                if cell is not None:
+                                    r, c = cell
+                                    push_undo()
+                                    cycle_mark(state.model, r, c)
+                                    sync_worker()
+                            else:
+                                cell = pick_cell_from_mouse(state.model, camera, base_cell_size, event.pos)
+                                if cell is not None and editor.grid is not None:
+                                    editor.selected = cell
 
-            if editor_state.message:
-                msg_surf = font.render(editor_state.message, True, (200, 0, 0))
-                screen.blit(msg_surf, (20, 110))
-            
-            info_txt = font.render("Editor Mode: Click cell to type number. \n 0 or Backspace to clear.", True, (50, 50, 50))
-            screen.blit(info_txt, (20, 150))
-            
-            draw_editor_grid(screen, font, editor_state, grid_origin, cell_size)
+                    lmb_down_pos = None
+                    lmb_dragging = False
+                    lmb_down_over_ui = False
+                    panning = False
+                    pan_last = None
+
+            if event.type == pygame.KEYDOWN and state.mode == MODE_EDITOR:
+                if editor.selected is not None and editor.grid is not None:
+                    r, c = editor.selected
+                    if 0 <= r < editor.rows and 0 <= c < editor.cols:
+                        if event.key in (pygame.K_BACKSPACE, pygame.K_DELETE, pygame.K_0):
+                            editor.grid[r][c] = 0
+                        else:
+                            ch = event.unicode
+                            if ch.isdigit():
+                                cur = editor.grid[r][c]
+                                d = int(ch)
+                                nxt = cur * 10 + d
+                                nxt = clamp_int(nxt, 0, 999)
+                                editor.grid[r][c] = nxt
+
+        ui_manager.update(time_delta)
+
+        screen.fill((30, 30, 30))
+
+        highlight_cell = None
+        if state.mode == MODE_EDITOR and editor.selected is not None:
+            highlight_cell = editor.selected
+
+        draw_grid(screen, state.model, camera, base_cell_size, font, small_font, highlight=highlight_cell)
+
+        ui_manager.draw_ui(screen)
+
+        if state.mode == MODE_EDITOR:
+            help_surf = small_font.render("Editor: click a cell then type digits; Backspace/0 clears.", True, (220, 220, 220))
+            screen.blit(help_surf, (screen.get_width() - help_surf.get_width() - 12, 12))
 
         pygame.display.flip()
-        clock.tick(60)
 
+    worker.stop()
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
