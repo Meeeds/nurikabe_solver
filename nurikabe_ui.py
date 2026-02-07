@@ -664,6 +664,7 @@ def main() -> None:
 
                 elif event.ui_element == btn_edit:
                     editor_win.show()
+                    editor_win.close_window_button.hide()
                     state.mode = MODE_EDITOR
                     update_selected_cell_info(editor, lbl_selected_cell_info)
                     log_append("Editor opened.")
