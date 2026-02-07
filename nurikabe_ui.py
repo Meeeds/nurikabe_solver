@@ -268,6 +268,17 @@ def html_escape(s: str) -> str:
          .replace("'", "&#39;")
     )
 
+def update_selected_cell_info(editor: EditorState, lbl_selected_cell_info: pygame_gui.elements.UILabel) -> None:
+    if editor.selected is not None and editor.grid is not None:
+        r, c = editor.selected
+        if 0 <= r < editor.rows and 0 <= c < editor.cols:
+            value = editor.grid[r][c]
+            lbl_selected_cell_info.set_text(f"Selected: ({r},{c}) Value: {value}")
+        else:
+            lbl_selected_cell_info.set_text("Selected: Invalid cell")
+    else:
+        lbl_selected_cell_info.set_text("Selected: None")
+
 
 # ----------------------------
 # Rendering (grid only)
@@ -436,12 +447,20 @@ def main() -> None:
     inp_cols = pygame_gui.elements.UITextEntryLine(pygame.Rect(220, 10, 80, 26), ui_manager, container=editor_win)
     inp_cols.set_text("7")
 
-    btn_new = pygame_gui.elements.UIButton(pygame.Rect(10, 46, 140, 32), "New Grid", ui_manager, container=editor_win)
-    btn_load_to_solver = pygame_gui.elements.UIButton(pygame.Rect(160, 46, 140, 32), "Load To Solver", ui_manager, container=editor_win)
+    btn_new = pygame_gui.elements.UIButton(pygame.Rect(10, 46, 100, 32), "New Grid", ui_manager, container=editor_win)
+    btn_clear_clues = pygame_gui.elements.UIButton(pygame.Rect(115, 46, 100, 32), "Clear Clues", ui_manager, container=editor_win)
+    btn_load_to_solver = pygame_gui.elements.UIButton(pygame.Rect(220, 46, 100, 32), "Load To Solver", ui_manager, container=editor_win)
 
-    lbl_files = pygame_gui.elements.UILabel(pygame.Rect(10, 86, 290, 24), "Puzzle files (click to load):", ui_manager, container=editor_win)
+    lbl_selected_cell_info = pygame_gui.elements.UILabel(
+        pygame.Rect(10, 88, 310, 24),
+        "Selected: None",
+        ui_manager,
+        container=editor_win
+    )
+
+    lbl_files = pygame_gui.elements.UILabel(pygame.Rect(10, 122, 290, 24), "Puzzle files (click to load):", ui_manager, container=editor_win)
     files_list = pygame_gui.elements.UISelectionList(
-        relative_rect=pygame.Rect(10, 112, -20, -96),
+        relative_rect=pygame.Rect(10, 148, -20, -96),
         item_list=[],
         manager=ui_manager,
         container=editor_win,
@@ -467,12 +486,12 @@ def main() -> None:
     camera = Camera()
     base_cell_size = 48
 
-    def center_camera_on_grid() -> None:
-        if state.model.rows == 0 or state.model.cols == 0:
+    def center_camera_on_model(model: NurikabeModel) -> None:
+        if model.rows == 0 or model.cols == 0:
             return
         sw, sh = screen.get_size()
-        grid_w = state.model.cols * base_cell_size
-        grid_h = state.model.rows * base_cell_size
+        grid_w = model.cols * base_cell_size
+        grid_h = model.rows * base_cell_size
         camera.zoom = 1.0
         camera.offset_x = (sw - grid_w) * 0.5
         camera.offset_y = (sh - grid_h) * 0.5
@@ -541,9 +560,10 @@ def main() -> None:
 
     state.model.load_grid(editor.grid)
     state.solver = NurikabeSolver(state.model)
-    center_camera_on_grid()
+    center_camera_on_model(state.model)
     sync_worker()
     log_append("Ready.")
+    update_selected_cell_info(editor, lbl_selected_cell_info)
 
     panning = False
     pan_last: Optional[Tuple[int, int]] = None
@@ -551,6 +571,8 @@ def main() -> None:
     lmb_dragging = False
     lmb_down_over_ui = False
     lmb_down_mode = MODE_MAIN
+
+    model_for_editor = NurikabeModel()
 
     running = True
     while running:
@@ -592,6 +614,7 @@ def main() -> None:
                 elif event.ui_element == btn_edit:
                     editor_win.show()
                     state.mode = MODE_EDITOR
+                    update_selected_cell_info(editor, lbl_selected_cell_info)
                     log_append("Editor opened.")
 
                 elif event.ui_element == btn_close_editor:
@@ -608,16 +631,30 @@ def main() -> None:
                         editor.rows, editor.cols = r, c
                         editor.grid = grid_default(r, c)
                         editor.selected = None
+                        model_for_editor.load_grid(editor.grid)
+                        center_camera_on_model(model_for_editor)
+                        update_selected_cell_info(editor, lbl_selected_cell_info)
                         log_append(f"New grid {r}x{c}.")
                     except ValueError:
                         log_append("Invalid rows/cols.")
+
+                elif event.ui_element == btn_clear_clues:
+                    if editor.grid is not None:
+                        for r_idx in range(editor.rows):
+                            for c_idx in range(editor.cols):
+                                editor.grid[r_idx][c_idx] = 0
+                        editor.selected = None
+                        update_selected_cell_info(editor, lbl_selected_cell_info)
+                        log_append("All clues cleared in editor grid.")
+                    else:
+                        log_append("No editor grid to clear.")
 
                 elif event.ui_element == btn_load_to_solver:
                     if editor.grid is not None:
                         push_undo()
                         state.model.load_grid(editor.grid)
                         state.solver = NurikabeSolver(state.model)
-                        center_camera_on_grid()
+                        center_camera_on_model(state.model)
                         sync_worker()
                         log_append("Grid loaded into solver.")
                     else:
@@ -658,6 +695,9 @@ def main() -> None:
                                 editor.cols = tmp.cols
                                 inp_rows.set_text(str(editor.rows))
                                 inp_cols.set_text(str(editor.cols))
+                                model_for_editor.load_grid(editor.grid)
+                                center_camera_on_model(model_for_editor)
+                                update_selected_cell_info(editor, lbl_selected_cell_info)
                                 log_append(f"Loaded file: {sel}")
                             else:
                                 log_append(f"Load failed: {msg}")
@@ -734,9 +774,12 @@ def main() -> None:
                                     cycle_mark(state.model, r, c)
                                     sync_worker()
                             else:
-                                cell = pick_cell_from_mouse(state.model, camera, base_cell_size, event.pos)
-                                if cell is not None and editor.grid is not None:
-                                    editor.selected = cell
+                                if editor.grid is not None:
+                                    model_for_editor.load_grid(editor.grid)
+                                    cell = pick_cell_from_mouse(model_for_editor, camera, base_cell_size, event.pos)
+                                    if cell is not None:
+                                        editor.selected = cell
+                                        update_selected_cell_info(editor, lbl_selected_cell_info)
 
                     lmb_down_pos = None
                     lmb_dragging = False
@@ -750,6 +793,7 @@ def main() -> None:
                     if 0 <= r < editor.rows and 0 <= c < editor.cols:
                         if event.key in (pygame.K_BACKSPACE, pygame.K_DELETE, pygame.K_0):
                             editor.grid[r][c] = 0
+                            update_selected_cell_info(editor, lbl_selected_cell_info)
                         else:
                             ch = event.unicode
                             if ch.isdigit():
@@ -758,16 +802,20 @@ def main() -> None:
                                 nxt = cur * 10 + d
                                 nxt = clamp_int(nxt, 0, 999)
                                 editor.grid[r][c] = nxt
+                                update_selected_cell_info(editor, lbl_selected_cell_info)
 
         ui_manager.update(time_delta)
 
         screen.fill((30, 30, 30))
 
         highlight_cell = None
-        if state.mode == MODE_EDITOR and editor.selected is not None:
+        if state.mode == MODE_EDITOR:
             highlight_cell = editor.selected
-
-        draw_grid(screen, state.model, camera, base_cell_size, font, small_font, highlight=highlight_cell)
+            if editor.grid is not None:
+                model_for_editor.load_grid(editor.grid)
+            draw_grid(screen, model_for_editor, camera, base_cell_size, font, small_font, highlight=highlight_cell)
+        else:
+            draw_grid(screen, state.model, camera, base_cell_size, font, small_font, highlight=highlight_cell)
 
         ui_manager.draw_ui(screen)
 
