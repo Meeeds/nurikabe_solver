@@ -18,17 +18,16 @@ Controls (Editor):
 
 import os
 import glob
-import math
-import queue
-import threading
 from dataclasses import dataclass
 from typing import Tuple, Optional, List, Dict, Any
 
 import pygame
 import pygame_gui
 
-from nurikabe_model import NurikabeModel, StepResult, UNKNOWN, BLACK, LAND
+from nurikabe_model import NurikabeModel, UNKNOWN, BLACK, LAND
 from nurikabe_rules import NurikabeSolver
+from nurikabe_worker import SolverWorker, WorkerCommand
+from nurikabe_drawing import Camera, draw_grid, pick_cell_from_mouse, clamp_int
 
 
 # ----------------------------
@@ -37,153 +36,7 @@ from nurikabe_rules import NurikabeSolver
 MODE_MAIN = 0
 MODE_EDITOR = 1
 
-
-# ----------------------------
-# Camera (pan/zoom for the grid only)
-# ----------------------------
-
 DRAG_THRESHOLD_PX = 6
-
-
-@dataclass
-class Camera:
-    offset_x: float = 0.0
-    offset_y: float = 0.0
-    zoom: float = 1.0
-
-    def screen_to_world(self, sx: float, sy: float) -> Tuple[float, float]:
-        return (sx - self.offset_x) / self.zoom, (sy - self.offset_y) / self.zoom
-
-    def world_to_screen(self, wx: float, wy: float) -> Tuple[float, float]:
-        return wx * self.zoom + self.offset_x, wy * self.zoom + self.offset_y
-
-    def zoom_at(self, mouse_pos: Tuple[int, int], zoom_factor: float, min_zoom: float, max_zoom: float) -> None:
-        mx, my = mouse_pos
-        wx, wy = self.screen_to_world(mx, my)
-
-        new_zoom = self.zoom * zoom_factor
-        new_zoom = max(min_zoom, min(max_zoom, new_zoom))
-        if abs(new_zoom - self.zoom) < 1e-9:
-            return
-
-        self.zoom = new_zoom
-        self.offset_x = mx - wx * self.zoom
-        self.offset_y = my - wy * self.zoom
-
-
-# ----------------------------
-# Worker thread for solving
-# ----------------------------
-
-@dataclass
-class WorkerCommand:
-    kind: str
-    payload: Optional[Dict[str, Any]] = None
-
-
-@dataclass
-class WorkerResult:
-    kind: str
-    payload: Dict[str, Any]
-
-
-class SolverWorker:
-    def __init__(self) -> None:
-        self._cmd_q: "queue.Queue[WorkerCommand]" = queue.Queue()
-        self._res_q: "queue.Queue[WorkerResult]" = queue.Queue()
-        self._stop_evt = threading.Event()
-        self._thread = threading.Thread(target=self._run, name="SolverWorker", daemon=True)
-
-        self._model = NurikabeModel()
-        self._solver = NurikabeSolver(self._model)
-
-    def start(self) -> None:
-        self._thread.start()
-
-    def stop(self) -> None:
-        self._stop_evt.set()
-        try:
-            self._cmd_q.put_nowait(WorkerCommand(kind="stop"))
-        except queue.Full:
-            pass
-        self._thread.join(timeout=1.0)
-
-    def send(self, cmd: WorkerCommand) -> None:
-        self._cmd_q.put(cmd)
-
-    def try_recv(self) -> Optional[WorkerResult]:
-        try:
-            return self._res_q.get_nowait()
-        except queue.Empty:
-            return None
-
-    def _emit_state(self, kind: str, extra: Optional[Dict[str, Any]] = None) -> None:
-        payload: Dict[str, Any] = {"state": self._model.snapshot()}
-        if extra:
-            payload.update(extra)
-        self._res_q.put(WorkerResult(kind=kind, payload=payload))
-
-    def _run(self) -> None:
-        while not self._stop_evt.is_set():
-            try:
-                cmd = self._cmd_q.get(timeout=0.05)
-            except queue.Empty:
-                continue
-
-            if cmd.kind == "stop":
-                return
-
-            if cmd.kind == "sync_state":
-                state = (cmd.payload or {}).get("state")
-                if isinstance(state, dict):
-                    try:
-                        self._model.restore(state)
-                        self._solver = NurikabeSolver(self._model)
-                        self._emit_state("synced")
-                    except Exception as e:
-                        self._res_q.put(WorkerResult(kind="error", payload={"message": f"Restore failed: {e}"}))
-                continue
-
-            if cmd.kind == "step":
-                try:
-                    step_res = self._solver.step()
-                    extra = {
-                        "step_result": {
-                            "changed_cells": list(step_res.changed_cells),
-                            "message": step_res.message,
-                            "rule": step_res.rule,
-                        }
-                    }
-                    self._emit_state("stepped", extra=extra)
-                except Exception as e:
-                    self._res_q.put(WorkerResult(kind="error", payload={"message": f"Step failed: {e}"}))
-                continue
-
-            if cmd.kind == "reset":
-                try:
-                    s = (cmd.payload or {}).get("state")
-                    if isinstance(s, dict):
-                        self._model.restore(s)
-                        self._solver = NurikabeSolver(self._model)
-                        self._emit_state("reset_done")
-                    else:
-                        self._res_q.put(WorkerResult(kind="error", payload={"message": "Reset missing state."}))
-                except Exception as e:
-                    self._res_q.put(WorkerResult(kind="error", payload={"message": f"Reset failed: {e}"}))
-                continue
-
-            if cmd.kind == "load_grid":
-                try:
-                    grid = (cmd.payload or {}).get("grid")
-                    if isinstance(grid, list) and grid and isinstance(grid[0], list):
-                        self._model.load_grid([[int(v) for v in row] for row in grid])
-                        self._solver = NurikabeSolver(self._model)
-                        self._emit_state("loaded")
-                    else:
-                        self._res_q.put(WorkerResult(kind="error", payload={"message": "Load missing/invalid grid."}))
-                except Exception as e:
-                    self._res_q.put(WorkerResult(kind="error", payload={"message": f"Load failed: {e}"}))
-                continue
 
 
 # ----------------------------
@@ -213,10 +66,6 @@ class MainState:
 # ----------------------------
 # Helpers
 # ----------------------------
-
-def clamp_int(v: int, lo: int, hi: int) -> int:
-    return max(lo, min(hi, v))
-
 
 def load_puzzle_files() -> List[str]:
     files = []
@@ -312,99 +161,6 @@ def save_editor_grid_to_file(
 
     except Exception as e:
         log_append(f"Save failed: {e}")
-
-
-# ----------------------------
-# Rendering (grid only)
-# ----------------------------
-
-def draw_grid(
-    screen: pygame.Surface,
-    model: NurikabeModel,
-    camera: Camera,
-    base_cell_size: int,
-    font: pygame.font.Font,
-    small_font: pygame.font.Font,
-    highlight: Optional[Tuple[int, int]] = None
-) -> None:
-    rows, cols = model.rows, model.cols
-    if rows == 0 or cols == 0:
-        return
-
-    cell_size = base_cell_size * camera.zoom
-    if cell_size < 2:
-        return
-
-    sw, sh = screen.get_size()
-    left = -cell_size
-    top = -cell_size
-    right = sw + cell_size
-    bottom = sh + cell_size
-
-    wl, wt = camera.screen_to_world(left, top)
-    wr, wb = camera.screen_to_world(right, bottom)
-    c0 = clamp_int(int(math.floor(wl / base_cell_size)), 0, cols - 1)
-    r0 = clamp_int(int(math.floor(wt / base_cell_size)), 0, rows - 1)
-    c1 = clamp_int(int(math.ceil(wr / base_cell_size)), 0, cols - 1)
-    r1 = clamp_int(int(math.ceil(wb / base_cell_size)), 0, rows - 1)
-
-    for r in range(r0, r1 + 1):
-        for c in range(c0, c1 + 1):
-            wx = c * base_cell_size
-            wy = r * base_cell_size
-            sx, sy = camera.world_to_screen(wx, wy)
-            rect = pygame.Rect(int(sx), int(sy), int(cell_size), int(cell_size))
-
-            if model.is_clue(r, c):
-                pygame.draw.rect(screen, (245, 245, 245), rect)
-            else:
-                mark = model.manual_mark[r][c]
-                if mark == BLACK:
-                    pygame.draw.rect(screen, (40, 40, 40), rect)
-                elif mark == LAND:
-                    pygame.draw.rect(screen, (230, 230, 230), rect)
-                else:
-                    pygame.draw.rect(screen, (200, 200, 200), rect)
-
-            pygame.draw.rect(screen, (70, 70, 70), rect, 1)
-
-            if highlight is not None and (r, c) == highlight:
-                pygame.draw.rect(screen, (20, 120, 220), rect, 3)
-
-            if model.is_clue(r, c):
-                txt = str(model.clues[r][c])
-                surf = font.render(txt, True, (0, 0, 0))
-                screen.blit(
-                    surf,
-                    (rect.x + (rect.width - surf.get_width()) // 2, rect.y + (rect.height - surf.get_height()) // 2)
-                )
-                if camera.zoom >= 1.0:
-                    iid = model.island_by_pos.get((r, c))
-                    if iid is not None:
-                        id_surf = small_font.render(str(iid), True, (90, 90, 90))
-                        screen.blit(id_surf, (rect.x + 3, rect.y + 2))
-            else:
-                if camera.zoom >= 1.0:
-                    ids = model.bitset_to_ids(model.owners[r][c])
-                    if len(ids) == 0:
-                        txt = "-"
-                    elif len(ids) > 3:
-                        txt = "*"
-                    else:
-                        txt = ",".join(str(x) for x in ids)
-                    surf = small_font.render(txt, True, (90, 90, 90))
-                    screen.blit(surf, (rect.x + 3, rect.y + 2))
-
-def pick_cell_from_mouse(model: NurikabeModel, camera: Camera, base_cell_size: int, mouse_pos: Tuple[int, int]) -> Optional[Tuple[int, int]]:
-    if model.rows == 0 or model.cols == 0:
-        return None
-    mx, my = mouse_pos
-    wx, wy = camera.screen_to_world(mx, my)
-    c = int(wx // base_cell_size)
-    r = int(wy // base_cell_size)
-    if 0 <= r < model.rows and 0 <= c < model.cols:
-        return (r, c)
-    return None
 
 
 # ----------------------------

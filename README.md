@@ -14,9 +14,22 @@ python nurikabe_ui.py
 
 ## High level description of the code : 
 
-- **nurikabe_model.py**: Defines the core data structures (`NurikabeModel`, `Island`, `StepResult`) and manages the grid state, including cell owners and validity checks.
-- **nurikabe_rules.py**: Implements the `NurikabeSolver` logic with various rule-based heuristics (e.g., connectivity, separation, global bottlenecks) to iteratively solve the puzzle.
-- **nurikabe_ui.py**: Provides an interactive Pygame interface for editing grids, visualizing the solver's progress step-by-step, and debugging specific logic like island extensions.
+1. `nurikabe_model.py` 
+    - Defines the core data structures (`NurikabeModel`, `Island`, `StepResult`) and manages the grid state, including cell owners and validity checks.
+1. `nurikabe_rules.py`
+    - Implements the `NurikabeSolver` logic with various rule-based heuristics (e.g., connectivity, separation, global bottlenecks) to iteratively solve the puzzle.
+1. `nurikabe_worker.py`
+    - Handles the background solver thread (SolverWorker).
+    - Contains worker-related data structures (WorkerCommand, WorkerResult).
+1. `nurikabe_drawing.py`
+    - Handles grid rendering (draw_grid).
+    - Manages the camera/view transformation (Camera).
+    - Contains coordinate utilities (pick_cell_from_mouse, clamp_int).
+1. `nurikabe_ui.py` (Updated)
+    - Remains the entry point (main).
+    - Manages UI state (EditorState, MainState).
+    - Handles events and Pygame GUI integration.
+    - Imports necessary components from the new files.
 
 ## Test Framework
 
