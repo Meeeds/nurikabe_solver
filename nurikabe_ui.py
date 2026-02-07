@@ -333,14 +333,22 @@ def draw_grid(
                     surf,
                     (rect.x + (rect.width - surf.get_width()) // 2, rect.y + (rect.height - surf.get_height()) // 2)
                 )
+                if camera.zoom >= 1.0:
+                    iid = model.island_by_pos.get((r, c))
+                    if iid is not None:
+                        id_surf = small_font.render(str(iid), True, (90, 90, 90))
+                        screen.blit(id_surf, (rect.x + 3, rect.y + 2))
             else:
-                if camera.zoom >= 1.2 and model.manual_mark[r][c] == UNKNOWN:
-                    bits = model.owners[r][c]
-                    cnt = bits.bit_count() if hasattr(int, "bit_count") else bin(bits).count("1")
-                    if cnt > 0:
-                        surf = small_font.render(str(cnt), True, (90, 90, 90))
-                        screen.blit(surf, (rect.x + 3, rect.y + 2))
-
+                if camera.zoom >= 1.0:
+                    ids = model.bitset_to_ids(model.owners[r][c])
+                    if len(ids) == 0:
+                        txt = "-"
+                    elif len(ids) > 3:
+                        txt = "*"
+                    else:
+                        txt = ",".join(str(x) for x in ids)
+                    surf = small_font.render(txt, True, (90, 90, 90))
+                    screen.blit(surf, (rect.x + 3, rect.y + 2))
 
 def pick_cell_from_mouse(model: NurikabeModel, camera: Camera, base_cell_size: int, mouse_pos: Tuple[int, int]) -> Optional[Tuple[int, int]]:
     if model.rows == 0 or model.cols == 0:
