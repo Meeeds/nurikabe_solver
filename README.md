@@ -24,9 +24,9 @@ The `test.py` script allows for automated regression testing of the solver:
 
 - **Generate Mode**: Runs the solver on a grid and saves the final state and rule counts as a reference JSON.
   ```bash
-  python test.py <grid_file> --mode generate
+  python tests/test.py <grid_file> --mode generate
   ```
 - **Test Mode**: Compares the solver's current output against an existing reference JSON to detect regressions.
   ```bash
-  python test.py <grid_file> --mode test
+  python tests/test.py <grid_file> --mode test
   ```

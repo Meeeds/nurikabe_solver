@@ -220,7 +220,7 @@ def clamp_int(v: int, lo: int, hi: int) -> int:
 
 def load_puzzle_files() -> List[str]:
     files = []
-    for pat in ["puzzles/*.txt", "puzzles/*.puz", "puzzles/*.*"]:
+    for pat in ["puzzles/*.txt", "tests/*.txt"]:
         files.extend(glob.glob(pat))
     files = sorted(set(files))
     return files
@@ -278,6 +278,40 @@ def update_selected_cell_info(editor: EditorState, lbl_selected_cell_info: pygam
             lbl_selected_cell_info.set_text("Selected: Invalid cell")
     else:
         lbl_selected_cell_info.set_text("Selected: None")
+
+def save_editor_grid_to_file(
+    editor: EditorState,
+    filename: str,
+    log_append: Any, # type: ignore
+    files_list: pygame_gui.elements.UISelectionList
+) -> None:
+    if not filename:
+        log_append("Save failed: Filename cannot be empty.")
+        return
+
+    filepath = os.path.join("puzzles", filename)
+
+    if editor.grid is None:
+        log_append("Save failed: Editor grid is empty.")
+        return
+
+    try:
+        grid_str = []
+        for r in range(editor.rows):
+            grid_str.append(" ".join(str(editor.grid[r][c]) for c in range(editor.cols)))
+        content = "\n".join(grid_str)
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        log_append(f"Grid saved to {filepath}")
+
+        # Reload puzzle files and update the list
+        editor.puzzle_files = load_puzzle_files()
+        files_list.set_item_list(editor.puzzle_files)
+
+    except Exception as e:
+        log_append(f"Save failed: {e}")
 
 
 # ----------------------------
@@ -395,23 +429,26 @@ def main() -> None:
         window_display_title="Controls",
         resizable=True
     )
+    controls_win.close_window_button.hide()
     log_win = pygame_gui.elements.UIWindow(
         pygame.Rect(20, 360, 520, 360),
         ui_manager,
         window_display_title="Log",
         resizable=True
     )
+    log_win.close_window_button.hide()
     editor_win = pygame_gui.elements.UIWindow(
-        pygame.Rect(300, 20, 340, 340),
+        pygame.Rect(300, 20, 340, 600),
         ui_manager,
         window_display_title="Editor",
         visible=False,
         resizable=True
     )
+    editor_win.close_window_button.hide()
 
     controls_win.set_minimum_dimensions((260, 320))
     log_win.set_minimum_dimensions((520, 260))
-    editor_win.set_minimum_dimensions((340, 300))
+    editor_win.set_minimum_dimensions((340, 600))
 
     btn_edit = pygame_gui.elements.UIButton(pygame.Rect(10, 10, 240, 36), "Edit Grid", ui_manager, container=controls_win)
     btn_step = pygame_gui.elements.UIButton(pygame.Rect(10, 56, 240, 36), "Step", ui_manager, container=controls_win)
@@ -460,18 +497,32 @@ def main() -> None:
 
     lbl_files = pygame_gui.elements.UILabel(pygame.Rect(10, 122, 290, 24), "Puzzle files (click to load):", ui_manager, container=editor_win)
     files_list = pygame_gui.elements.UISelectionList(
-        relative_rect=pygame.Rect(10, 148, -20, -96),
+        relative_rect=pygame.Rect(10, 150, 310, 200),
         item_list=[],
         manager=ui_manager,
         container=editor_win,
-        anchors={"left": "left", "right": "right", "top": "top", "bottom": "bottom"}
+        anchors={"left": "left", "right": "right", "top": "top"}
+    )
+    inp_filename = pygame_gui.elements.UITextEntryLine(
+        pygame.Rect(10, 360, 310, 32),
+        ui_manager,
+        container=editor_win,
+        anchors={"left": "left", "right": "right", "top": "top"}
+    )
+    inp_filename.set_text("new_puzzle.nu.txt")
+    btn_save = pygame_gui.elements.UIButton(
+        pygame.Rect(10, 396, 310, 32),
+        "Save Puzzle",
+        ui_manager,
+        container=editor_win,
+        anchors={"left": "left", "right": "right", "top": "top"}
     )
     btn_close_editor = pygame_gui.elements.UIButton(
-        pygame.Rect(10, -42, -20, 32),
+        pygame.Rect(10, 432, 310, 32),
         "Close Editor",
         ui_manager,
         container=editor_win,
-        anchors={"left": "left", "right": "right", "bottom": "bottom"}
+        anchors={"left": "left", "right": "right", "top": "top"}
     )
 
     state = MainState()
@@ -660,6 +711,9 @@ def main() -> None:
                     else:
                         log_append("No editor grid.")
 
+                elif event.ui_element == btn_save:
+                    save_editor_grid_to_file(editor, inp_filename.get_text(), log_append, files_list)
+
                 elif event.ui_element == btn_step:
                     push_undo()
                     worker.send(WorkerCommand(kind="step"))
@@ -803,6 +857,15 @@ def main() -> None:
                                 nxt = clamp_int(nxt, 0, 999)
                                 editor.grid[r][c] = nxt
                                 update_selected_cell_info(editor, lbl_selected_cell_info)
+
+        if state.mode == MODE_EDITOR:
+            btn_step.disable()
+            btn_10steps.disable()
+            btn_reset.disable()
+        else:
+            btn_step.enable()
+            btn_10steps.enable()
+            btn_reset.enable()
 
         ui_manager.update(time_delta)
 
