@@ -1,8 +1,12 @@
+import os
 import json
 import argparse
 import sys
 from collections import Counter
 from typing import Dict, Any, List
+
+# Add the project root to the system path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from nurikabe_model import NurikabeModel
 from nurikabe_rules import NurikabeSolver
@@ -29,7 +33,7 @@ def serialize_grid(model: NurikabeModel) -> List[List[str]]:
         grid_state.append(row_state)
     return grid_state
 
-def run_solver(grid_path: str) -> Dict[str, Any]:
+def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
     """Loads a grid, runs the solver to completion, and returns the result stats."""
     model = NurikabeModel()
     
@@ -37,13 +41,11 @@ def run_solver(grid_path: str) -> Dict[str, Any]:
         with open(grid_path, 'r') as f:
             content = f.read()
     except FileNotFoundError:
-        print(f"Error: File '{grid_path}' not found.")
-        sys.exit(1)
+        return None, f"Error: File '{grid_path}' not found."
 
     success, msg = model.parse_puzzle_text(content)
     if not success:
-        print(f"Error parsing grid: {msg}")
-        sys.exit(1)
+        return None, f"Error parsing grid: {msg}"
 
     solver = NurikabeSolver(model)
     
@@ -75,64 +77,108 @@ def run_solver(grid_path: str) -> Dict[str, Any]:
         "steps_total": steps_taken,
         "is_fully_solved": is_solved,
         "final_grid": serialize_grid(model)
-    }
+    }, None
 
-def generate_reference(grid_path: str):
+def generate_reference(grid_path: str) -> bool:
     """Runs solver and saves the result as a reference JSON."""
-    result = run_solver(grid_path)
+    result, error_msg = run_solver(grid_path)
+    if error_msg:
+        print(f"Error for {grid_path}: {error_msg}")
+        return False
+        
     ref_path = grid_path + ".reference.json"
     
     with open(ref_path, 'w') as f:
         json.dump(result, f, indent=2, sort_keys=True)
     
-    print(f"Success: Reference generated and saved to '{ref_path}'")
+    print(f"Success: Reference generated for '{grid_path}' and saved to '{ref_path}'")
     print(f"Solved: {result['is_fully_solved']}, Steps: {result['steps_total']}")
+    return True
 
-def check_regression(grid_path: str):
+def check_regression(grid_path: str) -> bool:
     """Runs solver and compares result with existing reference JSON."""
-    current_result = run_solver(grid_path)
+    current_result, error_msg = run_solver(grid_path)
+    if error_msg:
+        print(f"Error for {grid_path}: {error_msg}")
+        return False
+
     ref_path = grid_path + ".reference.json"
     
     try:
         with open(ref_path, 'r') as f:
             reference_result = json.load(f)
     except FileNotFoundError:
-        print(f"Error: Reference file '{ref_path}' not found. Run in 'generate' mode first.")
-        sys.exit(1)
+        print(f"Error for '{grid_path}': Reference file '{ref_path}' not found. Run in 'generate' mode first.")
+        return False
+    except json.JSONDecodeError:
+        print(f"Error for '{grid_path}': Reference file '{ref_path}' is not a valid JSON.")
+        return False
     
     # Comparison Logic
-    # 1. Compare Final Grid (Critical)
     grid_match = current_result["final_grid"] == reference_result["final_grid"]
-    
-    # 2. Compare Rule Counts (Indicative of logic changes)
     rules_match = current_result["rules_triggered"] == reference_result["rules_triggered"]
     
     if grid_match and rules_match:
-        print("TEST PASSED: Output matches reference exactly.")
+        print(f"TEST PASSED: '{grid_path}' matches reference exactly.")
+        return True
     else:
-        print("TEST FAILED: Output mismatch.")
+        print(f"TEST FAILED: '{grid_path}' output mismatch.")
         
         if not grid_match:
-            print("CRITICAL: Final grid state differs!")
+            print("  CRITICAL: Final grid state differs!")
             # Basic diff output
-            # (Could be improved to show specific cells)
         
         if not rules_match:
-            print("WARNING: Rule usage counts differ (logic path changed).")
-            print("Reference Rules:", reference_result["rules_triggered"])
-            print("Current Rules:  ", current_result["rules_triggered"])
+            print("  WARNING: Rule usage counts differ (logic path changed).")
+            print("    Reference Rules:", reference_result["rules_triggered"])
+            print("    Current Rules:  ", current_result["rules_triggered"])
             
-        sys.exit(1)
+        return False
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Nurikabe Solver Test Runner")
-    parser.add_argument("grid_file", help="Path to the .nu.txt grid file")
+    parser.add_argument("grid_file", nargs='?', help="Path to the .nu.txt grid file (optional if --all is used)")
     parser.add_argument("--mode", choices=["generate", "test"], default="test", 
                         help="Mode: 'generate' to create reference JSON, 'test' to compare against it.")
+    parser.add_argument("--all", action="store_true", 
+                        help="Run all tests on *.nu.txt files in the test directory.")
     
     args = parser.parse_args()
-    
-    if args.mode == "generate":
-        generate_reference(args.grid_file)
+
+    if args.all:
+        if args.grid_file:
+            print("Error: Cannot use --all and specify a grid_file simultaneously.")
+            sys.exit(1)
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        test_files = [os.path.join(test_dir, f) for f in os.listdir(test_dir) if f.endswith(".nu.txt")]
+        
+        if not test_files:
+            print(f"No .nu.txt files found in the test directory: {test_dir}")
+            sys.exit(0)
+
+        all_tests_passed = True
+        print(f"Running all tests in {args.mode} mode for files in {test_dir}:")
+        for test_file in sorted(test_files):
+            print(f"\n--- Processing {os.path.basename(test_file)} ---")
+            if args.mode == "generate":
+                if not generate_reference(test_file):
+                    all_tests_passed = False
+            else: # mode == "test"
+                if not check_regression(test_file):
+                    all_tests_passed = False
+        
+        if all_tests_passed:
+            print("\nAll selected tests PASSED!")
+            sys.exit(0)
+        else:
+            print("\nSome tests FAILED!")
+            sys.exit(1)
+    elif args.grid_file:
+        if args.mode == "generate":
+            generate_reference(args.grid_file)
+        else:
+            check_regression(args.grid_file)
     else:
-        check_regression(args.grid_file)
+        print("Error: No grid file specified and --all option not used.")
+        parser.print_help()
+        sys.exit(1)

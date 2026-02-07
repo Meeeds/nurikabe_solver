@@ -22,6 +22,12 @@ python nurikabe_ui.py
 
 The `test.py` script allows for automated regression testing of the solver:
 
+Run all tests : 
+```
+python tests/test.py --all
+```
+
+Run one Test : 
 - **Generate Mode**: Runs the solver on a grid and saves the final state and rule counts as a reference JSON.
   ```bash
   python tests/test.py <grid_file> --mode generate
