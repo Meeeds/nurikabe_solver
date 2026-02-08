@@ -1,5 +1,5 @@
 from typing import Optional, Set, List, Tuple
-from nurikabe_model import NurikabeModel, StepResult, BLACK, CellState
+from nurikabe_model import NurikabeModel, StepResult, CellState
 
 class NurikabeSolver:
     def __init__(self, model: NurikabeModel) -> None:
@@ -221,7 +221,7 @@ class NurikabeSolver:
                     continue
                 cell = self.model.cells[r][c]
                 # If owners domain is empty and it's not already black (and not land), force black.
-                if cell.owners == 0 and not cell.is_land and cell.state != BLACK:
+                if cell.owners == 0 and not cell.is_land and cell.state != CellState.BLACK:
                     self.model.force_black(r, c)
                     return StepResult(
                         changed_cells=[(r, c)],
@@ -468,7 +468,7 @@ class NurikabeSolver:
             # 2. Bottleneck: Force cells that are in ALL valid extensions
             if common_set:
                 for r, c in common_set:
-                    if self.model.cells[r][c].state == BLACK: 
+                    if self.model.cells[r][c].state == CellState.BLACK: 
                         continue
                     
                     if self.model.force_land(r, c):
@@ -596,7 +596,7 @@ class NurikabeSolver:
                 if found_count < original_count:
                     # Split detected!
                     tr, tc = cand
-                    if self.model.cells[tr][tc].state != BLACK:
+                    if self.model.cells[tr][tc].state != CellState.BLACK:
                         self.model.force_black(tr, tc)
                         return StepResult(
                             changed_cells=[(tr, tc)],
@@ -642,7 +642,7 @@ class NurikabeSolver:
                 for xr, xc in common:
                     if (xr, xc) not in component and (xr, xc) not in candidates:
                         cell_x = self.model.cells[xr][xc]
-                        if not cell_x.is_land and cell_x.state != BLACK:
+                        if not cell_x.is_land and cell_x.state != CellState.BLACK:
                             self.model.force_black(xr, xc)
                             return StepResult(
                                 changed_cells=[(xr, xc)],

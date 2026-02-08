@@ -24,7 +24,7 @@ from typing import Tuple, Optional, List, Dict, Any
 import pygame
 import pygame_gui
 
-from nurikabe_model import NurikabeModel, UNKNOWN, BLACK, LAND
+from nurikabe_model import NurikabeModel
 from nurikabe_rules import NurikabeSolver
 from nurikabe_worker import SolverWorker, WorkerCommand
 from nurikabe_drawing import Camera, draw_grid, pick_cell_from_mouse, clamp_int

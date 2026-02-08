@@ -11,11 +11,6 @@ class CellState(IntEnum):
     BLACK = 1  # Sea
     LAND = 2
 
-# Legacy constants for compatibility (if needed by importers)
-UNKNOWN = CellState.UNKNOWN
-BLACK = CellState.BLACK
-LAND = CellState.LAND
-
 RuleName = str
 
 @dataclass

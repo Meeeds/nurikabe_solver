@@ -2,7 +2,7 @@ import math
 import pygame
 from dataclasses import dataclass
 from typing import Tuple, Optional, List
-from nurikabe_model import NurikabeModel, BLACK, LAND
+from nurikabe_model import NurikabeModel
 import grid_style
 
 @dataclass
