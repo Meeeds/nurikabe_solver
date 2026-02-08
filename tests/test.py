@@ -23,7 +23,7 @@ def serialize_grid(model: NurikabeModel) -> List[List[str]]:
                 row_state.append("BLACK")
             elif model.is_land_certain(r, c):
                 # Distinguish if it has an assigned owner or just land
-                owners = model.bitset_to_ids(model.owners[r][c])
+                owners = model.bitset_to_ids(model.cells[r][c].owners)
                 if len(owners) == 1:
                     row_state.append(f"LAND({owners[0]})")
                 else:
@@ -54,6 +54,7 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
     
     while True:
         result = solver.step()
+        print(f"Step {steps_taken + 1}: Rule applied: {result.rule}, Message: {result.message}, Changed Cells: {len(result.changed_cells)}")
         
         # The solver returns rule="None" when no more rules can be applied
         if result.rule == "None":

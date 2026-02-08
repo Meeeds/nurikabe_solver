@@ -74,10 +74,9 @@ def draw_grid(
             if model.is_clue(r, c):
                 pygame.draw.rect(screen, grid_style.COLOR_CLUE, rect)
             else:
-                mark = model.manual_mark[r][c]
-                if mark == BLACK:
+                if model.is_black_certain(r, c):
                     pygame.draw.rect(screen, grid_style.COLOR_BLACK, rect)
-                elif mark == LAND:
+                elif model.is_land_certain(r, c):
                     pygame.draw.rect(screen, grid_style.COLOR_LAND, rect)
                 else:
                     pygame.draw.rect(screen, grid_style.COLOR_UNKNOWN, rect)
@@ -104,7 +103,7 @@ def draw_grid(
                         screen.blit(id_surf, (rect.x + 3, rect.y + 2))
             else:
                 if camera.zoom >= 1.0:
-                    ids = model.bitset_to_ids(model.owners[r][c])
+                    ids = model.bitset_to_ids(model.cells[r][c].owners)
                     if len(ids) == 0:
                         txt = "-"
                     elif len(ids) > 3:

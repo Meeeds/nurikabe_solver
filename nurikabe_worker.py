@@ -88,6 +88,57 @@ class SolverWorker:
                     self._res_q.put(WorkerResult(kind="error", payload={"message": f"Step failed: {e}"}))
                 continue
 
+            if cmd.kind == "next_cell":
+                try:
+                    all_changed = set()
+                    final_step_res = None
+                    
+                    # We continue stepping as long as we find rules, 
+                    # but we stop if any step makes a cell "certain".
+                    while True:
+                        # Capture certainty before step
+                        def get_certain_mask():
+                            mask = []
+                            for r in range(self._model.rows):
+                                row_mask = []
+                                for c in range(self._model.cols):
+                                    row_mask.append(self._model.is_land_certain(r, c) or self._model.is_black_certain(r, c))
+                                mask.append(row_mask)
+                            return mask
+                        
+                        pre_certain = get_certain_mask()
+                        step_res = self._solver.step()
+                        
+                        if step_res.rule == "None":
+                            final_step_res = step_res
+                            break
+                        
+                        all_changed.update(step_res.changed_cells)
+                        
+                        # Check if any cell became certain
+                        any_newly_certain = False
+                        for r, c in step_res.changed_cells:
+                            if (self._model.is_land_certain(r, c) or self._model.is_black_certain(r, c)) and not pre_certain[r][c]:
+                                print(f"Cell ({r}, {c}) became certain due to rule: {step_res.rule}")
+                                any_newly_certain = True
+                                break
+                        
+                        if any_newly_certain:
+                            final_step_res = step_res
+                            break
+                    
+                    extra = {
+                        "step_result": {
+                            "changed_cells": list(all_changed),
+                            "message": final_step_res.message,
+                            "rule": final_step_res.rule,
+                        }
+                    }
+                    self._emit_state("stepped", extra=extra)
+                except Exception as e:
+                    self._res_q.put(WorkerResult(kind="error", payload={"message": f"Next Cell failed: {e}"}))
+                continue
+
             if cmd.kind == "reset":
                 try:
                     s = (cmd.payload or {}).get("state")

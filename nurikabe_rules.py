@@ -1,5 +1,5 @@
 from typing import Optional, Set, List, Tuple
-from nurikabe_model import NurikabeModel, StepResult, BLACK
+from nurikabe_model import NurikabeModel, StepResult, BLACK, CellState
 
 class NurikabeSolver:
     def __init__(self, model: NurikabeModel) -> None:
@@ -89,16 +89,12 @@ class NurikabeSolver:
                     continue
                 
                 # Combine masks from all LAND neighbors
-                allowed_mask = -1 # All bits set (conceptually)
-                # In Python -1 is infinite 1s. We can use the actual full mask or just handle logic.
-                # Let's use current owners as base to avoid infinite bits issue with -1
-                
                 has_restriction = False
                 combined_neighbor_mask = (1 << len(self.model.islands)) - 1
                 
                 for nr, nc in self.model.neighbors4(r, c):
                     if self.model.is_land_certain(nr, nc):
-                        combined_neighbor_mask &= self.model.owners[nr][nc]
+                        combined_neighbor_mask &= self.model.cells[nr][nc].owners
                         has_restriction = True
                 
                 if has_restriction:
@@ -121,13 +117,15 @@ class NurikabeSolver:
                         if not self.model.is_black_certain(rr, cc):
                             if self.model.is_clue(rr, cc):
                                 continue
-                            if self.model.black_possible[rr][cc]:
-                                self.model.force_land(rr, cc)
-                                return StepResult(
-                                    changed_cells=[(rr, cc)],
-                                    message=f"Forced land to avoid a 2x2 black pool at block ({r},{c}).",
-                                    rule="G4 Anti-2x2: 3 blacks -> land"
-                                )
+                            # If not certain black, and we need to avoid 2x2, we force Land.
+                            # (Implicitly checking if Land is possible? The model allows forcing land unless it is already black)
+                            if not self.model.cells[rr][cc].is_black:
+                                if self.model.force_land(rr, cc):
+                                    return StepResult(
+                                        changed_cells=[(rr, cc)],
+                                        message=f"Forced land to avoid a 2x2 black pool at block ({r},{c}).",
+                                        rule="G4 Anti-2x2: 3 blacks -> land"
+                                    )
         return None
 
     def try_rule_common_neighbor_two_fixed_owners_black(self) -> Optional[StepResult]:
@@ -169,15 +167,15 @@ class NurikabeSolver:
                         curr_r, curr_c = q[idx]
                         idx += 1
                         component.append((curr_r, curr_c))
-                        common_mask &= self.model.owners[curr_r][curr_c]
+                        common_mask &= self.model.cells[curr_r][curr_c].owners
                         for nr, nc in self.model.neighbors4(curr_r, curr_c):
                             if self.model.is_land_certain(nr, nc) and not visited[nr][nc]:
                                 visited[nr][nc] = True
                                 q.append((nr, nc))
                     # Apply the intersection mask to all cells in this cluster
                     for cr, cc in component:
-                        if self.model.owners[cr][cc] != common_mask:
-                            self.model.owners[cr][cc] = common_mask
+                        if self.model.cells[cr][cc].owners != common_mask:
+                            self.model.cells[cr][cc].owners = common_mask
                             return StepResult(
                                 changed_cells=[(cr, cc)],
                                 message=f"Unified land cluster at {component[0]} with intersection of potential owners.",
@@ -195,7 +193,8 @@ class NurikabeSolver:
             island_cells = []
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
-                    if not self.model.black_possible[r][c] and self.model.owners[r][c] == bit:
+                    cell = self.model.cells[r][c]
+                    if cell.is_land and cell.owners == bit:
                         island_cells.append((r, c))
             
             # 2. If the island is complete, neighbors that are NOT in the island must be black
@@ -220,8 +219,10 @@ class NurikabeSolver:
             for c in range(self.model.cols):
                 if self.model.is_clue(r, c):
                     continue
-                if self.model.owners[r][c] == 0 and self.model.black_possible[r][c] and self.model.manual_mark[r][c] != BLACK:
-                    self.model.manual_mark[r][c] = BLACK
+                cell = self.model.cells[r][c]
+                # If owners domain is empty and it's not already black (and not land), force black.
+                if cell.owners == 0 and not cell.is_land and cell.state != BLACK:
+                    self.model.force_black(r, c)
                     return StepResult(
                         changed_cells=[(r, c)],
                         message="Owners domain became empty; forced black (no island can own this cell).",
@@ -243,8 +244,9 @@ class NurikabeSolver:
                 r, c = stack.pop()
                 for nr, nc in self.model.neighbors4(r, c):
                     if (nr, nc) not in component:
+                        n_cell = self.model.cells[nr][nc]
                         # Cell belongs to island iid if it's land and uniquely owned by bit
-                        if not self.model.black_possible[nr][nc] and self.model.owners[nr][nc] == bit:
+                        if n_cell.is_land and n_cell.owners == bit:
                             component.add((nr, nc))
                             stack.append((nr, nc))
             
@@ -255,7 +257,7 @@ class NurikabeSolver:
             potential = set()
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
-                    if not self.model.is_black_certain(r, c) and (self.model.owners[r][c] & bit):
+                    if not self.model.is_black_certain(r, c) and (self.model.cells[r][c].owners & bit):
                         potential.add((r, c))
             
             # 3. Check neighbors of the current component for bottlenecks
@@ -286,7 +288,7 @@ class NurikabeSolver:
                     # 'n' is mandatory for island iid to ever reach its size
                     tr, tc = n
                     self.model.force_land(tr, tc)
-                    self.model.owners[tr][tc] = bit
+                    self.model.cells[tr][tc].owners = bit
                     return StepResult(
                         changed_cells=[(tr, tc)],
                         message=f"Island {iid} must include ({tr},{tc}) to reach size {clue} (bottleneck detected).",
@@ -329,9 +331,10 @@ class NurikabeSolver:
         
         for r in range(self.model.rows):
             for c in range(self.model.cols):
-                if not self.model.black_possible[r][c] and self.model.owners[r][c] == bit:
+                cell = self.model.cells[r][c]
+                if cell.is_land and cell.owners == bit:
                     fixed_core.add((r, c))
-                if not self.model.is_black_certain(r, c) and (self.model.owners[r][c] & bit):
+                if not self.model.is_black_certain(r, c) and (cell.owners & bit):
                     potential.add((r, c))
 
         # Filter potential: Must not touch any other island's fixed cells
@@ -347,7 +350,8 @@ class NurikabeSolver:
             for nr, nc in self.model.neighbors4(r, c):
                 # Check if neighbor is Land and CANNOT be this island
                 # If it's Land and doesn't include our bit, it belongs to others.
-                if self.model.is_land_certain(nr, nc) and (self.model.owners[nr][nc] & bit) == 0:
+                n_cell = self.model.cells[nr][nc]
+                if self.model.is_land_certain(nr, nc) and (n_cell.owners & bit) == 0:
                     touches_other = True
                     break
             
@@ -357,8 +361,6 @@ class NurikabeSolver:
 
         current_size = len(fixed_core)
         if current_size >= clue:
-            # Even if full, check connectivity. If disconnected, it's invalid, 
-            # but we can't "extend" it. Just return empty.
             return set(), set()
         
         needed = clue - current_size
@@ -398,26 +400,17 @@ class NurikabeSolver:
             curr_added, curr_frontier = stack.pop()
             
             if len(curr_added) == needed:
-                # Validate connectivity of the WHOLE shape (fixed_core + curr_added)
-                # This handles cases where fixed_core is disconnected and we must bridge it.
                 if not self._is_connected(fixed_core | curr_added):
                     continue
 
-                # Found a valid configuration
                 if common_added is None:
                     common_added = set(curr_added)
                 else:
                     common_added &= curr_added
                 
                 union_added.update(curr_added)
-                
-                # Optimization: if common_added is empty, we can stop tracking it, 
-                # but we MUST continue if we want the full Union for debug purposes.
-                # Since the primary goal of this function is now dual-purpose (rule + debug),
-                # we should continue. However, if 'too_complex' becomes true, we abort.
                 continue
             
-            # Expand
             frontier_list = sorted(list(curr_frontier))
             for cell in frontier_list:
                 new_added = set(curr_added)
@@ -437,11 +430,9 @@ class NurikabeSolver:
                 stack.append((new_added_frozen, frozenset(new_frontier)))
 
         if too_complex:
-            # If too complex, we can't trust the results.
             return None
             
         if common_added is None:
-            # No solutions found
             return set(), set()
             
         return union_added, common_added
@@ -457,20 +448,18 @@ class NurikabeSolver:
             changed_list = []
             bit = self.model.bit(isl.island_id)
             
-            # 1. Pruning: Remove island from cells that are NEVER part of any valid extension
-            # We need to know the fixed_core to distinguish "part of core" from "extension"
-            # Re-identifying fixed core is safe and fast enough.
             fixed_core = set()
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
-                    if not self.model.black_possible[r][c] and self.model.owners[r][c] == bit:
+                    cell = self.model.cells[r][c]
+                    if cell.is_land and cell.owners == bit:
                         fixed_core.add((r, c))
             
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
                     if (r, c) in fixed_core:
                         continue
-                    if self.model.owners[r][c] & bit:
+                    if self.model.cells[r][c].owners & bit:
                         if (r, c) not in union_set:
                             # This cell allows 'bit' but is not in any valid extension -> prune it
                             if self.model.remove_owner(r, c, isl.island_id):
@@ -479,15 +468,15 @@ class NurikabeSolver:
             # 2. Bottleneck: Force cells that are in ALL valid extensions
             if common_set:
                 for r, c in common_set:
-                    if self.model.manual_mark[r][c] == BLACK: 
+                    if self.model.cells[r][c].state == BLACK: 
                         continue
                     
                     if self.model.force_land(r, c):
                         if (r, c) not in changed_list:
                              changed_list.append((r, c))
                     
-                    if self.model.owners[r][c] != bit:
-                        self.model.owners[r][c] = bit
+                    if self.model.cells[r][c].owners != bit:
+                        self.model.cells[r][c].owners = bit
                         if (r, c) not in changed_list:
                             changed_list.append((r, c))
 
@@ -570,8 +559,6 @@ class NurikabeSolver:
             return reached_comp_indices
 
         # 3. Group components into partitions (sets of component indices that can reach each other)
-        # We can do this by picking the first cell of each component and running BFS
-        # To avoid redundant work, we track which components have been assigned a partition
         comp_partitions = [] # List of sets of component indices
         assigned_comps = set()
         
@@ -593,11 +580,6 @@ class NurikabeSolver:
         # 4. Iterate over ALL unknown potential sea cells
         # For each candidate, check if it breaks ANY active partition
         for cand in candidates:
-            # We only need to check partitions that rely on 'cand'. 
-            # How to know? We don't easily. So check all active partitions.
-            # Optimization: Check if 'cand' is reachable from the partition at all? 
-            # If not reachable, it can't be a cut vertex.
-            
             # Let's just iterate partitions.
             for partition in active_partitions:
                 # Pick a representative component from the partition
@@ -605,19 +587,16 @@ class NurikabeSolver:
                 start_cell = black_components[start_comp_idx][0]
                 
                 # Check reachability with 'cand' blocked
-                # Note: We simulate 'cand' as blocked.
                 reachable_indices = get_reachable_component_indices(start_cell, cand)
                 
                 # Check if we lost any components in this partition
-                # We only care about components that were originally in THIS partition
                 original_count = len(partition)
-                # Intersection of found indices with the original partition indices
                 found_count = len(reachable_indices & partition)
                 
                 if found_count < original_count:
                     # Split detected!
                     tr, tc = cand
-                    if self.model.manual_mark[tr][tc] != BLACK:
+                    if self.model.cells[tr][tc].state != BLACK:
                         self.model.force_black(tr, tc)
                         return StepResult(
                             changed_cells=[(tr, tc)],
@@ -639,7 +618,8 @@ class NurikabeSolver:
                 r, c = stack.pop()
                 for nr, nc in self.model.neighbors4(r, c):
                     if (nr, nc) not in component:
-                        if not self.model.black_possible[nr][nc] and self.model.owners[nr][nc] == bit:
+                        n_cell = self.model.cells[nr][nc]
+                        if n_cell.is_land and n_cell.owners == bit:
                             component.add((nr, nc))
                             stack.append((nr, nc))
             
@@ -650,7 +630,7 @@ class NurikabeSolver:
             for r, c in component:
                 for nr, nc in self.model.neighbors4(r, c):
                     if (nr, nc) not in component and not self.model.is_black_certain(nr, nc):
-                        if not self.model.is_clue(nr, nc) and (self.model.owners[nr][nc] & bit):
+                        if not self.model.is_clue(nr, nc) and (self.model.cells[nr][nc].owners & bit):
                             candidates.add((nr, nc))
             
             if len(candidates) == 2:
@@ -661,7 +641,8 @@ class NurikabeSolver:
                 
                 for xr, xc in common:
                     if (xr, xc) not in component and (xr, xc) not in candidates:
-                        if self.model.black_possible[xr][xc] and self.model.manual_mark[xr][xc] != BLACK:
+                        cell_x = self.model.cells[xr][xc]
+                        if not cell_x.is_land and cell_x.state != BLACK:
                             self.model.force_black(xr, xc)
                             return StepResult(
                                 changed_cells=[(xr, xc)],
@@ -677,7 +658,8 @@ class NurikabeSolver:
         fixed_cells_by_island = {isl.island_id: [] for isl in self.model.islands}
         for r in range(self.model.rows):
             for c in range(self.model.cols):
-                if not self.model.black_possible[r][c] and self.model.owners[r][c] != 0:
+                cell = self.model.cells[r][c]
+                if cell.is_land and cell.owners != 0:
                     # Check if singleton owner
                     iid = self.model.owners_singleton(r, c)
                     if iid is not None:
@@ -694,10 +676,8 @@ class NurikabeSolver:
             current_fixed = fixed_cells_by_island[iid]
             current_size = len(current_fixed)
             
-            # Remaining capacity for expansion
             remaining = clue - current_size
             if remaining < 0:
-                # Contradiction, but we can't solve it here. Just skip pruning.
                 continue
                 
             reachable = set(current_fixed)
@@ -708,9 +688,6 @@ class NurikabeSolver:
                 r, c, d = queue[idx]
                 idx += 1
                 
-                # If we have reached the limit of expansion from the current core, stop.
-                # 'd' is the number of EXTRA cells needed to reach here from the core.
-                # If d == remaining, we can include this cell but no further neighbors.
                 if d < remaining:
                     for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                         nr, nc = r + dr, c + dc
@@ -720,9 +697,7 @@ class NurikabeSolver:
                                 is_obstacle = False
                                 if self.model.is_black_certain(nr, nc):
                                     is_obstacle = True
-                                elif (self.model.owners[nr][nc] & bit) == 0:
-                                    # If the cell cannot possibly belong to this island (bit not in owners),
-                                    # it is an obstacle for reachability, even if it is currently Unknown.
+                                elif (self.model.cells[nr][nc].owners & bit) == 0:
                                     is_obstacle = True
 
                                 if not is_obstacle:
@@ -733,8 +708,8 @@ class NurikabeSolver:
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
                     if (r, c) not in reachable:
-                        if self.model.owners[r][c] & bit:
-                            self.model.owners[r][c] &= ~bit
+                        if self.model.cells[r][c].owners & bit:
+                            self.model.cells[r][c].owners &= ~bit
                             changed_cells.append((r, c))
         
         if changed_cells:

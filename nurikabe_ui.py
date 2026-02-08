@@ -82,18 +82,7 @@ def grid_default(rows: int, cols: int) -> List[List[int]]:
 
 
 def cycle_mark(model: NurikabeModel, r: int, c: int) -> None:
-    if model.is_clue(r, c):
-        return
-    mark = model.manual_mark[r][c]
-    if mark == UNKNOWN:
-        model.force_land(r, c)
-    elif mark == LAND:
-        model.force_black(r, c)
-    else:
-        model.manual_mark[r][c] = UNKNOWN
-        model.black_possible[r][c] = True
-        if model.owners[r][c] == 0:
-            model.owners[r][c] = model.get_potential_owners_mask(r, c)
+    model.cycle_state(r, c)
 
 
 def format_debug_cell(model: NurikabeModel, r: int, c: int) -> str:
@@ -101,12 +90,13 @@ def format_debug_cell(model: NurikabeModel, r: int, c: int) -> str:
         return "Out of bounds."
     if model.is_clue(r, c):
         return f"Cell ({r},{c}) clue={model.clues[r][c]} island_id={model.island_by_pos.get((r,c), '-')}"
-    owners_bits = model.owners[r][c]
+    cell = model.cells[r][c]
+    owners_bits = cell.owners
     owners_ids = model.bitset_to_ids(owners_bits)
     return (
-        f"Cell ({r},{c}) manual={model.manual_mark[r][c]} black_possible={model.black_possible[r][c]}\n"
+        f"Cell ({r},{c}) state={cell.state.name}\n"
         f"owners_bits={owners_bits} owners_ids={owners_ids}\n"
-        f"is_black_certain={model.is_black_certain(r,c)} is_land_certain={model.is_land_certain(r,c)}"
+        f"is_black={cell.is_black} is_land={cell.is_land}"
     )
 
 
@@ -210,11 +200,12 @@ def main() -> None:
 
     btn_edit = pygame_gui.elements.UIButton(pygame.Rect(10, 10, 240, 36), "Edit Grid", ui_manager, container=controls_win)
     btn_step = pygame_gui.elements.UIButton(pygame.Rect(10, 56, 240, 36), "Step", ui_manager, container=controls_win)
-    btn_10steps = pygame_gui.elements.UIButton(pygame.Rect(10, 102, 240, 36), "10Steps", ui_manager, container=controls_win)
-    btn_reset = pygame_gui.elements.UIButton(pygame.Rect(10, 148, 240, 36), "Reset", ui_manager, container=controls_win)
+    btn_next_cell = pygame_gui.elements.UIButton(pygame.Rect(10, 102, 240, 36), "Next Cell", ui_manager, container=controls_win)
+    btn_10steps = pygame_gui.elements.UIButton(pygame.Rect(10, 148, 240, 36), "10Steps", ui_manager, container=controls_win)
+    btn_reset = pygame_gui.elements.UIButton(pygame.Rect(10, 194, 240, 36), "Reset", ui_manager, container=controls_win)
 
     lbl_hint = pygame_gui.elements.UILabel(
-        pygame.Rect(10, 200, 240, 60),
+        pygame.Rect(10, 240, 240, 60),
         "Pan: drag with LMB\nZoom: mouse wheel\nClick: release without drag",
         ui_manager,
         container=controls_win
@@ -478,6 +469,10 @@ def main() -> None:
                     push_undo()
                     worker.send(WorkerCommand(kind="step"))
 
+                elif event.ui_element == btn_next_cell:
+                    push_undo()
+                    worker.send(WorkerCommand(kind="next_cell"))
+
                 elif event.ui_element == btn_10steps:
                     push_undo()
                     for _ in range(10):
@@ -622,10 +617,12 @@ def main() -> None:
 
         if state.mode == MODE_EDITOR:
             btn_step.disable()
+            btn_next_cell.disable()
             btn_10steps.disable()
             btn_reset.disable()
         else:
             btn_step.enable()
+            btn_next_cell.enable()
             btn_10steps.enable()
             btn_reset.enable()
 

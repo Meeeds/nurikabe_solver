@@ -1,16 +1,22 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Tuple, Dict, Optional
+from enum import IntEnum
 
 # ----------------------------
 # Domain model
 # ----------------------------
 
-UNKNOWN = 0
-BLACK = 1
-LAND = 2
+class CellState(IntEnum):
+    UNKNOWN = 0
+    BLACK = 1  # Sea
+    LAND = 2
+
+# Legacy constants for compatibility (if needed by importers)
+UNKNOWN = CellState.UNKNOWN
+BLACK = CellState.BLACK
+LAND = CellState.LAND
 
 RuleName = str
-
 
 @dataclass
 class Island:
@@ -18,6 +24,22 @@ class Island:
     clue: int
     pos: Tuple[int, int]  # (r,c)
 
+@dataclass
+class Cell:
+    state: CellState = CellState.UNKNOWN
+    owners: int = 0  # bitmask of potential island owners
+
+    @property
+    def is_land(self) -> bool:
+        return self.state == CellState.LAND
+
+    @property
+    def is_black(self) -> bool:
+        return self.state == CellState.BLACK
+
+    @property
+    def is_unknown(self) -> bool:
+        return self.state == CellState.UNKNOWN
 
 @dataclass
 class StepResult:
@@ -34,13 +56,8 @@ class NurikabeModel:
         self.islands: List[Island] = []
         self.island_by_pos: Dict[Tuple[int, int], int] = {}
 
-        # For each cell:
-        # - black_possible: bool
-        # - owners: bitset (int) where bit i means island i (1..K) is possible owner
-        # - manual_mark: UNKNOWN/BLACK/LAND affects black_possible / owners
-        self.black_possible: List[List[bool]] = []
-        self.owners: List[List[int]] = []
-        self.manual_mark: List[List[int]] = []
+        # The grid of Cells
+        self.cells: List[List[Cell]] = []
 
         # UI/log support
         self.last_step: Optional[StepResult] = None
@@ -74,22 +91,23 @@ class NurikabeModel:
             i += 1
         return ids
 
+    def get_cell(self, r: int, c: int) -> Cell:
+        return self.cells[r][c]
+
     def owners_empty(self, r: int, c: int) -> bool:
-        return self.owners[r][c] == 0
+        return self.cells[r][c].owners == 0
 
     def owners_singleton(self, r: int, c: int) -> Optional[int]:
-        bits = self.owners[r][c]
+        bits = self.cells[r][c].owners
         if bits != 0 and (bits & (bits - 1)) == 0:
-            # index of the single bit
-            return (bits.bit_length())
+            return bits.bit_length()
         return None
 
     def is_black_certain(self, r: int, c: int) -> bool:
-        # In our model: black certain iff owners is empty AND black_possible is True
-        return self.owners[r][c] == 0 and self.black_possible[r][c]
+        return self.cells[r][c].state == CellState.BLACK
 
     def is_land_certain(self, r: int, c: int) -> bool:
-        return not self.black_possible[r][c]
+        return self.cells[r][c].state == CellState.LAND
 
     def fixed_owner(self, r: int, c: int) -> Optional[int]:
         if self.is_land_certain(r, c):
@@ -97,48 +115,44 @@ class NurikabeModel:
         return None
 
     def force_black(self, r: int, c: int) -> bool:
-        """Force cell to black certain by emptying owners."""
+        """Force cell to BLACK state."""
         if self.is_clue(r, c):
             return False
-        changed = False
-        if self.owners[r][c] != 0:
-            self.owners[r][c] = 0
-            changed = True
-        if not self.black_possible[r][c]:
-            # black is now forced, but if black was impossible, this is a contradiction.
-            # We handle contradictions by allowing it, but note it.
-            self.black_possible[r][c] = True
-            changed = True
-        self.manual_mark[r][c] = BLACK
-        return changed
+        cell = self.cells[r][c]
+        if cell.state == CellState.BLACK:
+            return False
+        
+        # If it was Land, this is a contradiction, but we enforce the new state
+        cell.state = CellState.BLACK
+        cell.owners = 0  # Black cells have no owners
+        return True
 
     def force_land(self, r: int, c: int) -> bool:
+        """Force cell to LAND state."""
         if self.is_clue(r, c):
             return False
-        changed = False
-        if self.black_possible[r][c]:
-            self.black_possible[r][c] = False
-            changed = True
-        # Policy: A land cell must ALWAYS have potential owners
-        if self.owners[r][c] == 0:
-            self.owners[r][c] = self.get_potential_owners_mask(r, c)
-            changed = True
-
-        self.manual_mark[r][c] = LAND
-        return changed
+        cell = self.cells[r][c]
+        if cell.state == CellState.LAND:
+            return False
+        
+        cell.state = CellState.LAND
+        # Ensure it has potential owners if none were set (recovery/init)
+        if cell.owners == 0:
+            cell.owners = self.get_potential_owners_mask(r, c)
+        return True
 
     def restrict_owners_intersection(self, r: int, c: int, mask: int) -> bool:
         """Owners := Owners & mask"""
         if self.is_clue(r, c):
             return False
-        before = self.owners[r][c]
+        cell = self.cells[r][c]
+        before = cell.owners
         after = before & mask
         if after != before:
-            self.owners[r][c] = after
-            # If owners empties, this implies black certain (G6), unless black is impossible.
-            if after == 0:
-                # keep black_possible as-is; if black_possible false => contradiction.
-                pass
+            cell.owners = after
+            # If owners becomes empty, it implies it cannot be Land.
+            # If it was Land or Unknown, it should become Black (G6 logic).
+            # However, this method only restricts owners. Rule G6 handles the state transition.
             return True
         return False
 
@@ -146,11 +160,12 @@ class NurikabeModel:
         """Owners := Owners without island_id"""
         if self.is_clue(r, c):
             return False
+        cell = self.cells[r][c]
         b = self.bit(island_id)
-        before = self.owners[r][c]
+        before = cell.owners
         after = before & (~b)
         if after != before:
-            self.owners[r][c] = after
+            cell.owners = after
             return True
         return False
 
@@ -168,7 +183,6 @@ class NurikabeModel:
         if not lines:
             return False, "Empty input."
 
-        # tokenized if spaces exist, else treat as char-grid with digits possibly multi-digit? (hard)
         grid: List[List[int]] = []
         for ln in lines:
             if " " in ln.strip():
@@ -187,7 +201,6 @@ class NurikabeModel:
                             return False, f"Bad token: {t}"
                 grid.append(row)
             else:
-                # char grid: allow '.' and digits 1..9 only
                 row = []
                 for ch in ln.strip():
                     if ch == "." or ch == "0":
@@ -220,28 +233,24 @@ class NurikabeModel:
                     self.islands.append(isl)
                     self.island_by_pos[(r, c)] = island_id
 
-        # init arrays
-        self.black_possible = [[True for _ in range(self.cols)] for _ in range(self.rows)]
-        self.owners = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
-        self.manual_mark = [[UNKNOWN for _ in range(self.cols)] for _ in range(self.rows)]
+        # Init cells
+        self.cells = [[Cell() for _ in range(self.cols)] for _ in range(self.rows)]
 
-        # initialize owners domains
+        # Initialize owners domains
         K = len(self.islands)
         all_mask = (1 << K) - 1
         for r in range(self.rows):
             for c in range(self.cols):
+                cell = self.cells[r][c]
                 if self.is_clue(r, c):
                     iid = self.island_by_pos[(r, c)]
-                    self.owners[r][c] = self.bit(iid)
-                    self.black_possible[r][c] = False
-                    self.manual_mark[r][c] = LAND
+                    cell.owners = self.bit(iid)
+                    cell.state = CellState.LAND
                 else:
-                    self.owners[r][c] = all_mask
-                    self.black_possible[r][c] = True
-                    self.manual_mark[r][c] = UNKNOWN
+                    cell.owners = all_mask
+                    cell.state = CellState.UNKNOWN
 
-        # clues cannot be adjacent orthogonally to another clue (validation)
-        # we won't fail hard; we'll just record a last_step message.
+        # Clues cannot be adjacent orthogonally to another clue (validation)
         for isl in self.islands:
             r, c = isl.pos
             for rr, cc in self.neighbors4(r, c):
@@ -269,28 +278,40 @@ class NurikabeModel:
                         nr, nc = r + dr, c + dc
                         if 0 <= nr < self.rows and 0 <= nc < self.cols:
                             if (nr, nc) not in reachable:
-                                if not self.is_black_certain(nr, nc) and not (self.is_clue(nr, nc) and (nr, nc) != (sr, sc)):
+                                cell = self.cells[nr][nc]
+                                # Obstacle if it's strictly Black, or a clue of another island
+                                is_obstacle = (cell.state == CellState.BLACK)
+                                if self.is_clue(nr, nc) and (nr, nc) != (sr, sc):
+                                    is_obstacle = True
+                                
+                                if not is_obstacle:
                                     reachable.add((nr, nc))
                                     queue.append((nr, nc, d + 1))
+            
             for r in range(self.rows):
                 for c in range(self.cols):
                     if (r, c) not in reachable:
-                        self.owners[r][c] &= ~bit
+                        self.cells[r][c].owners &= ~bit
 
     def reset_domains_from_manual(self) -> None:
-        """Rebuild domains from scratch but keep manual marks (black/land/unknown)."""
-        grid = [row[:] for row in self.clues]
-        self.load_grid(grid)
-        # re-apply manual marks on non-clue cells
+        """Rebuild domains from scratch but keep current states."""
+        # Backup current states
+        states = [[self.cells[r][c].state for c in range(self.cols)] for r in range(self.rows)]
+        
+        # Reload grid to reset everything
+        self.load_grid([row[:] for row in self.clues])
+        
+        # Restore states
         for r in range(self.rows):
             for c in range(self.cols):
-                if self.is_clue(r, c):
+                if self.is_clue(r, c): 
                     continue
-                mark = self.manual_mark[r][c]
-                if mark == BLACK:
+                old_state = states[r][c]
+                if old_state == CellState.BLACK:
                     self.force_black(r, c)
-                elif mark == LAND:
+                elif old_state == CellState.LAND:
                     self.force_land(r, c)
+                # If UNKNOWN, we leave it as initialized by load_grid (UNKNOWN with full mask)
 
     def island_size_assigned(self, island_id: int) -> int:
         """Count land certain cells whose owner singleton is island_id."""
@@ -298,41 +319,34 @@ class NurikabeModel:
         b = self.bit(island_id)
         for r in range(self.rows):
             for c in range(self.cols):
-                if self.black_possible[r][c]:
-                    continue
-                if self.owners[r][c] == b:
+                cell = self.cells[r][c]
+                if cell.state == CellState.LAND and cell.owners == b:
                     cnt += 1
         return cnt
 
-    def cycle_manual_mark(self, r: int, c: int, forward: bool = True) -> None:
+    def cycle_state(self, r: int, c: int, forward: bool = True) -> None:
         if self.is_clue(r, c):
             return
-        mark = self.manual_mark[r][c]
-        cycle = [UNKNOWN, BLACK, LAND] if forward else [UNKNOWN, LAND, BLACK]
-        idx = cycle.index(mark)
-        new_mark = cycle[(idx + 1) % len(cycle)]
-        self.manual_mark[r][c] = new_mark
-
-        # Apply to domain/black_possible immediately (local "manual constraint")
-        if new_mark == UNKNOWN:
-            # "unknown" means revert to permissive: black possible
-            self.black_possible[r][c] = True
-            # if owners was emptied (due to being black), we should try to restore potential owners
-            # otherwise it stays "impossible" which isn't what "unknown" implies for the user.
-            if self.owners[r][c] == 0:
-                 self.owners[r][c] = self.get_potential_owners_mask(r, c)
-        elif new_mark == BLACK:
+        cell = self.cells[r][c]
+        # UNKNOWN -> LAND -> BLACK -> UNKNOWN
+        cycle = [CellState.UNKNOWN, CellState.BLACK, CellState.LAND] if forward else [CellState.UNKNOWN, CellState.LAND, CellState.BLACK]
+        # Note order: UI requested Unknown -> Land -> Black -> Unknown
+        # Let's match UI request: U -> L -> B -> U
+        cycle = [CellState.UNKNOWN, CellState.LAND, CellState.BLACK]
+        
+        idx = cycle.index(cell.state)
+        new_state = cycle[(idx + 1) % len(cycle)]
+        
+        if new_state == CellState.UNKNOWN:
+            cell.state = CellState.UNKNOWN
+            if cell.owners == 0:
+                cell.owners = self.get_potential_owners_mask(r, c)
+        elif new_state == CellState.BLACK:
             self.force_black(r, c)
-        elif new_mark == LAND:
+        elif new_state == CellState.LAND:
             self.force_land(r, c)
 
     def snapshot(self) -> Dict[str, object]:
-        """Return a fully self-contained, pickle-friendly snapshot of the current state.
-
-        Intended for:
-        - Undo/redo stacks (store snapshots)
-        - Background solving (send snapshots across processes)
-        """
         last_step = None
         if self.last_step is not None:
             last_step = {
@@ -340,41 +354,46 @@ class NurikabeModel:
                 "message": self.last_step.message,
                 "rule": self.last_step.rule,
             }
+        
+        # Serialize cells
+        # We store tuples (state, owners)
+        cells_data = []
+        for r in range(self.rows):
+            row_data = []
+            for c in range(self.cols):
+                cell = self.cells[r][c]
+                row_data.append((int(cell.state), cell.owners))
+            cells_data.append(row_data)
+
         return {
             "clues": [row[:] for row in self.clues],
-            "manual_mark": [row[:] for row in self.manual_mark],
-            "black_possible": [row[:] for row in self.black_possible],
-            "owners": [row[:] for row in self.owners],
+            "cells": cells_data,
             "last_step": last_step,
         }
 
     def restore(self, state: Dict[str, object]) -> None:
-        """Restore a state previously produced by snapshot()."""
         clues = state.get("clues")
-        if not isinstance(clues, list) or not clues or not isinstance(clues[0], list):
-            raise ValueError("Invalid snapshot: missing/invalid 'clues'.")
-
+        if not isinstance(clues, list):
+            raise ValueError("Invalid snapshot: 'clues' missing.")
+        
         self.load_grid([[int(v) for v in row] for row in clues])
 
-        manual_mark = state.get("manual_mark")
-        black_possible = state.get("black_possible")
-        owners = state.get("owners")
-
-        if not (isinstance(manual_mark, list) and isinstance(black_possible, list) and isinstance(owners, list)):
-            raise ValueError("Invalid snapshot: missing arrays.")
-
-        self.manual_mark = [[int(v) for v in row] for row in manual_mark]
-        self.black_possible = [[bool(v) for v in row] for row in black_possible]
-        self.owners = [[int(v) for v in row] for row in owners]
+        cells_data = state.get("cells")
+        if isinstance(cells_data, list):
+            for r in range(self.rows):
+                for c in range(self.cols):
+                    if r < len(cells_data) and c < len(cells_data[r]):
+                        s_val, o_val = cells_data[r][c]
+                        self.cells[r][c].state = CellState(s_val)
+                        self.cells[r][c].owners = o_val
 
         last_step = state.get("last_step")
-        if last_step is None:
-            self.last_step = None
-        else:
-            if not isinstance(last_step, dict):
-                raise ValueError("Invalid snapshot: 'last_step' must be dict or None.")
+        if last_step and isinstance(last_step, dict):
             self.last_step = StepResult(
                 changed_cells=[(int(r), int(c)) for (r, c) in last_step.get("changed_cells", [])],
                 message=str(last_step.get("message", "")),
                 rule=str(last_step.get("rule", "")),
             )
+        else:
+            self.last_step = None
+
