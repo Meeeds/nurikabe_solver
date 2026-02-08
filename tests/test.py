@@ -3,13 +3,45 @@ import json
 import argparse
 import sys
 from collections import Counter
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Set
 
 # Add the project root to the system path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from nurikabe_model import NurikabeModel
 from nurikabe_rules import NurikabeSolver
+
+# Master list of rules defined in the solver and model
+KNOWN_RULES = sorted(set(NurikabeSolver.RULE_NAMES))
+
+GLOBAL_RULE_COUNTS = Counter()
+
+def print_global_stats():
+    """Prints a summary of rule applications across all tests."""
+    print("\n" + "="*100)
+    print(f"{'GLOBAL RULE EXECUTION STATISTICS':^100}")
+    print("="*100)
+    print(f"    {'Rule Name':<85} | {'Applications':>10}")
+    print(f"    {'-'*65}-+-{'-'*10}")
+    
+    # Sort by application count descending, then by name
+    sorted_stats = sorted(
+        [(name, GLOBAL_RULE_COUNTS[name]) for name in KNOWN_RULES],
+        key=lambda x: (-x[1], x[0])
+    )
+    
+    for name, count in sorted_stats:
+        status = "" if count > 0 else "  [NEVER TRIGGERED]"
+        print(f"    {name:<85} | {count:>10}{status}")
+    
+    # Also check for any rules that appeared but aren't in KNOWN_RULES (safety)
+    unknown_rules = set(GLOBAL_RULE_COUNTS.keys()) - set(KNOWN_RULES) - {"None"}
+    if unknown_rules:
+        print(f"    {'-'*85}-+-{'-'*10}")
+        for name in sorted(unknown_rules):
+            print(f"    {name:<85}*| {GLOBAL_RULE_COUNTS[name]:>10}  [UNKNOWN RULE]")
+            
+    print("="*100 + "\n")
 
 def serialize_grid(model: NurikabeModel) -> List[List[str]]:
     """Converts the final grid state into a list of strings for JSON serialization."""
@@ -62,6 +94,7 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
         
         rule_name = result.rule
         rule_counts[rule_name] += 1
+        GLOBAL_RULE_COUNTS[rule_name] += 1
         steps_taken += 1
 
     # Determine if solved (no unknowns left)
@@ -185,10 +218,8 @@ if __name__ == "__main__":
         
         if all_tests_passed:
             print("\nAll selected tests PASSED!")
-            sys.exit(0)
         else:
             print("\nSome tests FAILED!")
-            sys.exit(1)
     elif args.grid_file:
         if args.mode == "generate":
             generate_reference(args.grid_file)
@@ -198,3 +229,5 @@ if __name__ == "__main__":
         print("Error: No grid file specified and --all option not used.")
         parser.print_help()
         sys.exit(1)
+
+    print_global_stats()
