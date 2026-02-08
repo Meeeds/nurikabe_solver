@@ -174,12 +174,13 @@
     "G1 Separation: neighbor of >=2 fixed owners -> black": 30,
     "G10 Island Completion: common neighbor of last candidates -> black": 2,
     "G1b Separation: match neighbor owners": 84,
+    "G3 Closure: complete island forces black neighbors": 17,
     "G4 Anti-2x2: 3 blacks -> land": 10,
-    "G5 Distance Pruning (Enhanced)": 37,
-    "G6 Empty domain -> black": 23,
+    "G5 Distance Pruning (Enhanced)": 38,
+    "G6 Empty domain -> black": 6,
     "G7 Generic Mandatory Expansion": 40,
     "G7b Global Brute Force Intersection & Pruning": 4,
     "G9 Global Black Connectivity (Articulation Point)": 16
   },
-  "steps_total": 246
+  "steps_total": 247
 }

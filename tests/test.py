@@ -54,7 +54,7 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
     
     while True:
         result = solver.step()
-        print(f"Step {steps_taken + 1}: Rule applied: {result.rule}, Message: {result.message}, Changed Cells: {len(result.changed_cells)}")
+        # print(f"Step {steps_taken + 1}: Rule applied: {result.rule}, Message: {result.message}, Changed Cells: {len(result.changed_cells)}")
         
         # The solver returns rule="None" when no more rules can be applied
         if result.rule == "None":
@@ -131,8 +131,23 @@ def check_regression(grid_path: str) -> bool:
         
         if not rules_match:
             print("  WARNING: Rule usage counts differ (logic path changed).")
-            print("    Reference Rules:", reference_result["rules_triggered"])
-            print("    Current Rules:  ", current_result["rules_triggered"])
+            ref_rules = reference_result["rules_triggered"]
+            cur_rules = current_result["rules_triggered"]
+            all_rule_names = sorted(set(ref_rules.keys()) | set(cur_rules.keys()))
+            
+            print(f"    {'Rule Name':<60} | {'Ref':>5} | {'Cur':>5} | {'Diff':>5}")
+            print(f"    {'-'*80}-+-{'-'*5}-+-{'-'*5}-+-{'-'*5}")
+            for name in all_rule_names:
+                ref_val = ref_rules.get(name, 0)
+                cur_val = cur_rules.get(name, 0)
+                diff = cur_val - ref_val
+                diff_str = f"{diff:+d}" if diff != 0 else "0"
+                print(f"    {name:<80} | {ref_val:>5} | {cur_val:>5} | {diff_str:>5}")
+            
+            print(f"    {'-'*80}-+-{'-'*5}-+-{'-'*5}-+-{'-'*5}")
+            ref_total = reference_result.get('steps_total', sum(ref_rules.values()))
+            cur_total = current_result['steps_total']
+            print(f"    {'TOTAL STEPS':<80} | {ref_total:>5} | {cur_total:>5} | {cur_total - ref_total:>+5}")
             
         return False
 
