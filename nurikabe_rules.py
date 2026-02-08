@@ -4,9 +4,11 @@ from nurikabe_model import NurikabeModel, StepResult, CellState
 # Global registry for rules: list of (priority, func, name)
 _RULES = []
 
-def solver_rule(priority: int, name: str) -> Callable:
+def solver_rule(priority: int, name: str, message: str = "") -> Callable:
     """Decorator to register a solver rule with a priority and a descriptive name."""
     def decorator(func: Callable) -> Callable:
+        func._rule_name = name
+        func._rule_message = message
         _RULES.append((priority, func, name))
         return func
     return decorator
@@ -19,31 +21,31 @@ class NurikabeSolver:
 
     def step(self) -> Optional[StepResult]:
         # Iterate over rules sorted by priority (lowest number first)
-        """ Previous steps where:
-            res = self.try_rule_distance_pruning()
-            res = self.try_rule_anti_2x2_force_land()
-            res = self.try_rule_common_neighbor_two_fixed_owners_black()
-            res = self.try_rule_neighbor_of_fixed_restriction()
-            res = self.try_rule_land_cluster_unification()
-            res = self.try_rule_close_complete_island()
-            res = self.try_rule_empty_owners_becomes_black()
-            res = self.try_rule_island_mandatory_expansion()
-            res = self.try_rule_island_global_bottleneck()
-            res = self.try_rule_black_mandatory_expansion()
-            res = self.try_rule_island_completion_common_neighbor_black()
-        """
-
-
-        for _, func, _ in sorted(_RULES, key=lambda x: x[0]):
+        for _, func, name in sorted(_RULES, key=lambda x: x[0]):
             res = func(self)
             if res:
+                if not res.rule:
+                    res.rule = name
+                
+                # If there's a rule message template and no explicit message in result
+                if hasattr(func, '_rule_message') and func._rule_message and not res.message:
+                    if res.format_args:
+                        try:
+                            res.message = func._rule_message % res.format_args
+                        except TypeError:
+                            # Fallback if formatting fails
+                            res.message = func._rule_message
+                    else:
+                         res.message = func._rule_message
+
                 self.model.last_step = res
                 return res
 
         self.model.last_step = StepResult([], "No applicable rule found.", "None")
         return self.model.last_step
 
-    @solver_rule(priority=3, name="G1b Separation: match neighbor owners")
+    @solver_rule(priority=3, name="G1b Separation: match neighbor owners",
+                 message="Restricted potential owners of (%d,%d) to match adjacent Land cells.")
     def try_rule_neighbor_of_fixed_restriction(self) -> Optional[StepResult]:
         """
         G1b Separation (Proactive): 
@@ -69,12 +71,12 @@ class NurikabeSolver:
                     if self.model.restrict_owners_intersection(r, c, combined_neighbor_mask):
                         return StepResult(
                             changed_cells=[(r, c)],
-                            message=f"Restricted potential owners of ({r},{c}) to match adjacent Land cells.",
-                            rule="G1b Separation: match neighbor owners"
+                            format_args=(r, c)
                         )
         return None
 
-    @solver_rule(priority=1, name="G4 Anti-2x2: 3 blacks -> land")
+    @solver_rule(priority=1, name="G4 Anti-2x2: 3 blacks -> land",
+                 message="Forced land to avoid a 2x2 black pool at block (%d,%d).")
     def try_rule_anti_2x2_force_land(self) -> Optional[StepResult]:
         for r in range(self.model.rows - 1):
             for c in range(self.model.cols - 1):
@@ -91,12 +93,12 @@ class NurikabeSolver:
                                 if self.model.force_land(rr, cc):
                                     return StepResult(
                                         changed_cells=[(rr, cc)],
-                                        message=f"Forced land to avoid a 2x2 black pool at block ({r},{c}).",
-                                        rule="G4 Anti-2x2: 3 blacks -> land"
+                                        format_args=(r, c)
                                     )
         return None
 
-    @solver_rule(priority=2, name="G1 Separation: neighbor of >=2 fixed owners -> black")
+    @solver_rule(priority=2, name="G1 Separation: neighbor of >=2 fixed owners -> black",
+                 message="Forced black because cell touches multiple distinct fixed islands %s.")
     def try_rule_common_neighbor_two_fixed_owners_black(self) -> Optional[StepResult]:
         for r in range(self.model.rows):
             for c in range(self.model.cols):
@@ -114,12 +116,12 @@ class NurikabeSolver:
                         ids = sorted(list(fixed))[:3]
                         return StepResult(
                             changed_cells=[(r, c)],
-                            message=f"Forced black because cell touches multiple distinct fixed islands {ids}.",
-                            rule="G1 Separation: neighbor of >=2 fixed owners -> black"
+                            format_args=(ids,)
                         )
         return None
 
-    @solver_rule(priority=4, name="G2 Unification: land cluster domain intersection")
+    @solver_rule(priority=4, name="G2 Unification: land cluster domain intersection",
+                 message="Unified land cluster at %s with intersection of potential owners.")
     def try_rule_land_cluster_unification(self) -> Optional[StepResult]:
         visited = [[False for _ in range(self.model.cols)] for _ in range(self.model.rows)]
         K = len(self.model.islands)
@@ -148,12 +150,12 @@ class NurikabeSolver:
                             self.model.cells[cr][cc].owners = common_mask
                             return StepResult(
                                 changed_cells=[(cr, cc)],
-                                message=f"Unified land cluster at {component[0]} with intersection of potential owners.",
-                                rule="G2 Unification: land cluster domain intersection"
+                                format_args=(component[0],)
                             )
         return None
 
-    @solver_rule(priority=5, name="G3 Closure: complete island forces black neighbors")
+    @solver_rule(priority=5, name="G3 Closure: complete island forces black neighbors",
+                 message="Island %d is complete (%d/%d); neighbor (%d,%d) must be black.")
     def try_rule_close_complete_island(self) -> Optional[StepResult]:
         for isl in self.model.islands:
             iid = isl.island_id
@@ -180,12 +182,12 @@ class NurikabeSolver:
                                 self.model.force_black(rr, cc)
                                 return StepResult(
                                     changed_cells=[(rr, cc)],
-                                    message=f"Island {iid} is complete ({clue}/{clue}); neighbor ({rr},{cc}) must be black.",
-                                    rule="G3 Closure: complete island forces black neighbors"
+                                    format_args=(iid, clue, clue, rr, cc)
                                 )
         return None
 
-    @solver_rule(priority=6, name="G6 Empty domain -> black")
+    @solver_rule(priority=6, name="G6 Empty domain -> black", 
+                 message="Owners domain became empty; forced black (no island can own this cell).")
     def try_rule_empty_owners_becomes_black(self) -> Optional[StepResult]:
         for r in range(self.model.rows):
             for c in range(self.model.cols):
@@ -195,14 +197,11 @@ class NurikabeSolver:
                 # If owners domain is empty and it's not already black (and not land), force black.
                 if cell.owners == 0 and not cell.is_land and cell.state != CellState.BLACK:
                     self.model.force_black(r, c)
-                    return StepResult(
-                        changed_cells=[(r, c)],
-                        message="Owners domain became empty; forced black (no island can own this cell).",
-                        rule="G6 Empty domain -> black"
-                    )
+                    return StepResult(changed_cells=[(r, c)])
         return None
 
-    @solver_rule(priority=7, name="G7 Generic Mandatory Expansion")
+    @solver_rule(priority=7, name="G7 Generic Mandatory Expansion",
+                 message="Island %d must include (%d,%d) to reach size %d (bottleneck detected).")
     def try_rule_island_mandatory_expansion(self) -> Optional[StepResult]:
         for isl in self.model.islands:
             iid = isl.island_id
@@ -264,8 +263,7 @@ class NurikabeSolver:
                     self.model.cells[tr][tc].owners = bit
                     return StepResult(
                         changed_cells=[(tr, tc)],
-                        message=f"Island {iid} must include ({tr},{tc}) to reach size {clue} (bottleneck detected).",
-                        rule="G7 Generic Mandatory Expansion"
+                        format_args=(iid, tr, tc, clue)
                     )
         return None
 
@@ -410,7 +408,8 @@ class NurikabeSolver:
             
         return union_added, common_added
 
-    @solver_rule(priority=8, name="G7b Global Brute Force Intersection & Pruning")
+    @solver_rule(priority=8, name="G7b Global Brute Force Intersection & Pruning",
+                 message="Brute force analysis for Island %d: pruned unreachable candidates / enforced bottlenecks.")
     def try_rule_island_global_bottleneck(self) -> Optional[StepResult]:
         # "Brute Force" Intersection Rule
         for isl in self.model.islands:
@@ -457,13 +456,13 @@ class NurikabeSolver:
             if changed_list:
                 return StepResult(
                     changed_cells=changed_list,
-                    message=f"Brute force analysis for Island {isl.island_id}: pruned unreachable candidates / enforced bottlenecks.",
-                    rule="G7b Global Brute Force Intersection & Pruning"
+                    format_args=(isl.island_id,)
                 )
 
         return None
 
-    @solver_rule(priority=9, name="G9 Global Black Connectivity (Articulation Point)")
+    @solver_rule(priority=9, name="G9 Global Black Connectivity (Articulation Point)",
+                 message="Global Sea Connectivity: Cell (%d,%d) is a mandatory articulation point.")
     def try_rule_black_mandatory_expansion(self) -> Optional[StepResult]:
         # 1. Identify all connected components of current black cells
         visited = [[False for _ in range(self.model.cols)] for _ in range(self.model.rows)]
@@ -575,12 +574,12 @@ class NurikabeSolver:
                         self.model.force_black(tr, tc)
                         return StepResult(
                             changed_cells=[(tr, tc)],
-                            message=f"Global Sea Connectivity: Cell ({tr},{tc}) is a mandatory articulation point.",
-                            rule="G9 Global Black Connectivity (Articulation Point)"
+                            format_args=(tr, tc)
                         )
         return None
 
-    @solver_rule(priority=10, name="G10 Island Completion: common neighbor of last candidates -> black")
+    @solver_rule(priority=10, name="G10 Island Completion: common neighbor of last candidates -> black",
+                 message="Island %d needs 1 cell; either %s or %s will complete it. Their common neighbor (%d,%d) must be black.")
     def try_rule_island_completion_common_neighbor_black(self) -> Optional[StepResult]:
         for isl in self.model.islands:
             iid = isl.island_id
@@ -622,12 +621,12 @@ class NurikabeSolver:
                             self.model.force_black(xr, xc)
                             return StepResult(
                                 changed_cells=[(xr, xc)],
-                                message=f"Island {iid} needs 1 cell; either {c_list[0]} or {c_list[1]} will complete it. Their common neighbor ({xr},{xc}) must be black.",
-                                rule="G10 Island Completion: common neighbor of last candidates -> black"
+                                format_args=(iid, c_list[0], c_list[1], xr, xc)
                             )
         return None
 
-    @solver_rule(priority=0, name="G5 Distance Pruning (Enhanced)")
+    @solver_rule(priority=0, name="G5 Distance Pruning (Enhanced)",
+                 message="Pruned potential owners based on reachability from current island components.")
     def try_rule_distance_pruning(self) -> Optional[StepResult]:
         changed_cells = []
         
@@ -690,11 +689,7 @@ class NurikabeSolver:
                             changed_cells.append((r, c))
         
         if changed_cells:
-            return StepResult(
-                changed_cells=list(set(changed_cells)),
-                message="Pruned potential owners based on reachability from current island components.",
-                rule="G5 Distance Pruning (Enhanced)"
-            )
+            return StepResult(changed_cells=list(set(changed_cells)))
         return None
 
 # Dynamically generate the list of rule names sorted by priority

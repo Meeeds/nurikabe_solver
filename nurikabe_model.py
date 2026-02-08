@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Any
 from enum import IntEnum
 
 # ----------------------------
@@ -39,8 +39,9 @@ class Cell:
 @dataclass
 class StepResult:
     changed_cells: List[Tuple[int, int]]
-    message: str
-    rule: RuleName
+    message: str = ""
+    rule: RuleName = ""
+    format_args: Tuple[Any, ...] = field(default_factory=tuple)
 
 
 class NurikabeModel:
