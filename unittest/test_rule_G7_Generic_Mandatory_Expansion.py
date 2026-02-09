@@ -16,7 +16,7 @@ def get_rule_func(rule_name):
     return None
 
 TEST_DATA_FILES = [
-    'unittest/data/rule_G7_Generic_Mandatory_Expansion_0.json', 'unittest/data/rule_G7_Generic_Mandatory_Expansion_1.json', 'unittest/data/rule_G7_Generic_Mandatory_Expansion_2.json', 'unittest/data/rule_G7_Generic_Mandatory_Expansion_3.json', 'unittest/data/rule_G7_Generic_Mandatory_Expansion_4.json', 'unittest/data/rule_G7_Generic_Mandatory_Expansion_5.json', 'unittest/data/rule_G7_Generic_Mandatory_Expansion_6.json', 'unittest/data/rule_G7_Generic_Mandatory_Expansion_7.json', 'unittest/data/rule_G7_Generic_Mandatory_Expansion_8.json', 'unittest/data/rule_G7_Generic_Mandatory_Expansion_9.json'
+    'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_0.json', 'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_1.json', 'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_2.json', 'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_3.json', 'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_4.json', 'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_5.json', 'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_6.json', 'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_7.json', 'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_8.json', 'unittest/G7_Generic_Mandatory_Expansion/data/rule_G7_Generic_Mandatory_Expansion_9.json'
 ]
 
 @pytest.mark.parametrize("data_file", TEST_DATA_FILES)

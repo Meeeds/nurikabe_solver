@@ -16,7 +16,7 @@ def get_rule_func(rule_name):
     return None
 
 TEST_DATA_FILES = [
-    'unittest/data/rule_G6_Empty_domain____black_0.json', 'unittest/data/rule_G6_Empty_domain____black_1.json', 'unittest/data/rule_G6_Empty_domain____black_2.json', 'unittest/data/rule_G6_Empty_domain____black_3.json', 'unittest/data/rule_G6_Empty_domain____black_4.json', 'unittest/data/rule_G6_Empty_domain____black_5.json', 'unittest/data/rule_G6_Empty_domain____black_6.json', 'unittest/data/rule_G6_Empty_domain____black_7.json', 'unittest/data/rule_G6_Empty_domain____black_8.json', 'unittest/data/rule_G6_Empty_domain____black_9.json'
+    'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_0.json', 'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_1.json', 'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_2.json', 'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_3.json', 'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_4.json', 'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_5.json', 'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_6.json', 'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_7.json', 'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_8.json', 'unittest/G6_Empty_domain____black/data/rule_G6_Empty_domain____black_9.json'
 ]
 
 @pytest.mark.parametrize("data_file", TEST_DATA_FILES)

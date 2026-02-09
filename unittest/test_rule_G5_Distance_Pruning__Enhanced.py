@@ -16,7 +16,7 @@ def get_rule_func(rule_name):
     return None
 
 TEST_DATA_FILES = [
-    'unittest/data/rule_G5_Distance_Pruning__Enhanced_0.json', 'unittest/data/rule_G5_Distance_Pruning__Enhanced_1.json', 'unittest/data/rule_G5_Distance_Pruning__Enhanced_2.json', 'unittest/data/rule_G5_Distance_Pruning__Enhanced_3.json', 'unittest/data/rule_G5_Distance_Pruning__Enhanced_4.json', 'unittest/data/rule_G5_Distance_Pruning__Enhanced_5.json', 'unittest/data/rule_G5_Distance_Pruning__Enhanced_6.json', 'unittest/data/rule_G5_Distance_Pruning__Enhanced_7.json', 'unittest/data/rule_G5_Distance_Pruning__Enhanced_8.json', 'unittest/data/rule_G5_Distance_Pruning__Enhanced_9.json'
+    'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_0.json', 'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_1.json', 'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_2.json', 'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_3.json', 'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_4.json', 'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_5.json', 'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_6.json', 'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_7.json', 'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_8.json', 'unittest/G5_Distance_Pruning__Enhanced/data/rule_G5_Distance_Pruning__Enhanced_9.json'
 ]
 
 @pytest.mark.parametrize("data_file", TEST_DATA_FILES)

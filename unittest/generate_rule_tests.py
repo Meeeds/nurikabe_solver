@@ -66,13 +66,8 @@ def collect_samples():
     return samples
 
 def generate_tests(samples):
-    output_dir_data = os.path.join(os.path.dirname(__file__), 'data')
-    output_dir_tests = os.path.dirname(__file__)
+    unittest_dir = os.path.dirname(__file__)
     
-    # Ensure data dir exists (it should, but just in case)
-    if not os.path.exists(output_dir_data):
-        os.makedirs(output_dir_data)
-
     for rule_name, instances in samples.items():
         print(f"Generating tests for rule: {rule_name} ({len(instances)} instances found)")
         
@@ -80,6 +75,13 @@ def generate_tests(samples):
         selected = random.sample(instances, min(len(instances), 10))
         
         sanitized_rule_name = sanitize_filename(rule_name)
+        
+        rule_dir = os.path.join(unittest_dir, sanitized_rule_name)
+        output_dir_data = os.path.join(rule_dir, 'data')
+        
+        # Ensure directories exist
+        os.makedirs(output_dir_data, exist_ok=True)
+
         json_filenames = []
         
         for i, data in enumerate(selected):
@@ -90,12 +92,12 @@ def generate_tests(samples):
             with open(json_path, 'w') as f:
                 json.dump(data, f, indent=2)
             
-            # Store relative path for the python test
-            json_filenames.append(os.path.join('unittest', 'data', json_filename))
+            # Store relative path for the python test (relative to project root)
+            json_filenames.append(os.path.join('unittest', sanitized_rule_name, 'data', json_filename))
             
         # Generate Python Test File
         test_filename = f"test_rule_{sanitized_rule_name}.py"
-        test_path = os.path.join(output_dir_tests, test_filename)
+        test_path = os.path.join(rule_dir, test_filename)
         
         test_content = f"""
 import pytest

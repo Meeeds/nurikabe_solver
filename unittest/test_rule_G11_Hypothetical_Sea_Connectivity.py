@@ -16,7 +16,7 @@ def get_rule_func(rule_name):
     return None
 
 TEST_DATA_FILES = [
-    'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_0.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_1.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_2.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_3.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_4.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_5.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_6.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_7.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_8.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_9.json'
+    'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_0.json', 'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_1.json', 'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_2.json', 'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_3.json', 'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_4.json', 'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_5.json', 'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_6.json', 'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_7.json', 'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_8.json', 'unittest/G11_Hypothetical_Sea_Connectivity/data/rule_G11_Hypothetical_Sea_Connectivity_9.json'
 ]
 
 @pytest.mark.parametrize("data_file", TEST_DATA_FILES)

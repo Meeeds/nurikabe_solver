@@ -16,7 +16,7 @@ def get_rule_func(rule_name):
     return None
 
 TEST_DATA_FILES = [
-    'unittest/data/rule_G4_Anti_2x2__3_blacks____land_0.json', 'unittest/data/rule_G4_Anti_2x2__3_blacks____land_1.json', 'unittest/data/rule_G4_Anti_2x2__3_blacks____land_2.json', 'unittest/data/rule_G4_Anti_2x2__3_blacks____land_3.json', 'unittest/data/rule_G4_Anti_2x2__3_blacks____land_4.json', 'unittest/data/rule_G4_Anti_2x2__3_blacks____land_5.json', 'unittest/data/rule_G4_Anti_2x2__3_blacks____land_6.json', 'unittest/data/rule_G4_Anti_2x2__3_blacks____land_7.json', 'unittest/data/rule_G4_Anti_2x2__3_blacks____land_8.json', 'unittest/data/rule_G4_Anti_2x2__3_blacks____land_9.json'
+    'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_0.json', 'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_1.json', 'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_2.json', 'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_3.json', 'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_4.json', 'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_5.json', 'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_6.json', 'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_7.json', 'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_8.json', 'unittest/G4_Anti_2x2__3_blacks____land/data/rule_G4_Anti_2x2__3_blacks____land_9.json'
 ]
 
 @pytest.mark.parametrize("data_file", TEST_DATA_FILES)
