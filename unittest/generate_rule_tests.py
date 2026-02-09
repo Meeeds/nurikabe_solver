@@ -97,7 +97,7 @@ def generate_tests(samples):
             
         # Generate Python Test File
         test_filename = f"test_rule_{sanitized_rule_name}.py"
-        test_path = os.path.join(rule_dir, test_filename)
+        test_path = os.path.join(unittest_dir, test_filename)
         
         test_content = f"""
 import pytest
