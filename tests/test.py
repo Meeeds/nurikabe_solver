@@ -3,7 +3,7 @@ import json
 import argparse
 import sys
 from collections import Counter
-from typing import Dict, Any, List, Set
+from typing import Dict, Any, List
 
 # Add the project root to the system path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -186,48 +186,59 @@ def check_regression(grid_path: str) -> bool:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Nurikabe Solver Test Runner")
-    parser.add_argument("grid_file", nargs='?', help="Path to the .nu.txt grid file (optional if --all is used)")
+    parser.add_argument("path", nargs='?', help="Path to a .txt grid file OR a directory containing .txt files. (Optional if --all is used)")
     parser.add_argument("--mode", choices=["generate", "test"], default="test", 
                         help="Mode: 'generate' to create reference JSON, 'test' to compare against it.")
     parser.add_argument("--all", action="store_true", 
-                        help="Run all tests on *.nu.txt files in the test directory.")
+                        help="Run all tests on *.txt files in the test directory (deprecated behavior, prefer providing a directory path).")
     
     args = parser.parse_args()
 
-    if args.all:
-        if args.grid_file:
-            print("Error: Cannot use --all and specify a grid_file simultaneously.")
-            sys.exit(1)
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        test_files = [os.path.join(test_dir, f) for f in os.listdir(test_dir) if f.endswith(".nu.txt")]
-        
-        if not test_files:
-            print(f"No .nu.txt files found in the test directory: {test_dir}")
-            sys.exit(0)
+    files_to_process = []
 
-        all_tests_passed = True
+    # Determine the target directory or file
+    if args.path:
+        if os.path.isdir(args.path):
+            # It's a directory, find all .txt files
+            files_to_process = [os.path.join(args.path, f) for f in os.listdir(args.path) if f.endswith(".txt")]
+            if not files_to_process:
+                 print(f"No .txt files found in the directory: {args.path}")
+                 sys.exit(0)
+            print(f"Running all tests in {args.mode} mode for {len(files_to_process)} files in {args.path}:")
+        elif os.path.isfile(args.path):
+            # It's a single file
+            files_to_process = [args.path]
+        else:
+            print(f"Error: Path '{args.path}' does not exist.")
+            sys.exit(1)
+    elif args.all:
+        # Fallback to legacy behavior: current script directory
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        files_to_process = [os.path.join(test_dir, f) for f in os.listdir(test_dir) if f.endswith(".txt")]
+        if not files_to_process:
+            print(f"No .txt files found in the test directory: {test_dir}")
+            sys.exit(0)
         print(f"Running all tests in {args.mode} mode for files in {test_dir}:")
-        for test_file in sorted(test_files):
-            print(f"\n--- Processing {os.path.basename(test_file)} ---")
-            if args.mode == "generate":
-                if not generate_reference(test_file):
-                    all_tests_passed = False
-            else: # mode == "test"
-                if not check_regression(test_file):
-                    all_tests_passed = False
-        
+    else:
+        print("Error: No path specified and --all option not used.")
+        parser.print_help()
+        sys.exit(1)
+
+    # Process files
+    all_tests_passed = True
+    for test_file in sorted(files_to_process):
+        print(f"\n--- Processing {os.path.basename(test_file)} ---")
+        if args.mode == "generate":
+            if not generate_reference(test_file):
+                all_tests_passed = False
+        else: # mode == "test"
+            if not check_regression(test_file):
+                all_tests_passed = False
+    
+    if len(files_to_process) > 1:
         if all_tests_passed:
             print("\nAll selected tests PASSED!")
         else:
             print("\nSome tests FAILED!")
-    elif args.grid_file:
-        if args.mode == "generate":
-            generate_reference(args.grid_file)
-        else:
-            check_regression(args.grid_file)
-    else:
-        print("Error: No grid file specified and --all option not used.")
-        parser.print_help()
-        sys.exit(1)
 
     print_global_stats()

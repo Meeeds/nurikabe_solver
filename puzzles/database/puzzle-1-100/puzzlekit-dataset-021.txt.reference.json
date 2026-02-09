@@ -1,0 +1,137 @@
+{
+  "final_grid": [
+    [
+      "LAND(1)",
+      "LAND(1)",
+      "LAND(1)",
+      "LAND(1)",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK"
+    ],
+    [
+      "CLUE(5)",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "CLUE(3)",
+      "LAND(2)",
+      "LAND(2)",
+      "BLACK",
+      "CLUE(5)"
+    ],
+    [
+      "BLACK",
+      "BLACK",
+      "LAND(7)",
+      "BLACK",
+      "LAND(4)",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "LAND(3)"
+    ],
+    [
+      "LAND(7)",
+      "LAND(7)",
+      "LAND(7)",
+      "BLACK",
+      "LAND(4)",
+      "CLUE(3)",
+      "BLACK",
+      "LAND(5)",
+      "BLACK",
+      "LAND(3)"
+    ],
+    [
+      "LAND(7)",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "CLUE(3)",
+      "LAND(5)",
+      "BLACK",
+      "LAND(3)"
+    ],
+    [
+      "LAND(7)",
+      "BLACK",
+      "LAND(8)",
+      "LAND(8)",
+      "BLACK",
+      "CLUE(5)",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "LAND(3)"
+    ],
+    [
+      "CLUE(7)",
+      "BLACK",
+      "CLUE(3)",
+      "BLACK",
+      "BLACK",
+      "LAND(6)",
+      "LAND(6)",
+      "LAND(6)",
+      "BLACK",
+      "BLACK"
+    ],
+    [
+      "BLACK",
+      "CLUE(6)",
+      "BLACK",
+      "BLACK",
+      "LAND(9)",
+      "BLACK",
+      "LAND(6)",
+      "BLACK",
+      "CLUE(1)",
+      "BLACK"
+    ],
+    [
+      "BLACK",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK"
+    ],
+    [
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "CLUE(4)",
+      "LAND(11)",
+      "LAND(11)",
+      "LAND(11)"
+    ]
+  ],
+  "is_fully_solved": true,
+  "rules_triggered": {
+    "G1 Separation: neighbor of >=2 fixed owners -> black": 15,
+    "G1b Separation: match neighbor owners": 36,
+    "G3 Closure: complete island forces black neighbors": 13,
+    "G4 Anti-2x2: 3 blacks -> land": 5,
+    "G5 Distance Pruning (Enhanced)": 15,
+    "G6 Empty domain -> black": 11,
+    "G7 Generic Mandatory Expansion": 20,
+    "G7b Global Brute Force Intersection & Pruning": 5,
+    "G9 Global Black Connectivity (Articulation Point)": 16
+  },
+  "steps_total": 136
+}
