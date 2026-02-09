@@ -259,7 +259,8 @@
   "is_fully_solved": false,
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 41,
-    "G1b Separation: match neighbor owners": 101,
+    "G1b Separation: match neighbor owners": 100,
+    "G2 Unification: land cluster domain intersection": 1,
     "G3 Closure: complete island forces black neighbors": 43,
     "G4 Anti-2x2: 3 blacks -> land": 15,
     "G5 Distance Pruning (Enhanced)": 58,

@@ -261,7 +261,7 @@ if __name__ == "__main__":
 
         print_global_stats()
 
-    if len(files_to_process) > 1:
+    if args.mode == "test" and len(files_to_process) > 1:
         if all_tests_passed:
             print("\nAll selected tests PASSED!")
             sys.exit(0)

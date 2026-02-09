@@ -194,14 +194,15 @@
   "is_fully_solved": true,
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 24,
-    "G1b Separation: match neighbor owners": 59,
+    "G1b Separation: match neighbor owners": 58,
+    "G2 Unification: land cluster domain intersection": 3,
     "G3 Closure: complete island forces black neighbors": 51,
     "G4 Anti-2x2: 3 blacks -> land": 15,
-    "G5 Distance Pruning (Enhanced)": 41,
+    "G5 Distance Pruning (Enhanced)": 40,
     "G6 Empty domain -> black": 18,
     "G7 Generic Mandatory Expansion": 16,
     "G7b Global Brute Force Intersection & Pruning": 7,
     "G9 Global Black Connectivity (Articulation Point)": 5
   },
-  "steps_total": 236
+  "steps_total": 237
 }

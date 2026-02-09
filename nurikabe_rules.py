@@ -44,7 +44,7 @@ class NurikabeSolver:
         self.model.last_step = StepResult([], "No applicable rule found.", "None")
         return self.model.last_step
 
-    @solver_rule(priority=3, name="G1b Separation: match neighbor owners",
+    @solver_rule(priority=4, name="G1b Separation: match neighbor owners",
                  message="Restricted potential owners of (%d,%d) to match adjacent Land cells.")
     def try_rule_neighbor_of_fixed_restriction(self) -> Optional[StepResult]:
         """
@@ -55,7 +55,7 @@ class NurikabeSolver:
         """
         for r in range(self.model.rows):
             for c in range(self.model.cols):
-                if self.model.is_clue(r, c) or self.model.is_black_certain(r, c):
+                if not self.model.cells[r][c].is_unknown:
                     continue
                 
                 # Combine masks from all LAND neighbors
@@ -120,7 +120,7 @@ class NurikabeSolver:
                         )
         return None
 
-    @solver_rule(priority=4, name="G2 Unification: land cluster domain intersection",
+    @solver_rule(priority=3, name="G2 Unification: land cluster domain intersection",
                  message="Unified land cluster at %s with intersection of potential owners.")
     def try_rule_land_cluster_unification(self) -> Optional[StepResult]:
         visited = [[False for _ in range(self.model.cols)] for _ in range(self.model.rows)]
