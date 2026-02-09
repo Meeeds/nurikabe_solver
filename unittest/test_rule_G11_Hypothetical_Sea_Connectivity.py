@@ -16,11 +16,11 @@ def get_rule_func(rule_name):
     return None
 
 TEST_DATA_FILES = [
-    'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_0.json', 'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_1.json', 'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_2.json', 'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_3.json', 'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_4.json', 'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_5.json', 'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_6.json', 'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_7.json', 'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_8.json', 'unittest/data/rule_G1_Separation__neighbor_of___2_fixed_owners____black_9.json'
+    'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_0.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_1.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_2.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_3.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_4.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_5.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_6.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_7.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_8.json', 'unittest/data/rule_G11_Hypothetical_Sea_Connectivity_9.json'
 ]
 
 @pytest.mark.parametrize("data_file", TEST_DATA_FILES)
-def test_G1_Separation__neighbor_of___2_fixed_owners____black(data_file):
+def test_G11_Hypothetical_Sea_Connectivity(data_file):
     # Resolve absolute path to data file
     # Assuming test is run from project root or unittest folder
     # We try to locate the file relative to the project root

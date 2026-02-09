@@ -66,11 +66,6 @@ def collect_samples():
     return samples
 
 def generate_tests(samples):
-    # Filter out G2 Unification
-    if "G2 Unification: land cluster domain intersection" in samples:
-        print("Skipping G2 Unification samples as requested.")
-        del samples["G2 Unification: land cluster domain intersection"]
-
     output_dir_data = os.path.join(os.path.dirname(__file__), 'data')
     output_dir_tests = os.path.dirname(__file__)
     
