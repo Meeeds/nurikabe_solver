@@ -352,13 +352,13 @@ class NurikabeModel:
             }
         
         # Serialize cells
-        # We store tuples (state, owners)
+        # We store lists [state, owners] for JSON compatibility
         cells_data = []
         for r in range(self.rows):
             row_data = []
             for c in range(self.cols):
                 cell = self.cells[r][c]
-                row_data.append((int(cell.state), cell.owners))
+                row_data.append([int(cell.state), cell.owners])
             cells_data.append(row_data)
 
         return {
