@@ -21,7 +21,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "UNKNOWN",
+      "BLACK",
       "BLACK"
     ],
     [
@@ -123,6 +123,7 @@
   ],
   "is_fully_solved": false,
   "rules_triggered": {
+    "G11 Hypothetical Sea Connectivity": 3,
     "G1b Separation: match neighbor owners": 43,
     "G3 Closure: complete island forces black neighbors": 13,
     "G4 Anti-2x2: 3 blacks -> land": 1,
@@ -131,5 +132,5 @@
     "G7b Global Brute Force Intersection & Pruning": 3,
     "G9 Global Black Connectivity (Articulation Point)": 1
   },
-  "steps_total": 78
+  "steps_total": 81
 }

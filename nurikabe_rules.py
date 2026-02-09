@@ -692,5 +692,166 @@ class NurikabeSolver:
             return StepResult(changed_cells=list(set(changed_cells)))
         return None
 
+    @solver_rule(priority=20, name="G11 Hypothetical Sea Connectivity",
+                 message="Hypothetical island expansion at (%d,%d) disconnects sea.")
+    def try_rule_hypothetical_sea_connectivity(self) -> Optional[StepResult]:
+        # Optimization: identifying black cells once
+        black_cells = []
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if self.model.is_black_certain(r, c):
+                    black_cells.append((r, c))
+        
+        if len(black_cells) < 2:
+            return None # Cannot disconnect < 2 cells
+
+        black_cells_set = set(black_cells)
+
+        # Pre-calculate fixed core for each island to speed up lookups
+        island_cores = {}
+        for isl in self.model.islands:
+            island_cores[isl.island_id] = []
+        
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if self.model.is_land_certain(r, c):
+                    singleton = self.model.owners_singleton(r, c)
+                    if singleton is not None:
+                        island_cores[singleton].append((r, c))
+
+        for r in range(self.model.rows):
+            for c in range(self.model.cols):
+                if not self.model.cells[r][c].is_unknown:
+                    continue
+                
+                owners_mask = self.model.cells[r][c].owners
+                if owners_mask == 0: continue
+
+                impossible_owners = []
+                potential_owners = self.model.bitset_to_ids(owners_mask)
+                
+                for iid in potential_owners:
+                    core_cells = island_cores[iid]
+                    if not core_cells: continue
+
+                    bit = self.model.bit(iid)
+                    
+                    # 1. BFS to get distance map from (r,c)
+                    dist_map = {(r, c): 0}
+                    q_bfs = [(r, c)]
+                    idx = 0
+                    
+                    min_dist = float('inf')
+                    
+                    while idx < len(q_bfs):
+                        curr = q_bfs[idx]
+                        idx += 1
+                        d = dist_map[curr]
+                        
+                        is_core = False
+                        for cr, cc in core_cells:
+                            if (cr, cc) == curr:
+                                is_core = True
+                                break
+                        
+                        if is_core:
+                            if d < min_dist:
+                                min_dist = d
+                            continue 
+
+                        if d >= min_dist:
+                            continue
+
+                        for nr, nc in self.model.neighbors4(*curr):
+                            if (nr, nc) not in dist_map:
+                                cell_n = self.model.cells[nr][nc]
+                                if not cell_n.is_black and (cell_n.owners & bit):
+                                    dist_map[(nr, nc)] = d + 1
+                                    q_bfs.append((nr, nc))
+                    
+                    if min_dist == float('inf'):
+                        impossible_owners.append(iid)
+                        continue
+
+                    # 2. DFS to reconstruct ALL shortest paths and check connectivity
+                    targets = [cell for cell in core_cells if dist_map.get(cell) == min_dist]
+                    
+                    MAX_PATHS = 50
+                    paths_checked = 0
+                    found_valid_path = False
+                    
+                    stack = []
+                    for t in targets:
+                        stack.append((t, {t}))
+                    
+                    while stack:
+                        curr, path_so_far = stack.pop()
+                        
+                        if curr == (r, c):
+                            paths_checked += 1
+                            obstacles = path_so_far.union(core_cells)
+                            
+                            q_sea = [black_cells[0]]
+                            seen_sea = {black_cells[0]}
+                            reached_blacks_count = 0
+                            sea_idx = 0
+                            
+                            while sea_idx < len(q_sea):
+                                curr_sea = q_sea[sea_idx]
+                                sea_idx += 1
+                                if curr_sea in black_cells_set:
+                                    reached_blacks_count += 1
+                                for nr, nc in self.model.neighbors4(*curr_sea):
+                                    if (nr, nc) not in obstacles:
+                                        if not self.model.is_land_certain(nr, nc):
+                                            if (nr, nc) not in seen_sea:
+                                                seen_sea.add((nr, nc))
+                                                q_sea.append((nr, nc))
+                            
+                            if reached_blacks_count == len(black_cells):
+                                found_valid_path = True
+                                break
+                            
+                            if paths_checked >= MAX_PATHS:
+                                found_valid_path = True 
+                                break
+                            continue
+
+                        current_d = dist_map[curr]
+                        for nr, nc in self.model.neighbors4(*curr):
+                            if dist_map.get((nr, nc)) == current_d - 1:
+                                new_path = path_so_far.copy()
+                                new_path.add((nr, nc))
+                                stack.append(((nr, nc), new_path))
+                    
+                    if not found_valid_path:
+                        impossible_owners.append(iid)
+
+                if len(impossible_owners) == len(potential_owners):
+                    self.model.force_black(r, c)
+                    msg = "Every hypothetical expansion of (%d,%d) disconnects sea; forced Black." % (r, c)
+                    print(msg)
+                    return StepResult(
+                        changed_cells=[(r, c)],
+                        message=msg
+                    )
+                elif len(impossible_owners) > 0:
+                    changed = False
+                    removed_ids = []
+                    for iid in impossible_owners:
+                        if self.model.remove_owner(r, c, iid):
+                            changed = True
+                            removed_ids.append(iid)
+                    if changed:
+                        ids_str = ", ".join(map(str, sorted(removed_ids)))
+                        msg = "Removed impossible owners %s for cell (%d,%d) because their shortest paths disconnect sea." % (ids_str, r, c)
+                        print(msg)
+                        return StepResult(
+                            changed_cells=[(r, c)],
+                            message=msg
+                        )
+
+        return None
+
 # Dynamically generate the list of rule names sorted by priority
 NurikabeSolver.RULE_NAMES = [r[2] for r in sorted(_RULES, key=lambda x: x[0])]

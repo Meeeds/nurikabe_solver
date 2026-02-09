@@ -161,6 +161,7 @@ def check_regression(grid_path: str) -> bool:
         
         if not grid_match:
             print("  CRITICAL: Final grid state differs!")
+            print(f" reference_result[is_fully_solved] = {reference_result['is_fully_solved']} current_result[is_fully_solved] = {current_result['is_fully_solved']}")
             # Basic diff output
         
         if not rules_match:

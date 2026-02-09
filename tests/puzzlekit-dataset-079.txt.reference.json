@@ -124,11 +124,12 @@
   "is_fully_solved": false,
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 3,
+    "G11 Hypothetical Sea Connectivity": 12,
     "G1b Separation: match neighbor owners": 26,
     "G3 Closure: complete island forces black neighbors": 4,
-    "G5 Distance Pruning (Enhanced)": 15,
+    "G5 Distance Pruning (Enhanced)": 16,
     "G7 Generic Mandatory Expansion": 3,
     "G9 Global Black Connectivity (Articulation Point)": 2
   },
-  "steps_total": 53
+  "steps_total": 66
 }

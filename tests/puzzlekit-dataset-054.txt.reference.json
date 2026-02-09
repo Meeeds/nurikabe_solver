@@ -260,6 +260,7 @@
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 35,
     "G10 Island Completion: common neighbor of last candidates -> black": 2,
+    "G11 Hypothetical Sea Connectivity": 2,
     "G1b Separation: match neighbor owners": 92,
     "G3 Closure: complete island forces black neighbors": 31,
     "G4 Anti-2x2: 3 blacks -> land": 9,
@@ -269,5 +270,5 @@
     "G7b Global Brute Force Intersection & Pruning": 2,
     "G9 Global Black Connectivity (Articulation Point)": 14
   },
-  "steps_total": 267
+  "steps_total": 269
 }

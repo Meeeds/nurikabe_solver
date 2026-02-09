@@ -8,7 +8,7 @@
       "BLACK",
       "UNKNOWN",
       "UNKNOWN",
-      "UNKNOWN",
+      "BLACK",
       "UNKNOWN",
       "CLUE(2)"
     ],
@@ -124,10 +124,11 @@
   "is_fully_solved": false,
   "rules_triggered": {
     "G10 Island Completion: common neighbor of last candidates -> black": 1,
+    "G11 Hypothetical Sea Connectivity": 4,
     "G1b Separation: match neighbor owners": 28,
     "G3 Closure: complete island forces black neighbors": 11,
     "G5 Distance Pruning (Enhanced)": 9,
     "G6 Empty domain -> black": 1
   },
-  "steps_total": 50
+  "steps_total": 54
 }
