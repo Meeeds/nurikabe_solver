@@ -31,6 +31,17 @@ python nurikabe_ui.py
     - Handles events and Pygame GUI integration.
     - Imports necessary components from the new files.
 
+
+## Unit test
+
+Unit test has been first generated using `unittest/generate_rule_tests.py`
+
+How to run them
+```
+pytest
+pytest unittest/test_rule_G1b_Separation__match_neighbor_owners.py 
+```
+
 ## Test Framework
 
 The `test.py` script allows for automated regression testing of the solver:
