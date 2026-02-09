@@ -1,0 +1,48 @@
+{
+  "final_grid": [
+    [
+      "CLUE(2)",
+      "LAND(1)",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "BLACK",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "CLUE(1)",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "BLACK",
+      "UNKNOWN",
+      "CLUE(6)",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "rules_triggered": {
+    "G1 Separation: neighbor of >=2 fixed owners -> black": 1,
+    "G1b Separation: match neighbor owners": 5,
+    "G3 Closure: complete island forces black neighbors": 4,
+    "G5 Distance Pruning (Enhanced)": 1,
+    "G7 Generic Mandatory Expansion": 1
+  },
+  "steps_total": 12
+}

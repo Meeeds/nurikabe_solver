@@ -1,0 +1,66 @@
+{
+  "final_grid": [
+    [
+      "CLUE(3)",
+      "BLACK",
+      "CLUE(1)",
+      "BLACK",
+      "CLUE(10)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(1)",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(1)",
+      "BLACK",
+      "LAND(4)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "BLACK",
+      "UNKNOWN",
+      "CLUE(4)",
+      "BLACK",
+      "CLUE(5)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "rules_triggered": {
+    "G1 Separation: neighbor of >=2 fixed owners -> black": 3,
+    "G1b Separation: match neighbor owners": 14,
+    "G3 Closure: complete island forces black neighbors": 3,
+    "G4 Anti-2x2: 3 blacks -> land": 1,
+    "G5 Distance Pruning (Enhanced)": 7,
+    "G6 Empty domain -> black": 1,
+    "G7 Generic Mandatory Expansion": 2,
+    "G9 Global Black Connectivity (Articulation Point)": 2
+  },
+  "steps_total": 33
+}

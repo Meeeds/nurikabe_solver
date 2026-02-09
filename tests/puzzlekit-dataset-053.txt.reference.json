@@ -1,0 +1,47 @@
+{
+  "final_grid": [
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "CLUE(4)",
+      "BLACK",
+      "CLUE(4)",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "BLACK",
+      "BLACK",
+      "BLACK",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "CLUE(4)",
+      "BLACK",
+      "CLUE(4)",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "rules_triggered": {
+    "G1 Separation: neighbor of >=2 fixed owners -> black": 4,
+    "G1b Separation: match neighbor owners": 8,
+    "G5 Distance Pruning (Enhanced)": 4,
+    "G6 Empty domain -> black": 1
+  },
+  "steps_total": 17
+}

@@ -2,6 +2,7 @@ import os
 import json
 import argparse
 import sys
+import time
 from collections import Counter
 from typing import Dict, Any, List
 
@@ -226,19 +227,38 @@ if __name__ == "__main__":
 
     # Process files
     all_tests_passed = True
+    execution_times = []
     for test_file in sorted(files_to_process):
-        print(f"\n--- Processing {os.path.basename(test_file)} ---")
+        test_name = os.path.basename(test_file)
+        print(f"\n--- Processing {test_name} ---")
+        start_time = time.time()
+        
         if args.mode == "generate":
-            if not generate_reference(test_file):
-                all_tests_passed = False
+            passed = generate_reference(test_file)
         else: # mode == "test"
-            if not check_regression(test_file):
-                all_tests_passed = False
+            passed = check_regression(test_file)
+        
+        elapsed = time.time() - start_time
+        execution_times.append((test_name, elapsed))
+        print(f"Elapsed time: {elapsed:.3f}s")
+        
+        if not passed:
+            all_tests_passed = False
     
     if len(files_to_process) > 1:
         if all_tests_passed:
             print("\nAll selected tests PASSED!")
         else:
             print("\nSome tests FAILED!")
+
+    # Print summary of execution times
+    print("\n" + "="*70)
+    print(f"{'TESTS SORTED BY ELAPSED TIME':^70}")
+    print("="*70)
+    print(f"    {'Test File':<50} | {'Duration':>10}")
+    print(f"    {'-'*50}-+-{'-'*10}")
+    for name, elapsed in sorted(execution_times, key=lambda x: x[1], reverse=True):
+        print(f"    {name:<50} | {elapsed:>9.3f}s")
+    print("="*70 + "\n")
 
     print_global_stats()
