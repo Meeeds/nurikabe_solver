@@ -192,6 +192,8 @@ if __name__ == "__main__":
                         help="Mode: 'generate' to create reference JSON, 'test' to compare against it.")
     parser.add_argument("--all", action="store_true", 
                         help="Run all tests on *.txt files in the test directory (deprecated behavior, prefer providing a directory path).")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Print summary of execution times and global rule statistics.")
     
     args = parser.parse_args()
 
@@ -240,25 +242,29 @@ if __name__ == "__main__":
         
         elapsed = time.time() - start_time
         execution_times.append((test_name, elapsed))
-        print(f"Elapsed time: {elapsed:.3f}s")
+        if args.verbose:
+            print(f"Elapsed time: {elapsed:.3f}s")
         
         if not passed:
             all_tests_passed = False
-    
+
+    if args.verbose:
+        # Print summary of execution times
+        print("\n" + "="*70)
+        print(f"{'TESTS SORTED BY ELAPSED TIME':^70}")
+        print("="*70)
+        print(f"    {'Test File':<50} | {'Duration':>10}")
+        print(f"    {'-'*50}-+-{'-'*10}")
+        for name, elapsed in sorted(execution_times, key=lambda x: x[1], reverse=True):
+            print(f"    {name:<50} | {elapsed:>9.3f}s")
+        print("="*70 + "\n")
+
+        print_global_stats()
+
     if len(files_to_process) > 1:
         if all_tests_passed:
             print("\nAll selected tests PASSED!")
+            sys.exit(0)
         else:
             print("\nSome tests FAILED!")
-
-    # Print summary of execution times
-    print("\n" + "="*70)
-    print(f"{'TESTS SORTED BY ELAPSED TIME':^70}")
-    print("="*70)
-    print(f"    {'Test File':<50} | {'Duration':>10}")
-    print(f"    {'-'*50}-+-{'-'*10}")
-    for name, elapsed in sorted(execution_times, key=lambda x: x[1], reverse=True):
-        print(f"    {name:<50} | {elapsed:>9.3f}s")
-    print("="*70 + "\n")
-
-    print_global_stats()
+            sys.exit(1)
