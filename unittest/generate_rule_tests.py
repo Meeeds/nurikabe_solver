@@ -49,7 +49,7 @@ def collect_samples():
             # Step
             res = solver.step()
             
-            if res.rule == "None":
+            if res.rule == "None" or res.rule == "BROKEN_NURIKABE_RULES":
                 break
             
             # Capture state after

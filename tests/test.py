@@ -13,7 +13,7 @@ from nurikabe_model import NurikabeModel
 from nurikabe_rules import NurikabeSolver
 
 # Master list of rules defined in the solver and model
-KNOWN_RULES = sorted(set(NurikabeSolver.RULE_NAMES))
+KNOWN_RULES = sorted(set(NurikabeSolver.RULE_NAMES) | {"BROKEN_NURIKABE_RULES"})
 
 GLOBAL_RULE_COUNTS = Counter()
 NEW_CELLS_FOUND = 0
@@ -96,10 +96,14 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
     rule_counts = Counter()
     steps_taken = 0
     
+    start_time = time.time()
     while True:
         result = solver.step()
         # print(f"Step {steps_taken + 1}: Rule applied: {result.rule}, Message: {result.message}, Changed Cells: {len(result.changed_cells)}")
         
+        if result.rule == "BROKEN_NURIKABE_RULES":
+            return None, f"CRITICAL ERROR: Contradiction detected! {result.message}"
+
         # The solver returns rule="None" when no more rules can be applied
         if result.rule == "None":
             break
@@ -108,6 +112,10 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
         rule_counts[rule_name] += 1
         GLOBAL_RULE_COUNTS[rule_name] += 1
         steps_taken += 1
+
+        if time.time() - start_time > 30:
+            break
+
 
     # Determine if solved (no unknowns left) and count definitive cells
     is_solved = True

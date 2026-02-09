@@ -20,6 +20,14 @@ class NurikabeSolver:
         self.model = model
 
     def step(self) -> Optional[StepResult]:
+        # Check for contradictions at the start of the step
+        is_ok, err_msg = self.model.puzzle_correct_so_far()
+        if not is_ok:
+            prev_rule = self.model.last_step.rule if self.model.last_step else "None"
+            res = StepResult([], f"!!! CONTRADICTION DETECTED !!! {err_msg}. (Rule: {prev_rule})", "BROKEN_NURIKABE_RULES")
+            self.model.last_step = res
+            return res
+
         # Iterate over rules sorted by priority (lowest number first)
         for _, func, name in sorted(_RULES, key=lambda x: x[0]):
             res = func(self)
@@ -39,20 +47,9 @@ class NurikabeSolver:
                          res.message = func._rule_message
 
                 self.model.last_step = res
-                
-                # Check if the step broke any rules
-                is_ok, err_msg = self.model.puzzle_correct_so_far()
-                if not is_ok:
-                    res.message = f"!!! CONTRADICTION DETECTED !!! {err_msg}. (Rule: {res.rule})"
-                    # We might want to stop here or signal error. 
-                    # For now, we just update the message so the UI shows it.
-                
                 return res
 
         self.model.last_step = StepResult([], "No applicable rule found.", "None")
-        is_ok, err_msg = self.model.puzzle_correct_so_far()
-        if not is_ok:
-            self.model.last_step.message = f"!!! CONTRADICTION DETECTED !!! {err_msg}. (No rule applied)"
         return self.model.last_step
 
     @solver_rule(priority=4, name="G1b Separation: match neighbor owners",
