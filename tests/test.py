@@ -16,14 +16,25 @@ from nurikabe_rules import NurikabeSolver
 KNOWN_RULES = sorted(set(NurikabeSolver.RULE_NAMES))
 
 GLOBAL_RULE_COUNTS = Counter()
+NEW_CELLS_FOUND = 0
+CELLS_NOW_NOT_FOUND = 0
 
 def print_global_stats():
     """Prints a summary of rule applications across all tests."""
     print("\n" + "="*100)
-    print(f"{'GLOBAL RULE EXECUTION STATISTICS':^100}")
+    print(f"{'GLOBAL EXECUTION SUMMARY':^100}")
     print("="*100)
+    
+    # Print cumulative cell discovery stats
+    print(f"    {'Global Cell Discovery Delta':<85} | {'Value':>10}")
+    print(f"    {'-'*85}-+-{'-'*10}")
+    print(f"    {'New cells found (IMPROVEMENT)':<85} | {NEW_CELLS_FOUND:>10}")
+    print(f"    {'Cells now not found (REGRESSION)':<85} | {CELLS_NOW_NOT_FOUND:>10}")
+    print(f"    {'-'*85}-+-{'-'*10}")
+
+    print(f"\n    {'Rule Application Statistics':^100}")
     print(f"    {'Rule Name':<85} | {'Applications':>10}")
-    print(f"    {'-'*65}-+-{'-'*10}")
+    print(f"    {'-'*85}-+-{'-'*10}")
     
     # Sort by application count descending, then by name
     sorted_stats = sorted(
@@ -134,6 +145,7 @@ def generate_reference(grid_path: str) -> bool:
 
 def check_regression(grid_path: str) -> bool:
     """Runs solver and compares result with existing reference JSON."""
+    global NEW_CELLS_FOUND, CELLS_NOW_NOT_FOUND
     current_result, error_msg = run_solver(grid_path)
     if error_msg:
         print(f"Error for {grid_path}: {error_msg}")
@@ -168,6 +180,10 @@ def check_regression(grid_path: str) -> bool:
         
         if not cells_found_match:
             print(f"  CRITICAL: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
+            if current_result['number_of_cell_found'] > reference_result.get('number_of_cell_found'):
+                NEW_CELLS_FOUND += current_result['number_of_cell_found'] - reference_result.get('number_of_cell_found')
+            else:
+                CELLS_NOW_NOT_FOUND += reference_result.get('number_of_cell_found') - current_result['number_of_cell_found']
         
         if not rules_match:
             print("  WARNING: Rule usage counts differ (logic path changed).")
