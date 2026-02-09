@@ -39,9 +39,20 @@ class NurikabeSolver:
                          res.message = func._rule_message
 
                 self.model.last_step = res
+                
+                # Check if the step broke any rules
+                is_ok, err_msg = self.model.puzzle_correct_so_far()
+                if not is_ok:
+                    res.message = f"!!! CONTRADICTION DETECTED !!! {err_msg}. (Rule: {res.rule})"
+                    # We might want to stop here or signal error. 
+                    # For now, we just update the message so the UI shows it.
+                
                 return res
 
         self.model.last_step = StepResult([], "No applicable rule found.", "None")
+        is_ok, err_msg = self.model.puzzle_correct_so_far()
+        if not is_ok:
+            self.model.last_step.message = f"!!! CONTRADICTION DETECTED !!! {err_msg}. (No rule applied)"
         return self.model.last_step
 
     @solver_rule(priority=4, name="G1b Separation: match neighbor owners",
@@ -830,7 +841,6 @@ class NurikabeSolver:
                 if len(impossible_owners) == len(potential_owners):
                     self.model.force_black(r, c)
                     msg = "Every hypothetical expansion of (%d,%d) disconnects sea; forced Black." % (r, c)
-                    print(msg)
                     return StepResult(
                         changed_cells=[(r, c)],
                         message=msg
@@ -845,7 +855,6 @@ class NurikabeSolver:
                     if changed:
                         ids_str = ", ".join(map(str, sorted(removed_ids)))
                         msg = "Removed impossible owners %s for cell (%d,%d) because their shortest paths disconnect sea." % (ids_str, r, c)
-                        print(msg)
                         return StepResult(
                             changed_cells=[(r, c)],
                             message=msg

@@ -367,6 +367,110 @@ class NurikabeModel:
             "last_step": last_step,
         }
 
+    def puzzle_correct_so_far(self) -> Tuple[bool, str]:
+        """
+        Checks if the current definitive state (LAND, BLACK, clues) 
+        respects the basic rules of Nurikabe.
+        Returns (is_correct, error_message).
+        """
+        # 1. No 2x2 black blocks
+        for r in range(self.rows - 1):
+            for c in range(self.cols - 1):
+                if (self.is_black_certain(r, c) and 
+                    self.is_black_certain(r + 1, c) and 
+                    self.is_black_certain(r, c + 1) and 
+                    self.is_black_certain(r + 1, c + 1)):
+                    return False, f"2x2 sea block at ({r},{c})"
+
+        # 2. Island checks (connectivity, clues, size)
+        visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
+        land_components = []
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if self.is_land_certain(r, c) and not visited[r][c]:
+                    comp = []
+                    q = [(r, c)]
+                    visited[r][c] = True
+                    while q:
+                        curr_r, curr_c = q.pop(0)
+                        comp.append((curr_r, curr_c))
+                        for nr, nc in self.neighbors4(curr_r, curr_c):
+                            if self.is_land_certain(nr, nc) and not visited[nr][nc]:
+                                visited[nr][nc] = True
+                                q.append((nr, nc))
+                    land_components.append(comp)
+
+        for comp in land_components:
+            comp_clues = [(rr, cc) for (rr, cc) in comp if self.is_clue(rr, cc)]
+            
+            # Multiple clues in one island
+            if len(comp_clues) > 1:
+                clue_vals = [self.clues[rr][cc] for (rr, cc) in comp_clues]
+                return False, f"Island contains multiple clues: {clue_vals} at {comp_clues[0]}"
+            
+            # Size check
+            if len(comp_clues) == 1:
+                cr, cc = comp_clues[0]
+                clue_val = self.clues[cr][cc]
+                if len(comp) > clue_val:
+                    return False, f"Island at ({cr},{cc}) is too large: {len(comp)} > {clue_val}"
+                
+                # If surrounded by sea, it must be exactly the right size
+                is_sealed = True
+                for rr, cc in comp:
+                    for nr, nc in self.neighbors4(rr, cc):
+                        if not self.is_land_certain(nr, nc) and not self.is_black_certain(nr, nc):
+                            is_sealed = False
+                            break
+                    if not is_sealed: break
+                
+                if is_sealed and len(comp) < clue_val:
+                    return False, f"Island at ({cr},{cc}) is sealed but too small: {len(comp)} < {clue_val}"
+            else:
+                # No clues in this land component
+                # Check if it's sealed
+                is_sealed = True
+                for rr, cc in comp:
+                    for nr, nc in self.neighbors4(rr, cc):
+                        if not self.is_land_certain(nr, nc) and not self.is_black_certain(nr, nc):
+                            is_sealed = False
+                            break
+                    if not is_sealed: break
+                if is_sealed:
+                    return False, f"Land component at {comp[0]} has no clue and is sealed"
+
+        # 3. Check for completion
+        is_complete = True
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if self.cells[r][c].is_unknown:
+                    is_complete = False
+                    break
+            if not is_complete: break
+        
+        if is_complete:
+            # All land cells must have been visited (already checked by component analysis)
+            # All sea cells must be connected
+            sea_cells = [(r, c) for r in range(self.rows) for c in range(self.cols) if self.is_black_certain(r, c)]
+            if sea_cells:
+                start_sea = sea_cells[0]
+                q = [start_sea]
+                seen_sea = {start_sea}
+                while q:
+                    curr_r, curr_c = q.pop(0)
+                    for nr, nc in self.neighbors4(curr_r, curr_c):
+                        if self.is_black_certain(nr, nc) and (nr, nc) not in seen_sea:
+                            seen_sea.add((nr, nc))
+                            q.append((nr, nc))
+                if len(seen_sea) != len(sea_cells):
+                    return False, "Sea is not connected"
+            
+            # Every clue must have an island (already checked if all land is assigned)
+            # and every island must have a clue (already checked)
+            # and sizes must match (already checked)
+
+        return True, "OK"
+
     def restore(self, state: Dict[str, object]) -> None:
         clues = state.get("clues")
         if not isinstance(clues, list):
