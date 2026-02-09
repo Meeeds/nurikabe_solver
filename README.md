@@ -42,6 +42,19 @@ pytest
 pytest unittest/test_rule_G1b_Separation__match_neighbor_owners.py 
 ```
 
+### Generating Test Images
+
+The `unittest/generate_test_images.py` script creates visual representations of the "before" and "after" states for each generated unit test. This is useful for quickly understanding the effect of each rule application. The "after" image highlights the cells that were changed by the rule.
+
+To generate these images:
+
+```bash
+python unittest/generate_test_images.py
+```
+
+The images will be saved in the `unittest/images/` directory.
+
+
 ## Test Framework
 
 The `test.py` script allows for automated regression testing of the solver:
