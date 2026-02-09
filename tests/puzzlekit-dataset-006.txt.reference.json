@@ -122,6 +122,7 @@
     ]
   ],
   "is_fully_solved": false,
+  "number_of_cell_found": 24,
   "rules_triggered": {
     "G10 Island Completion: common neighbor of last candidates -> black": 1,
     "G11 Hypothetical Sea Connectivity": 4,

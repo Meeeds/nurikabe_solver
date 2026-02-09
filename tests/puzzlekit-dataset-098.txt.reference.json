@@ -162,6 +162,7 @@
     ]
   ],
   "is_fully_solved": false,
+  "number_of_cell_found": 68,
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 5,
     "G1b Separation: match neighbor owners": 61,

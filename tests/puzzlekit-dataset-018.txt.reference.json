@@ -366,6 +366,7 @@
     ]
   ],
   "is_fully_solved": false,
+  "number_of_cell_found": 243,
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 41,
     "G10 Island Completion: common neighbor of last candidates -> black": 1,

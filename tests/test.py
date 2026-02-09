@@ -98,19 +98,21 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
         GLOBAL_RULE_COUNTS[rule_name] += 1
         steps_taken += 1
 
-    # Determine if solved (no unknowns left)
+    # Determine if solved (no unknowns left) and count definitive cells
     is_solved = True
+    cells_found = 0
     for r in range(model.rows):
         for c in range(model.cols):
-            if not model.is_black_certain(r, c) and not model.is_land_certain(r, c):
+            if model.is_black_certain(r, c) or model.is_land_certain(r, c):
+                cells_found += 1
+            else:
                 is_solved = False
-                break
-        if not is_solved: break
 
     return {
         "rules_triggered": dict(rule_counts),
         "steps_total": steps_taken,
         "is_fully_solved": is_solved,
+        "number_of_cell_found": cells_found,
         "final_grid": serialize_grid(model)
     }, None
 
@@ -127,7 +129,7 @@ def generate_reference(grid_path: str) -> bool:
         json.dump(result, f, indent=2, sort_keys=True)
     
     print(f"Success: Reference generated for '{grid_path}' and saved to '{ref_path}'")
-    print(f"Solved: {result['is_fully_solved']}, Steps: {result['steps_total']}")
+    print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
     return True
 
 def check_regression(grid_path: str) -> bool:
@@ -152,8 +154,9 @@ def check_regression(grid_path: str) -> bool:
     # Comparison Logic
     grid_match = current_result["final_grid"] == reference_result["final_grid"]
     rules_match = current_result["rules_triggered"] == reference_result["rules_triggered"]
+    cells_found_match = current_result.get("number_of_cell_found") == reference_result.get("number_of_cell_found")
     
-    if grid_match and rules_match:
+    if grid_match and rules_match and cells_found_match:
         print(f"TEST PASSED: '{grid_path}' matches reference exactly.")
         return True
     else:
@@ -161,8 +164,10 @@ def check_regression(grid_path: str) -> bool:
         
         if not grid_match:
             print("  CRITICAL: Final grid state differs!")
-            print(f" reference_result[is_fully_solved] = {reference_result['is_fully_solved']} current_result[is_fully_solved] = {current_result['is_fully_solved']}")
-            # Basic diff output
+            print(f" reference_result[is_fully_solved] = {reference_result.get('is_fully_solved')} current_result[is_fully_solved] = {current_result['is_fully_solved']}")
+        
+        if not cells_found_match:
+            print(f"  CRITICAL: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
         
         if not rules_match:
             print("  WARNING: Rule usage counts differ (logic path changed).")

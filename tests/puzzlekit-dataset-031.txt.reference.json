@@ -17,6 +17,7 @@
     ]
   ],
   "is_fully_solved": true,
+  "number_of_cell_found": 9,
   "rules_triggered": {
     "G1b Separation: match neighbor owners": 2,
     "G3 Closure: complete island forces black neighbors": 2,

@@ -257,6 +257,7 @@
     ]
   ],
   "is_fully_solved": false,
+  "number_of_cell_found": 222,
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 36,
     "G11 Hypothetical Sea Connectivity": 1,
