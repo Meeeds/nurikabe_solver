@@ -22,8 +22,7 @@ from dataclasses import dataclass, field
 from typing import Tuple, Optional, List, Dict, Any
 
 import pygame
-import 
-
+import pygame_gui
 
 from nurikabe_model import NurikabeModel
 from nurikabe_rules import NurikabeSolver
