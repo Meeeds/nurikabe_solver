@@ -213,7 +213,7 @@ def main() -> None:
 
     log_box = pygame_gui.elements.UITextBox(
         html_text="",
-        relative_rect=pygame.Rect(10, 10, -20, -60),
+        relative_rect=pygame.Rect(10, 10, 500, 260),
         manager=ui_manager,
         container=log_win,
         anchors={"left": "left", "right": "right", "top": "top", "bottom": "bottom"}
@@ -299,14 +299,44 @@ def main() -> None:
     log_lines: List[str] = []
 
     def log_append(msg: str) -> None:
-        rolling_log_lines = 8
         if not msg:
             return
-        log_lines.append(msg)
-        if len(log_lines) > rolling_log_lines:
-            del log_lines[0:len(log_lines) - rolling_log_lines]
+        
+        # Force wrapping by ensuring spaces around common delimiters
+        for char in [',', ';', ']', ')', '}', ':', '>', '[', '(', '{', '<', '=', '|']:
+            msg = msg.replace(char, ' ' + char + ' ')
+        
+        # Handle multi-line messages
+        for line in msg.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Split by any whitespace and rejoin to normalize
+            words = line.split()
+            processed_words = []
+            for word in words:
+                # If a word is extremely long (no spaces), force a break by inserting a space.
+                # Threshold reduced to 30 for safer wrapping in the UI.
+                while len(word) > 30:
+                    processed_words.append(word[:30])
+                    word = word[30:]
+                if word:
+                    processed_words.append(word)
+            
+            log_lines.append(' '.join(processed_words))
+        
+        # Keep a reasonable history
+        max_log_lines = 100
+        if len(log_lines) > max_log_lines:
+            del log_lines[0:len(log_lines) - max_log_lines]
+            
         html = "<br>".join(html_escape(ln) for ln in log_lines)
         log_box.set_text(html)
+        
+        # Auto-scroll to bottom
+        if log_box.scroll_bar is not None:
+            log_box.scroll_bar.set_scroll_from_start_percentage(1.0)
 
     def log_clear() -> None:
         log_lines.clear()
