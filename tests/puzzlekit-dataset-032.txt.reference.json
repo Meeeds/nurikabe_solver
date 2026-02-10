@@ -46,7 +46,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "BLACK",
-      "BLACK"
+      "UNKNOWN"
     ],
     [
       "BLACK",
@@ -122,11 +122,10 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 65,
+  "number_of_cell_found": 64,
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 7,
     "G10 Island Completion: common neighbor of last candidates -> black": 1,
-    "G11 Hypothetical Sea Connectivity": 3,
     "G1b Separation: match neighbor owners": 34,
     "G3 Closure: complete island forces black neighbors": 21,
     "G4 Anti-2x2: 3 blacks -> land": 3,
@@ -136,5 +135,5 @@
     "G7b Global Brute Force Intersection & Pruning": 1,
     "G9 Global Black Connectivity (Articulation Point)": 7
   },
-  "steps_total": 102
+  "steps_total": 99
 }

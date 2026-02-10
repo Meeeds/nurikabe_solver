@@ -150,10 +150,10 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
+      "UNKNOWN",
       "LAND(19)",
-      "LAND(19)",
-      "LAND(19)",
-      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
       "BLACK",
       "BLACK",
       "LAND(23)",
@@ -290,20 +290,19 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 214,
+  "number_of_cell_found": 211,
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 39,
     "G10 Island Completion: common neighbor of last candidates -> black": 3,
-    "G11 Hypothetical Sea Connectivity": 2,
-    "G1b Separation: match neighbor owners": 106,
+    "G1b Separation: match neighbor owners": 104,
     "G2 Unification: land cluster domain intersection": 1,
     "G3 Closure: complete island forces black neighbors": 27,
-    "G4 Anti-2x2: 3 blacks -> land": 15,
-    "G5 Distance Pruning (Enhanced)": 55,
+    "G4 Anti-2x2: 3 blacks -> land": 14,
+    "G5 Distance Pruning (Enhanced)": 54,
     "G6 Empty domain -> black": 29,
-    "G7 Generic Mandatory Expansion": 39,
+    "G7 Generic Mandatory Expansion": 38,
     "G7b Global Brute Force Intersection & Pruning": 7,
     "G9 Global Black Connectivity (Articulation Point)": 22
   },
-  "steps_total": 345
+  "steps_total": 338
 }

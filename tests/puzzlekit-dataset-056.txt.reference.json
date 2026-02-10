@@ -138,8 +138,8 @@
       "LAND(8)",
       "BLACK",
       "BLACK",
-      "BLACK",
-      "LAND(15)",
+      "UNKNOWN",
+      "UNKNOWN",
       "LAND(15)",
       "CLUE(6)",
       "BLACK"
@@ -156,8 +156,8 @@
       "BLACK",
       "CLUE(1)",
       "BLACK",
-      "LAND(15)",
-      "LAND(15)",
+      "UNKNOWN",
+      "UNKNOWN",
       "UNKNOWN",
       "BLACK",
       "CLUE(3)"
@@ -173,7 +173,7 @@
       "BLACK",
       "LAND(23)",
       "BLACK",
-      "BLACK",
+      "UNKNOWN",
       "BLACK",
       "UNKNOWN",
       "UNKNOWN",
@@ -192,8 +192,8 @@
       "LAND(23)",
       "BLACK",
       "CLUE(2)",
-      "LAND(20)",
-      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
       "CLUE(2)",
       "BLACK",
       "UNKNOWN"
@@ -210,8 +210,8 @@
       "CLUE(4)",
       "BLACK",
       "BLACK",
-      "BLACK",
-      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
@@ -308,19 +308,18 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 240,
+  "number_of_cell_found": 231,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 42,
+    "G1 Separation: neighbor of >=2 fixed owners -> black": 40,
     "G10 Island Completion: common neighbor of last candidates -> black": 2,
-    "G11 Hypothetical Sea Connectivity": 2,
     "G1b Separation: match neighbor owners": 100,
     "G3 Closure: complete island forces black neighbors": 48,
-    "G4 Anti-2x2: 3 blacks -> land": 18,
-    "G5 Distance Pruning (Enhanced)": 54,
-    "G6 Empty domain -> black": 33,
-    "G7 Generic Mandatory Expansion": 25,
+    "G4 Anti-2x2: 3 blacks -> land": 16,
+    "G5 Distance Pruning (Enhanced)": 53,
+    "G6 Empty domain -> black": 32,
+    "G7 Generic Mandatory Expansion": 23,
     "G7b Global Brute Force Intersection & Pruning": 10,
-    "G9 Global Black Connectivity (Articulation Point)": 16
+    "G9 Global Black Connectivity (Articulation Point)": 15
   },
-  "steps_total": 350
+  "steps_total": 339
 }

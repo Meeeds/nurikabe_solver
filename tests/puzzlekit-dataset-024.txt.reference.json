@@ -36,7 +36,7 @@
     [
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "UNKNOWN",
       "BLACK",
       "CLUE(10)",
       "BLACK",
@@ -79,14 +79,13 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 16,
+  "number_of_cell_found": 15,
   "rules_triggered": {
     "G1 Separation: neighbor of >=2 fixed owners -> black": 6,
-    "G11 Hypothetical Sea Connectivity": 5,
     "G1b Separation: match neighbor owners": 9,
     "G5 Distance Pruning (Enhanced)": 12,
     "G7 Generic Mandatory Expansion": 2,
     "G9 Global Black Connectivity (Articulation Point)": 2
   },
-  "steps_total": 36
+  "steps_total": 31
 }

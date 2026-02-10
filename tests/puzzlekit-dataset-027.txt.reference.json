@@ -2,35 +2,35 @@
   "final_grid": [
     [
       "CLUE(2)",
-      "LAND(1)",
-      "BLACK",
-      "BLACK",
-      "BLACK",
-      "LAND(2)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
       "LAND(2)",
       "LAND(2)",
       "LAND(2)",
       "CLUE(6)"
     ],
     [
+      "UNKNOWN",
+      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
       "BLACK",
       "BLACK",
-      "BLACK",
-      "LAND(3)",
-      "BLACK",
-      "LAND(2)",
-      "BLACK",
-      "BLACK",
-      "BLACK",
-      "BLACK"
+      "UNKNOWN"
     ],
     [
-      "BLACK",
+      "UNKNOWN",
       "CLUE(5)",
       "LAND(3)",
-      "LAND(3)",
-      "BLACK",
-      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
       "BLACK",
       "CLUE(2)",
       "LAND(4)",
@@ -40,24 +40,24 @@
       "BLACK",
       "BLACK",
       "BLACK",
-      "LAND(3)",
-      "BLACK",
-      "LAND(5)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
       "CLUE(2)",
       "BLACK",
       "BLACK",
-      "BLACK"
+      "UNKNOWN"
     ],
     [
       "BLACK",
       "LAND(6)",
       "CLUE(2)",
       "BLACK",
+      "UNKNOWN",
       "BLACK",
-      "BLACK",
-      "BLACK",
-      "LAND(8)",
-      "BLACK",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
       "CLUE(2)"
     ],
     [
@@ -66,11 +66,11 @@
       "BLACK",
       "CLUE(6)",
       "LAND(8)",
-      "LAND(8)",
-      "LAND(8)",
-      "LAND(8)",
-      "BLACK",
-      "LAND(7)"
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
     ],
     [
       "CLUE(3)",
@@ -82,7 +82,7 @@
       "BLACK",
       "BLACK",
       "BLACK",
-      "BLACK"
+      "UNKNOWN"
     ],
     [
       "BLACK",
@@ -118,23 +118,21 @@
       "BLACK",
       "BLACK",
       "BLACK",
-      "LAND(12)"
+      "UNKNOWN"
     ]
   ],
-  "is_fully_solved": true,
-  "number_of_cell_found": 100,
+  "is_fully_solved": false,
+  "number_of_cell_found": 69,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 18,
+    "G1 Separation: neighbor of >=2 fixed owners -> black": 16,
     "G10 Island Completion: common neighbor of last candidates -> black": 4,
-    "G11 Hypothetical Sea Connectivity": 2,
-    "G1b Separation: match neighbor owners": 28,
-    "G3 Closure: complete island forces black neighbors": 10,
-    "G4 Anti-2x2: 3 blacks -> land": 6,
-    "G5 Distance Pruning (Enhanced)": 21,
-    "G6 Empty domain -> black": 12,
-    "G7 Generic Mandatory Expansion": 23,
-    "G7b Global Brute Force Intersection & Pruning": 2,
-    "G9 Global Black Connectivity (Articulation Point)": 11
+    "G1b Separation: match neighbor owners": 26,
+    "G3 Closure: complete island forces black neighbors": 5,
+    "G4 Anti-2x2: 3 blacks -> land": 1,
+    "G5 Distance Pruning (Enhanced)": 14,
+    "G6 Empty domain -> black": 7,
+    "G7 Generic Mandatory Expansion": 16,
+    "G9 Global Black Connectivity (Articulation Point)": 6
   },
-  "steps_total": 137
+  "steps_total": 95
 }
