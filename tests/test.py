@@ -102,6 +102,8 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
         # print(f"Step {steps_taken + 1}: Rule applied: {result.rule}, Message: {result.message}, Changed Cells: {len(result.changed_cells)}")
         
         if result.rule == "BROKEN_NURIKABE_RULES":
+            rule_counts["BROKEN_NURIKABE_RULES"] += 1
+            GLOBAL_RULE_COUNTS["BROKEN_NURIKABE_RULES"] += 1
             return None, f"CRITICAL ERROR: Contradiction detected! {result.message}"
 
         # The solver returns rule="None" when no more rules can be applied
@@ -113,7 +115,7 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
         GLOBAL_RULE_COUNTS[rule_name] += 1
         steps_taken += 1
 
-        if time.time() - start_time > 30:
+        if time.time() - start_time > 60:
             break
 
 
@@ -148,6 +150,17 @@ def generate_reference(grid_path: str) -> bool:
         json.dump(result, f, indent=2, sort_keys=True)
     
     print(f"Success: Reference generated for '{grid_path}' and saved to '{ref_path}'")
+    print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
+    return True
+
+def run_and_print_stats(grid_path: str) -> bool:
+    """Runs solver and prints result stats without saving."""
+    result, error_msg = run_solver(grid_path)
+    if error_msg:
+        print(f"Error for {grid_path}: {error_msg}")
+        return False
+    
+    print(f"Results for '{grid_path}':")
     print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
     return True
 
@@ -218,8 +231,8 @@ def check_regression(grid_path: str) -> bool:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Nurikabe Solver Test Runner")
     parser.add_argument("path", nargs='?', help="Path to a .txt grid file OR a directory containing .txt files. (Optional if --all is used)")
-    parser.add_argument("--mode", choices=["generate", "test"], default="test", 
-                        help="Mode: 'generate' to create reference JSON, 'test' to compare against it.")
+    parser.add_argument("--mode", choices=["generate", "test", "stats"], default="test", 
+                        help="Mode: 'generate' to create reference JSON, 'test' to compare against it, 'stats' to just run and show stats.")
     parser.add_argument("--all", action="store_true", 
                         help="Run all tests on *.txt files in the test directory (deprecated behavior, prefer providing a directory path).")
     parser.add_argument("-v", "--verbose", action="store_true",
@@ -267,6 +280,8 @@ if __name__ == "__main__":
         
         if args.mode == "generate":
             passed = generate_reference(test_file)
+        elif args.mode == "stats":
+            passed = run_and_print_stats(test_file)
         else: # mode == "test"
             passed = check_regression(test_file)
         
