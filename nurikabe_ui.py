@@ -123,7 +123,7 @@ def refresh_file_list(editor: EditorState, files_list_ui: pygame_gui.elements.UI
         for node in node_list:
             # Create display string
             indent = "    " * node.level
-            icon = ("▼ " if node.expanded else "▶ ") if node.is_dir else "  "
+            icon = ("[-] " if node.expanded else "[+] ") if node.is_dir else "    "
             
             display_text = f"{indent}{icon}{node.name}"
             # Minimal zero-width spaces for uniqueness
@@ -184,6 +184,15 @@ def html_escape(s: str) -> str:
          .replace("'", "&#39;")
     )
 
+def find_first_file(nodes: List[TreeNode]) -> Optional[str]:
+    for node in nodes:
+        if not node.is_dir:
+            return node.path
+        res = find_first_file(node.children)
+        if res:
+            return res
+    return None
+
 def update_selected_cell_info(editor: EditorState, lbl_selected_cell_info: pygame_gui.elements.UILabel) -> None:
     if editor.selected is not None and editor.grid is not None:
         r, c = editor.selected
@@ -222,9 +231,9 @@ def save_editor_grid_to_file(
 
         log_append(f"Grid saved to {filepath}")
 
-        # Reload puzzle files and update the list
-        editor.puzzle_files = load_puzzle_files()
-        files_list.set_item_list(editor.puzzle_files)
+        # Reload tree and update the list
+        editor.tree_roots = load_puzzle_files_to_tree()
+        refresh_file_list(editor, files_list)
 
     except Exception as e:
         log_append(f"Save failed: {e}")
@@ -454,10 +463,11 @@ def main() -> None:
                 return True
         return False
 
-    if editor.puzzle_files:
-        first = editor.puzzle_files[0]
+    # Auto-load the first puzzle found in the tree
+    first_puzzle = find_first_file(editor.tree_roots)
+    if first_puzzle:
         try:
-            with open(first, "r", encoding="utf-8") as f:
+            with open(first_puzzle, "r", encoding="utf-8") as f:
                 txt = f.read()
             tmp = NurikabeModel()
             ok, msg = tmp.parse_puzzle_text(txt)
@@ -467,7 +477,7 @@ def main() -> None:
                 editor.cols = tmp.cols
                 inp_rows.set_text(str(editor.rows))
                 inp_cols.set_text(str(editor.cols))
-                log_append(f"Auto-loaded: {first}")
+                log_append(f"Auto-loaded: {first_puzzle}")
             else:
                 log_append(f"Auto-load failed: {msg}")
         except Exception as e:
