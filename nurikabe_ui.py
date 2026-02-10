@@ -57,8 +57,6 @@ class EditorState:
     # Tree view state
     tree_roots: List['TreeNode'] = field(default_factory=list)
     visible_nodes: List['TreeNode'] = field(default_factory=list)
-    last_click_time: float = 0.0
-    last_click_node: Optional['TreeNode'] = None
 
 @dataclass
 class TreeNode:
@@ -584,6 +582,11 @@ def main() -> None:
                         center_camera_on_model(state.model)
                         sync_worker()
                         log_append("Grid loaded into solver.")
+
+                        # Close editor
+                        editor_win.hide()
+                        state.mode = MODE_MAIN
+                        log_append("Editor closed.")
                     else:
                         log_append("No editor grid.")
 
@@ -615,91 +618,42 @@ def main() -> None:
                     else:
                         log_append("Nothing to reset (undo empty).")
 
-            if event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
-                if event.ui_element == files_list:
-                    sel_text = event.text
-                    clicked_node = None
+                else:
+                    # Check if it's a button in our files_list
+                    idx = -1
+                    # item_list property returns the list of item data
+                    for i, item in enumerate(files_list.item_list):
+                        if item['button_element'] == event.ui_element:
+                            idx = i
+                            break
                     
-                    try:
-                        # Find index
-                        idx = -1
-                        # item_list property returns the list of item data
-                        items = files_list.item_list
-                        for i, item in enumerate(items):
-                            if item['text'] == sel_text:
-                                idx = i
-                                break
+                    if idx != -1 and idx < len(editor.visible_nodes):
+                        node = editor.visible_nodes[idx]
                         
-                        if idx != -1 and idx < len(editor.visible_nodes):
-                            node = editor.visible_nodes[idx]
-                            clicked_node = node
-                            
-                            # Double click detection
-                            now = pygame.time.get_ticks() / 1000.0
-                            is_double_click = False
-                            if editor.last_click_node == node and (now - editor.last_click_time) < 0.5:
-                                is_double_click = True
-                            
-                            editor.last_click_time = now
-                            editor.last_click_node = node
-                            
-                            if node.is_dir:
-                                node.expanded = not node.expanded
-                                refresh_file_list(editor, files_list)
-                            else:
-                                if is_double_click:
-                                    try:
-                                        with open(node.path, "r", encoding="utf-8") as f:
-                                            txt = f.read()
-                                        tmp = NurikabeModel()
-                                        ok, msg = tmp.parse_puzzle_text(txt)
-                                        if ok:
-                                            editor.grid = [row[:] for row in tmp.clues]
-                                            editor.rows = tmp.rows
-                                            editor.cols = tmp.cols
-                                            inp_rows.set_text(str(editor.rows))
-                                            inp_cols.set_text(str(editor.cols))
-                                            model_for_editor.load_grid(editor.grid)
-                                            center_camera_on_model(model_for_editor)
-                                            update_selected_cell_info(editor, lbl_selected_cell_info)
-                                            log_append(f"Loaded: {node.name}")
-                                            
-                                            # Close editor & load to solver
-                                            editor_win.hide()
-                                            state.mode = MODE_MAIN
-                                            log_append("Editor closed (double-click).")
-                                            
-                                            push_undo()
-                                            state.model.load_grid(editor.grid)
-                                            state.solver = NurikabeSolver(state.model)
-                                            center_camera_on_model(state.model)
-                                            sync_worker()
-                                        else:
-                                            log_append(f"Load failed: {msg}")
-                                    except Exception as e:
-                                        log_append(f"File read failed: {e}")
+                        if node.is_dir:
+                            node.expanded = not node.expanded
+                            refresh_file_list(editor, files_list)
+                        else:
+                            # Preview on click
+                            try:
+                                with open(node.path, "r", encoding="utf-8") as f:
+                                    txt = f.read()
+                                tmp = NurikabeModel()
+                                ok, msg = tmp.parse_puzzle_text(txt)
+                                if ok:
+                                    editor.grid = [row[:] for row in tmp.clues]
+                                    editor.rows = tmp.rows
+                                    editor.cols = tmp.cols
+                                    inp_rows.set_text(str(editor.rows))
+                                    inp_cols.set_text(str(editor.cols))
+                                    model_for_editor.load_grid(editor.grid)
+                                    center_camera_on_model(model_for_editor)
+                                    update_selected_cell_info(editor, lbl_selected_cell_info)
+                                    log_append(f"Previewed: {node.name}")
                                 else:
-                                    # Preview on single click
-                                    try:
-                                        with open(node.path, "r", encoding="utf-8") as f:
-                                            txt = f.read()
-                                        tmp = NurikabeModel()
-                                        ok, msg = tmp.parse_puzzle_text(txt)
-                                        if ok:
-                                            editor.grid = [row[:] for row in tmp.clues]
-                                            editor.rows = tmp.rows
-                                            editor.cols = tmp.cols
-                                            inp_rows.set_text(str(editor.rows))
-                                            inp_cols.set_text(str(editor.cols))
-                                            model_for_editor.load_grid(editor.grid)
-                                            center_camera_on_model(model_for_editor)
-                                            update_selected_cell_info(editor, lbl_selected_cell_info)
-                                    except:
-                                        pass
-
-                    except Exception as e:
-                        # Fallback or error logging
-                        print(f"Tree error: {e}")
+                                    log_append(f"Preview failed: {msg}")
+                            except Exception as e:
+                                log_append(f"File read failed: {e}")
 
             if event.type == pygame.MOUSEWHEEL:
                 if not is_over_ui(pygame.mouse.get_pos()):
