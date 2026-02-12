@@ -67,7 +67,7 @@ def serialize_grid(model: NurikabeModel) -> List[List[str]]:
                 row_state.append("BLACK")
             elif model.is_land_certain(r, c):
                 # Distinguish if it has an assigned owner or just land
-                owners = model.bitset_to_ids(model.cells[r][c].owners)
+                owners = model.cells[r][c].owners.to_ids()
                 if len(owners) == 1:
                     row_state.append(f"LAND({owners[0]})")
                 else:

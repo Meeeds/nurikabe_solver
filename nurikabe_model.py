@@ -56,6 +56,17 @@ class OwnerMask:
             return self.bits.bit_length()
         return None
 
+    def to_ids(self) -> List[int]:
+        ids = []
+        i = 1
+        b = self.bits
+        while b:
+            if b & 1:
+                ids.append(i)
+            b >>= 1
+            i += 1
+        return ids
+
     def __bool__(self) -> bool:
         return self.bits != 0
 
@@ -194,17 +205,6 @@ class NurikabeModel:
     def bit(self, island_id: int) -> int:
         # island_id is 1..K
         return 1 << (island_id - 1)
-
-    def bitset_to_ids(self, bits: Any) -> List[int]:
-        ids = []
-        i = 1
-        b = int(bits)
-        while b:
-            if b & 1:
-                ids.append(i)
-            b >>= 1
-            i += 1
-        return ids
 
     def get_cell(self, r: int, c: int) -> Cell:
         return self.cells[r][c]

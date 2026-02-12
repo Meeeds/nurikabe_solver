@@ -103,7 +103,7 @@ def draw_grid(
                         screen.blit(id_surf, (rect.x + 3, rect.y + 2))
             else:
                 if camera.zoom >= 1.0:
-                    ids = model.bitset_to_ids(model.cells[r][c].owners)
+                    ids = model.cells[r][c].owners.to_ids()
                     if len(ids) == 0:
                         txt = "-"
                     elif len(ids) > 3:
