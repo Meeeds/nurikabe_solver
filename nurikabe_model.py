@@ -338,14 +338,18 @@ class NurikabeModel:
 
     def island_size_assigned(self, island_id: int) -> int:
         """Count land certain cells whose owner singleton is island_id."""
-        cnt = 0
+        return len(self.get_island_core_cells(island_id))
+
+    def get_island_core_cells(self, island_id: int) -> Set[Tuple[int, int]]:
+        """Returns the set of land cells uniquely owned by island_id."""
         b = self.bit(island_id)
+        core = set()
         for r in range(self.rows):
             for c in range(self.cols):
                 cell = self.cells[r][c]
                 if cell.state == CellState.LAND and cell.owners == b:
-                    cnt += 1
-        return cnt
+                    core.add((r, c))
+        return core
 
     def cycle_state(self, r: int, c: int, forward: bool = True) -> None:
         if self.is_clue(r, c):
