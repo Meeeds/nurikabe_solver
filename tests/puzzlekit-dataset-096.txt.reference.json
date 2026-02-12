@@ -259,10 +259,10 @@
   "is_fully_solved": false,
   "number_of_cell_found": 221,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 35,
+    "G1 Separation: neighbor of >=2 fixed owners -> black": 34,
     "G1b Separation: match neighbor owners": 54,
     "G2 Unification: land cluster domain intersection": 1,
-    "G3 Closure: complete island forces black neighbors": 35,
+    "G3 Closure: complete island forces black neighbors": 36,
     "G4 Anti-2x2: 3 blacks -> land": 19,
     "G5 Distance Pruning (Enhanced)": 41,
     "G6 Empty domain -> black": 38,
