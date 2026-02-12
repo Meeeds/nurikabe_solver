@@ -351,6 +351,17 @@ class NurikabeModel:
                     core.add((r, c))
         return core
 
+    def get_all_island_core_cells(self) -> Dict[int, List[Tuple[int, int]]]:
+        """Returns a mapping from island_id to its core cells, in grid order."""
+        cores = {isl.island_id: [] for isl in self.islands}
+        for r in range(self.rows):
+            for c in range(self.cols):
+                iid = self.fixed_owner(r, c)
+                if iid is not None:
+                    if iid in cores:
+                        cores[iid].append((r, c))
+        return cores
+
     def cycle_state(self, r: int, c: int, forward: bool = True) -> None:
         if self.is_clue(r, c):
             return

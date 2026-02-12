@@ -556,17 +556,8 @@ class NurikabeSolver:
     def try_rule_distance_pruning(self) -> Optional[StepResult]:
         changed_cells = []
         
-        # Pre-compute fixed cells for each island to optimize
-        fixed_cells_by_island = {isl.island_id: [] for isl in self.model.islands}
-        for r in range(self.model.rows):
-            for c in range(self.model.cols):
-                cell = self.model.cells[r][c]
-                if cell.is_land and cell.owners != 0:
-                    # Check if singleton owner
-                    iid = self.model.owners_singleton(r, c)
-                    if iid is not None:
-                         if iid in fixed_cells_by_island:
-                             fixed_cells_by_island[iid].append((r, c))
+        # Get all fixed cells for each island in a single pass to optimize and maintain determinism
+        all_cores = self.model.get_all_island_core_cells()
 
         for isl in self.model.islands:
             iid = isl.island_id
@@ -575,7 +566,7 @@ class NurikabeSolver:
             
             # Start BFS from ALL cells currently fixed to this island
             # Note: The clue cell itself is always fixed owner, so it's included.
-            current_fixed = fixed_cells_by_island[iid]
+            current_fixed = all_cores[iid]
             current_size = len(current_fixed)
             
             remaining = clue - current_size
