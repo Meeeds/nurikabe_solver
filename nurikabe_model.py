@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple, Dict, Optional, Any, Set, Callable
+from typing import List, Tuple, Dict, Optional, Any, Set, Callable, Iterable
 from enum import IntEnum
 
 # ----------------------------
@@ -131,6 +131,18 @@ class NurikabeModel:
 
     def is_land_certain(self, r: int, c: int) -> bool:
         return self.cells[r][c].state == CellState.LAND
+
+    def can_be_land(self, r: int, c: int, island_id: Optional[int] = None) -> bool:
+        """Returns True if the cell is not definitely black. If island_id is provided, also checks if it's a potential owner."""
+        if self.is_black_certain(r, c):
+            return False
+        if island_id is not None:
+            return bool(self.cells[r][c].owners & self.bit(island_id))
+        return True
+
+    def is_fixed_to(self, r: int, c: int, island_id: int) -> bool:
+        """Returns True if the cell is definitely land and uniquely owned by island_id."""
+        return self.is_land_certain(r, c) and self.cells[r][c].owners == self.bit(island_id)
 
     def fixed_owner(self, r: int, c: int) -> Optional[int]:
         if self.is_land_certain(r, c):
@@ -284,32 +296,78 @@ class NurikabeModel:
                         rule="Validate"
                     )
 
+    def get_reachable_cells(self, start_cells: Iterable[Tuple[int, int]], max_dist: int, obstacle_predicate: Callable[[int, int], bool]) -> Set[Tuple[int, int]]:
+        """Returns the set of cells reachable from start_cells within max_dist, avoiding obstacles."""
+        reachable = set(start_cells)
+        queue = [(r, c, 0) for r, c in start_cells]
+        idx = 0
+        while idx < len(queue):
+            r, c, d = queue[idx]
+            idx += 1
+            if d < max_dist:
+                for nr, nc in self.neighbors4(r, c):
+                    if (nr, nc) not in reachable and not obstacle_predicate(nr, nc):
+                        reachable.add((nr, nc))
+                        queue.append((nr, nc, d + 1))
+        return reachable
+
+    def is_mandatory_for_connectivity(self, cell: Tuple[int, int], start_node: Tuple[int, int], target_nodes: Iterable[Tuple[int, int]], potential_area: Set[Tuple[int, int]]) -> bool:
+        """
+        Returns True if 'cell' is mandatory for 'start_node' to reach all 'target_nodes' 
+        within 'potential_area' (excluding 'cell').
+        """
+        if cell == start_node: return True
+        
+        def predicate(r, c):
+            if (r, c) == cell: return False
+            return (r, c) in potential_area
+            
+        reachable = self.get_connected_component(start_node[0], start_node[1], predicate)
+        for target in target_nodes:
+            if target not in reachable:
+                return True
+        return False
+
+    def is_mandatory_for_reach_size(self, cell: Tuple[int, int], start_nodes: Iterable[Tuple[int, int]], target_size: int, potential_area: Set[Tuple[int, int]]) -> bool:
+        """
+        Returns True if 'cell' is mandatory for the 'start_nodes' component to be able 
+        to reach 'target_size' cells within 'potential_area' (excluding 'cell').
+        """
+        q = list(start_nodes)
+        seen = set(start_nodes)
+        if cell in seen: return True
+        
+        reached_count = 0
+        idx = 0
+        while idx < len(q):
+            curr = q[idx]
+            idx += 1
+            reached_count += 1
+            if reached_count >= target_size:
+                return False
+            for nr, nc in self.neighbors4(curr[0], curr[1]):
+                if (nr, nc) not in seen and (nr, nc) != cell and (nr, nc) in potential_area:
+                    seen.add((nr, nc))
+                    q.append((nr, nc))
+        return reached_count < target_size
+
     def apply_distance_pruning_all(self) -> None:
         for isl in self.islands:
             iid = isl.island_id
             limit = isl.clue
-            sr, sc = isl.pos
             bit = self.bit(iid)
-            reachable = {(sr, sc)}
-            queue = [(sr, sc, 0)]
-            idx = 0
-            while idx < len(queue):
-                r, c, d = queue[idx]
-                idx += 1
-                if d < limit - 1:
-                    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        nr, nc = r + dr, c + dc
-                        if 0 <= nr < self.rows and 0 <= nc < self.cols:
-                            if (nr, nc) not in reachable:
-                                cell = self.cells[nr][nc]
-                                # Obstacle if it's strictly Black, or a clue of another island
-                                is_obstacle = (cell.state == CellState.BLACK)
-                                if self.is_clue(nr, nc) and (nr, nc) != (sr, sc):
-                                    is_obstacle = True
-                                
-                                if not is_obstacle:
-                                    reachable.add((nr, nc))
-                                    queue.append((nr, nc, d + 1))
+            sr, sc = isl.pos
+
+            def obstacle_predicate(nr, nc):
+                cell = self.cells[nr][nc]
+                # Obstacle if it's strictly Black, or a clue of another island
+                if cell.state == CellState.BLACK:
+                    return True
+                if self.is_clue(nr, nc) and (nr, nc) != (sr, sc):
+                    return True
+                return False
+
+            reachable = self.get_reachable_cells([(sr, sc)], limit - 1, obstacle_predicate)
             
             for r in range(self.rows):
                 for c in range(self.cols):
