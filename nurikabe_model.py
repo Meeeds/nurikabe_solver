@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple, Dict, Optional, Any
+from typing import List, Tuple, Dict, Optional, Any, Set, Callable
 from enum import IntEnum
 
 # ----------------------------
@@ -68,6 +68,33 @@ class NurikabeModel:
             if self.in_bounds(rr, cc):
                 out.append((rr, cc))
         return out
+
+    def get_connected_component(self, r: int, c: int, predicate: Callable[[int, int], bool]) -> Set[Tuple[int, int]]:
+        if not predicate(r, c):
+            return set()
+        comp = {(r, c)}
+        q = [(r, c)]
+        idx = 0
+        while idx < len(q):
+            curr_r, curr_c = q[idx]
+            idx += 1
+            for nr, nc in self.neighbors4(curr_r, curr_c):
+                if predicate(nr, nc) and (nr, nc) not in comp:
+                    comp.add((nr, nc))
+                    q.append((nr, nc))
+        return comp
+
+    def get_all_components(self, predicate: Callable[[int, int], bool]) -> List[Set[Tuple[int, int]]]:
+        visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
+        components = []
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if predicate(r, c) and not visited[r][c]:
+                    comp = self.get_connected_component(r, c, predicate)
+                    for rr, cc in comp:
+                        visited[rr][cc] = True
+                    components.append(comp)
+        return components
 
     def is_clue(self, r: int, c: int) -> bool:
         return self.clues[r][c] > 0
@@ -383,22 +410,7 @@ class NurikabeModel:
                     return False, f"2x2 sea block at ({r},{c})"
 
         # 2. Island checks (connectivity, clues, size)
-        visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
-        land_components = []
-        for r in range(self.rows):
-            for c in range(self.cols):
-                if self.is_land_certain(r, c) and not visited[r][c]:
-                    comp = []
-                    q = [(r, c)]
-                    visited[r][c] = True
-                    while q:
-                        curr_r, curr_c = q.pop(0)
-                        comp.append((curr_r, curr_c))
-                        for nr, nc in self.neighbors4(curr_r, curr_c):
-                            if self.is_land_certain(nr, nc) and not visited[nr][nc]:
-                                visited[nr][nc] = True
-                                q.append((nr, nc))
-                    land_components.append(comp)
+        land_components = self.get_all_components(self.is_land_certain)
 
         for comp in land_components:
             comp_clues = [(rr, cc) for (rr, cc) in comp if self.is_clue(rr, cc)]
@@ -451,18 +463,11 @@ class NurikabeModel:
         if is_complete:
             # All land cells must have been visited (already checked by component analysis)
             # All sea cells must be connected
-            sea_cells = [(r, c) for r in range(self.rows) for c in range(self.cols) if self.is_black_certain(r, c)]
-            if sea_cells:
-                start_sea = sea_cells[0]
-                q = [start_sea]
-                seen_sea = {start_sea}
-                while q:
-                    curr_r, curr_c = q.pop(0)
-                    for nr, nc in self.neighbors4(curr_r, curr_c):
-                        if self.is_black_certain(nr, nc) and (nr, nc) not in seen_sea:
-                            seen_sea.add((nr, nc))
-                            q.append((nr, nc))
-                if len(seen_sea) != len(sea_cells):
+            sea_cells_coords = [(r, c) for r in range(self.rows) for c in range(self.cols) if self.is_black_certain(r, c)]
+            if sea_cells_coords:
+                start_sea = sea_cells_coords[0]
+                seen_sea = self.get_connected_component(start_sea[0], start_sea[1], self.is_black_certain)
+                if len(seen_sea) != len(sea_cells_coords):
                     return False, "Sea is not connected"
             
             # Every clue must have an island (already checked if all land is assigned)
