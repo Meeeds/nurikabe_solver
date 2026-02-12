@@ -131,35 +131,23 @@ class NurikabeSolver:
     @solver_rule(priority=3, name="G2 Unification: land cluster domain intersection",
                  message="Unified land cluster at %s with intersection of potential owners.")
     def try_rule_land_cluster_unification(self) -> Optional[StepResult]:
-        visited = [[False for _ in range(self.model.cols)] for _ in range(self.model.rows)]
+        land_components = self.model.get_all_components(self.model.is_land_certain)
         K = len(self.model.islands)
         full_mask = (1 << K) - 1
-        for r in range(self.model.rows):
-            for c in range(self.model.cols):
-                if self.model.is_land_certain(r, c) and not visited[r][c]:
-                    # Find the connected component of land cells
-                    component = []
-                    q = [(r, c)]
-                    visited[r][c] = True
-                    common_mask = full_mask
-                    idx = 0
-                    while idx < len(q):
-                        curr_r, curr_c = q[idx]
-                        idx += 1
-                        component.append((curr_r, curr_c))
-                        common_mask &= self.model.cells[curr_r][curr_c].owners
-                        for nr, nc in self.model.neighbors4(curr_r, curr_c):
-                            if self.model.is_land_certain(nr, nc) and not visited[nr][nc]:
-                                visited[nr][nc] = True
-                                q.append((nr, nc))
-                    # Apply the intersection mask to all cells in this cluster
-                    for cr, cc in component:
-                        if self.model.cells[cr][cc].owners != common_mask:
-                            self.model.cells[cr][cc].owners = common_mask
-                            return StepResult(
-                                changed_cells=[(cr, cc)],
-                                format_args=(component[0],)
-                            )
+        
+        for component in land_components:
+            common_mask = full_mask
+            for cr, cc in component:
+                common_mask &= self.model.cells[cr][cc].owners
+            
+            # Apply the intersection mask to all cells in this cluster
+            for cr, cc in component:
+                if self.model.cells[cr][cc].owners != common_mask:
+                    self.model.cells[cr][cc].owners = common_mask
+                    return StepResult(
+                        changed_cells=[(cr, cc)],
+                        format_args=(list(component)[0],)
+                    )
         return None
 
     @solver_rule(priority=5, name="G3 Closure: complete island forces black neighbors",
@@ -168,15 +156,9 @@ class NurikabeSolver:
         for isl in self.model.islands:
             iid = isl.island_id
             clue = isl.clue
-            bit = self.model.bit(iid)
             
-            # 1. Get all cells definitively belonging to this island
-            island_cells = []
-            for r in range(self.model.rows):
-                for c in range(self.model.cols):
-                    cell = self.model.cells[r][c]
-                    if cell.is_land and cell.owners == bit:
-                        island_cells.append((r, c))
+            # 1. Get all cells definitively belonging to this island (globally)
+            island_cells = self.model.get_island_core_cells(iid)
             
             # 2. If the island is complete, neighbors that are NOT in the island must be black
             if len(island_cells) == clue:
@@ -217,18 +199,8 @@ class NurikabeSolver:
             bit = self.model.bit(iid)
             
             # 1. Identify current connected component for this island
-            sr, sc = isl.pos
-            component = {(sr, sc)}
-            stack = [(sr, sc)]
-            while stack:
-                r, c = stack.pop()
-                for nr, nc in self.model.neighbors4(r, c):
-                    if (nr, nc) not in component:
-                        n_cell = self.model.cells[nr][nc]
-                        # Cell belongs to island iid if it's land and uniquely owned by bit
-                        if n_cell.is_land and n_cell.owners == bit:
-                            component.add((nr, nc))
-                            stack.append((nr, nc))
+            component = self.model.get_connected_component(isl.pos[0], isl.pos[1],
+                lambda r, c: self.model.is_land_certain(r, c) and self.model.cells[r][c].owners == bit)
             
             if len(component) >= clue:
                 continue
@@ -278,18 +250,9 @@ class NurikabeSolver:
     def _is_connected(self, cells: Set[Tuple[int, int]]) -> bool:
         if not cells:
             return True
-        start = next(iter(cells))
-        q = [start]
-        seen = {start}
-        count = 0
-        while q:
-            curr = q.pop()
-            count += 1
-            for n in self.model.neighbors4(*curr):
-                if n in cells and n not in seen:
-                    seen.add(n)
-                    q.append(n)
-        return count == len(cells)
+        start = list(cells)[0]
+        seen = self.model.get_connected_component(start[0], start[1], lambda rr, cc: (rr, cc) in cells)
+        return len(seen) == len(cells)
 
     def analyze_island_extensions(self, isl) -> Optional[Tuple[Set[Tuple[int, int]], Set[Tuple[int, int]]]]:
         """
@@ -304,15 +267,13 @@ class NurikabeSolver:
         clue = isl.clue
         bit = self.model.bit(iid)
 
-        # 1. Identify fixed core and potential cells
-        fixed_core = set()
-        potential = set()
+        # 1. Identify fixed core (globally) and potential cells
+        fixed_core = self.model.get_island_core_cells(iid)
         
+        potential = set()
         for r in range(self.model.rows):
             for c in range(self.model.cols):
                 cell = self.model.cells[r][c]
-                if cell.is_land and cell.owners == bit:
-                    fixed_core.add((r, c))
                 if not self.model.is_black_certain(r, c) and (cell.owners & bit):
                     potential.add((r, c))
 
@@ -429,12 +390,8 @@ class NurikabeSolver:
             changed_list = []
             bit = self.model.bit(isl.island_id)
             
-            fixed_core = set()
-            for r in range(self.model.rows):
-                for c in range(self.model.cols):
-                    cell = self.model.cells[r][c]
-                    if cell.is_land and cell.owners == bit:
-                        fixed_core.add((r, c))
+            # Use get_island_core_cells for global discovery
+            fixed_core = self.model.get_island_core_cells(isl.island_id)
             
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
@@ -473,22 +430,7 @@ class NurikabeSolver:
                  message="Global Sea Connectivity: Cell (%d,%d) is a mandatory articulation point.")
     def try_rule_black_mandatory_expansion(self) -> Optional[StepResult]:
         # 1. Identify all connected components of current black cells
-        visited = [[False for _ in range(self.model.cols)] for _ in range(self.model.rows)]
-        black_components = []
-        for r in range(self.model.rows):
-            for c in range(self.model.cols):
-                if self.model.is_black_certain(r, c) and not visited[r][c]:
-                    comp = []
-                    q = [(r, c)]
-                    visited[r][c] = True
-                    while q:
-                        curr_r, curr_c = q.pop(0)
-                        comp.append((curr_r, curr_c))
-                        for nr, nc in self.model.neighbors4(curr_r, curr_c):
-                            if self.model.is_black_certain(nr, nc) and not visited[nr][nc]:
-                                visited[nr][nc] = True
-                                q.append((nr, nc))
-                    black_components.append(comp)
+        black_components = self.model.get_all_components(self.model.is_black_certain)
 
         if len(black_components) < 2:
             return None
@@ -512,32 +454,18 @@ class NurikabeSolver:
             for cell in comp:
                 cell_to_comp_idx[cell] = idx
 
-        # Helper BFS to find reachable component INDICES from a start cell
+        # Helper to find reachable component INDICES from a start cell
         def get_reachable_component_indices(start_cell: Tuple[int, int], forbidden: Optional[Tuple[int, int]]) -> Set[int]:
+            def predicate(r, c):
+                if (r, c) == forbidden: return False
+                return (r, c) in potential_sea
+            
+            reachable_cells = self.model.get_connected_component(start_cell[0], start_cell[1], predicate)
+            
             reached_comp_indices = set()
-            
-            # Optimization: If start_cell itself belongs to a component, add it immediately
-            if start_cell in cell_to_comp_idx:
-                reached_comp_indices.add(cell_to_comp_idx[start_cell])
-
-            q = [start_cell]
-            seen = {start_cell}
-            if forbidden:
-                seen.add(forbidden)
-            
-            idx = 0
-            while idx < len(q):
-                curr = q[idx]
-                idx += 1
-                
-                # If we hit a black cell, record its component
-                if curr in cell_to_comp_idx:
-                    reached_comp_indices.add(cell_to_comp_idx[curr])
-                
-                for nr, nc in self.model.neighbors4(*curr):
-                    if (nr, nc) in potential_sea and (nr, nc) not in seen:
-                        seen.add((nr, nc))
-                        q.append((nr, nc))
+            for cell in reachable_cells:
+                if cell in cell_to_comp_idx:
+                    reached_comp_indices.add(cell_to_comp_idx[cell])
             return reached_comp_indices
 
         # 3. Group components into partitions (sets of component indices that can reach each other)
@@ -549,7 +477,7 @@ class NurikabeSolver:
                 continue
             
             # BFS from component i to find all connected components
-            reached = get_reachable_component_indices(black_components[i][0], None)
+            reached = get_reachable_component_indices(list(black_components[i])[0], None)
             comp_partitions.append(reached)
             assigned_comps.update(reached)
 
@@ -560,13 +488,11 @@ class NurikabeSolver:
             return None
 
         # 4. Iterate over ALL unknown potential sea cells
-        # For each candidate, check if it breaks ANY active partition
         for cand in candidates:
-            # Let's just iterate partitions.
             for partition in active_partitions:
                 # Pick a representative component from the partition
                 start_comp_idx = next(iter(partition))
-                start_cell = black_components[start_comp_idx][0]
+                start_cell = list(black_components[start_comp_idx])[0]
                 
                 # Check reachability with 'cand' blocked
                 reachable_indices = get_reachable_component_indices(start_cell, cand)
@@ -594,17 +520,9 @@ class NurikabeSolver:
             clue = isl.clue
             bit = self.model.bit(iid)
             
-            sr, sc = isl.pos
-            component = {(sr, sc)}
-            stack = [(sr, sc)]
-            while stack:
-                r, c = stack.pop()
-                for nr, nc in self.model.neighbors4(r, c):
-                    if (nr, nc) not in component:
-                        n_cell = self.model.cells[nr][nc]
-                        if n_cell.is_land and n_cell.owners == bit:
-                            component.add((nr, nc))
-                            stack.append((nr, nc))
+            # Identify current connected component for this island
+            component = self.model.get_connected_component(isl.pos[0], isl.pos[1],
+                lambda r, c: self.model.is_land_certain(r, c) and self.model.cells[r][c].owners == bit)
             
             if len(component) != clue - 1:
                 continue

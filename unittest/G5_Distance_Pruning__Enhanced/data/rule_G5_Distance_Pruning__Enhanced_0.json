@@ -848,11 +848,11 @@
         ],
         [
           0,
-          17039360
+          16777216
         ],
         [
           0,
-          2097152
+          0
         ],
         [
           2,
@@ -860,7 +860,7 @@
         ],
         [
           0,
-          135274496
+          0
         ],
         [
           0,
@@ -1194,10 +1194,10 @@
       "changed_cells": [
         [
           9,
-          6
+          10
         ]
       ],
-      "message": "Restricted potential owners of (9,6) to match adjacent Land cells.",
+      "message": "Restricted potential owners of (9,10) to match adjacent Land cells.",
       "rule": "G1b Separation: match neighbor owners"
     }
   },
@@ -2053,7 +2053,7 @@
         ],
         [
           0,
-          2097152
+          0
         ],
         [
           2,
@@ -2061,7 +2061,7 @@
         ],
         [
           0,
-          135274496
+          0
         ],
         [
           0,
@@ -2123,7 +2123,7 @@
         ],
         [
           0,
-          135274496
+          135266304
         ],
         [
           2,
@@ -2394,8 +2394,8 @@
     "last_step": {
       "changed_cells": [
         [
-          9,
-          7
+          10,
+          10
         ]
       ],
       "message": "Pruned potential owners based on reachability from current island components.",

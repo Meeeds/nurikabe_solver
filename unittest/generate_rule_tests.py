@@ -71,8 +71,8 @@ def generate_tests(samples):
     for rule_name, instances in samples.items():
         print(f"Generating tests for rule: {rule_name} ({len(instances)} instances found)")
         
-        # Select up to 10 random instances
-        selected = random.sample(instances, min(len(instances), 10))
+        # Select up to 20 random instances
+        selected = random.sample(instances, min(len(instances), 20))
         
         sanitized_rule_name = sanitize_filename(rule_name)
         

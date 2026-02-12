@@ -6,6 +6,7 @@ Here is the overview of the code :
 
 1. `nurikabe_model.py` 
     - Defines the core data structures (`NurikabeModel`, `Island`, `StepResult`) and manages the grid state, including cell owners and validity checks.
+    - Centralizes graph traversal logic with `get_connected_component(r, c, predicate)` and `get_all_components(predicate)`.
 1. `nurikabe_rules.py`
     - Implements the `NurikabeSolver` logic with various rule-based heuristics (e.g., connectivity, separation, global bottlenecks) to iteratively solve the puzzle.
 1. `nurikabe_worker.py`
