@@ -1,5 +1,5 @@
 from typing import Optional, Set, List, Tuple, Callable
-from nurikabe_model import NurikabeModel, StepResult, CellState
+from nurikabe_model import NurikabeModel, StepResult, CellState, OwnerMask
 
 # Global registry for rules: list of (priority, func, name)
 _RULES = []
@@ -68,7 +68,7 @@ class NurikabeSolver:
                 
                 # Combine masks from all LAND neighbors
                 has_restriction = False
-                combined_neighbor_mask = (1 << len(self.model.islands)) - 1
+                combined_neighbor_mask = OwnerMask((1 << len(self.model.islands)) - 1)
                 
                 for nr, nc in self.model.neighbors4(r, c):
                     if self.model.is_land_certain(nr, nc):
@@ -76,7 +76,7 @@ class NurikabeSolver:
                         has_restriction = True
                 
                 if has_restriction:
-                    if self.model.restrict_owners_intersection(r, c, combined_neighbor_mask):
+                    if self.model.restrict_owners_intersection(r, c, combined_neighbor_mask.bits):
                         return StepResult(
                             changed_cells=[(r, c)],
                             format_args=(r, c)
@@ -133,17 +133,17 @@ class NurikabeSolver:
     def try_rule_land_cluster_unification(self) -> Optional[StepResult]:
         land_components = self.model.get_all_components(self.model.is_land_certain)
         K = len(self.model.islands)
-        full_mask = (1 << K) - 1
+        full_mask = OwnerMask((1 << K) - 1)
         
         for component in land_components:
-            common_mask = full_mask
+            common_mask = OwnerMask(full_mask.bits)
             for cr, cc in component:
                 common_mask &= self.model.cells[cr][cc].owners
             
             # Apply the intersection mask to all cells in this cluster
             for cr, cc in component:
                 if self.model.cells[cr][cc].owners != common_mask:
-                    self.model.cells[cr][cc].owners = common_mask
+                    self.model.cells[cr][cc].owners = OwnerMask(common_mask.bits)
                     return StepResult(
                         changed_cells=[(cr, cc)],
                         format_args=(list(component)[0],)
@@ -224,7 +224,7 @@ class NurikabeSolver:
                     # 'n' is mandatory for island iid to ever reach its size
                     tr, tc = n
                     self.model.force_land(tr, tc)
-                    self.model.cells[tr][tc].owners = bit
+                    self.model.cells[tr][tc].owners = OwnerMask.from_island_id(iid)
                     return StepResult(
                         changed_cells=[(tr, tc)],
                         format_args=(iid, tr, tc, clue)
@@ -535,7 +535,6 @@ class NurikabeSolver:
         for isl in self.model.islands:
             iid = isl.island_id
             clue = isl.clue
-            bit = self.model.bit(iid)
             
             # Start BFS from ALL cells currently fixed to this island
             current_fixed = all_cores[iid]
@@ -555,8 +554,8 @@ class NurikabeSolver:
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
                     if (r, c) not in reachable:
-                        if self.model.cells[r][c].owners & bit:
-                            self.model.cells[r][c].owners &= ~bit
+                        if self.model.cells[r][c].owners.has(iid):
+                            self.model.cells[r][c].owners.remove(iid)
                             changed_cells.append((r, c))
         
         if changed_cells:
