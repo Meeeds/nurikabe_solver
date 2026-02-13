@@ -72,11 +72,11 @@ class NurikabeSolver:
                 
                 for nr, nc in self.model.neighbors4(r, c):
                     if self.model.is_land_certain(nr, nc):
-                        combined_neighbor_mask &= self.model.cells[nr][nc].owners
+                        combined_neighbor_mask.intersect(self.model.cells[nr][nc].owners)
                         has_restriction = True
                 
                 if has_restriction:
-                    if self.model.restrict_owners_intersection(r, c, combined_neighbor_mask.bits):
+                    if self.model.restrict_owners_intersection(r, c, combined_neighbor_mask):
                         return StepResult(
                             changed_cells=[(r, c)],
                             format_args=(r, c)
@@ -138,12 +138,11 @@ class NurikabeSolver:
         for component in land_components:
             common_mask = OwnerMask(full_mask.bits)
             for cr, cc in component:
-                common_mask &= self.model.cells[cr][cc].owners
+                common_mask.intersect(self.model.cells[cr][cc].owners)
             
             # Apply the intersection mask to all cells in this cluster
             for cr, cc in component:
-                if self.model.cells[cr][cc].owners != common_mask:
-                    self.model.cells[cr][cc].owners = OwnerMask(common_mask.bits)
+                if self.model.restrict_owners_intersection(cr, cc, common_mask):
                     return StepResult(
                         changed_cells=[(cr, cc)],
                         format_args=(list(component)[0],)
@@ -223,7 +222,7 @@ class NurikabeSolver:
                     # 'n' is mandatory for island iid to ever reach its size
                     tr, tc = n
                     self.model.force_land(tr, tc)
-                    self.model.cells[tr][tc].owners = OwnerMask.from_island_id(iid)
+                    self.model.force_owner(tr, tc, iid)
                     return StepResult(
                         changed_cells=[(tr, tc)],
                         format_args=(iid, tr, tc, clue)
@@ -386,18 +385,15 @@ class NurikabeSolver:
             # 2. Bottleneck: Force cells that are in ALL valid extensions
             if common_set:
                 for r, c in common_set:
-                    cell = self.model.cells[r][c]
-                    if cell.state == CellState.BLACK: 
+                    if self.model.cells[r][c].state == CellState.BLACK: 
                         continue
                     
-                    if self.model.force_land(r, c):
+                    forced_land = self.model.force_land(r, c)
+                    forced_owner = self.model.force_owner(r, c, iid)
+                    
+                    if forced_land or forced_owner:
                         if (r, c) not in changed_list:
                              changed_list.append((r, c))
-                    
-                    if cell.owners.get_singleton_id() != iid:
-                        cell.owners = OwnerMask.from_island_id(iid)
-                        if (r, c) not in changed_list:
-                            changed_list.append((r, c))
 
             if changed_list:
                 return StepResult(

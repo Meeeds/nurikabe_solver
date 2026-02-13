@@ -122,10 +122,7 @@ class Cell:
 
     @owners.setter
     def owners(self, value: Any) -> None:
-        if isinstance(value, OwnerMask):
-            self._owners = value
-        else:
-            self._owners = OwnerMask(value)
+        self._owners = OwnerMask(value)
 
     @property
     def is_land(self) -> bool:
@@ -265,12 +262,23 @@ class NurikabeModel:
             cell.owners = OwnerMask(self.get_potential_owners_mask(r, c))
         return True
 
-    def restrict_owners_intersection(self, r: int, c: int, mask: int) -> bool:
-        """Owners := Owners & mask"""
+    def force_owner(self, r: int, c: int, island_id: int) -> bool:
+        """Owners := {island_id}. Returns True if changed."""
         if self.is_clue(r, c):
             return False
         cell = self.cells[r][c]
-        return cell.owners.intersect(OwnerMask(mask))
+        new_mask = OwnerMask.from_island_id(island_id)
+        if cell.owners != new_mask:
+            cell.owners = new_mask
+            return True
+        return False
+
+    def restrict_owners_intersection(self, r: int, c: int, mask: Any) -> bool:
+        """Owners := Owners & mask. Returns True if changed."""
+        if self.is_clue(r, c):
+            return False
+        cell = self.cells[r][c]
+        return cell.owners.intersect(mask)
 
     def remove_owner(self, r: int, c: int, island_id: int) -> bool:
         """Owners := Owners without island_id"""
