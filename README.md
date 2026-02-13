@@ -76,10 +76,13 @@ The `tests/test.py` script performs automated regression testing against referen
 
 ```bash
 # Run all tests for V1
-python tests/test.py --mode test --model v1 -v tests/main_tests
+python tests/test.py --mode test --model v1 -v tests/
 
-# Run all tests for V2 (uses .reference.v2.json)
+# Run main_tests for V2 (uses .reference.v2.json)
 python tests/test.py --mode test --model v2 -v tests/main_tests
+
+# Run all test for V2 (uses .reference.v2.json)
+python tests/test.py --mode test --model v2 -v tests/
 ```
 
 ### Individual Puzzle commands:
