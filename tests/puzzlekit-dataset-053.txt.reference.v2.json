@@ -1,0 +1,47 @@
+{
+  "final_grid": [
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "CLUE(4)",
+      "SEA",
+      "CLUE(4)",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "CLUE(4)",
+      "SEA",
+      "CLUE(4)",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 9,
+  "rules_triggered": {
+    "B0 Distance Pruning": 4,
+    "R0 Empty domain -> Sea": 5,
+    "R2 Neighbor Domain Restriction": 12
+  },
+  "steps_total": 21
+}

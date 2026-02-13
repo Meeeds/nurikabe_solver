@@ -1,0 +1,124 @@
+{
+  "final_grid": [
+    [
+      "CLUE(2)",
+      "LAND(1)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "CLUE(2)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(2)",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN"
+    ],
+    [
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "UNKNOWN",
+      "CLUE(7)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)",
+      "SEA",
+      "CLUE(3)",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(10)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "UNKNOWN"
+    ],
+    [
+      "CLUE(2)",
+      "SEA",
+      "SEA",
+      "CLUE(4)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "LAND(9)",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(11)",
+      "LAND(11)",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "LAND(14)"
+    ],
+    [
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "CLUE(2)",
+      "SEA",
+      "CLUE(4)",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 54,
+  "rules_triggered": {
+    "B0 Distance Pruning": 15,
+    "R0 Empty domain -> Sea": 24,
+    "R1 Anti 2x2": 3,
+    "R2 Neighbor Domain Restriction": 34,
+    "R3 Mandatory Expansion": 5,
+    "R4 Global Sea Connectivity": 6,
+    "R5 Generalized Theorem": 2
+  },
+  "steps_total": 89
+}

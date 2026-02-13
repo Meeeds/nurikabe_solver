@@ -1,0 +1,29 @@
+{
+  "final_grid": [
+    [
+      "CLUE(1)",
+      "SEA",
+      "LAND(2)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(2)"
+    ],
+    [
+      "LAND(2)",
+      "CLUE(5)",
+      "LAND(2)"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 9,
+  "rules_triggered": {
+    "B0 Distance Pruning": 1,
+    "R0 Empty domain -> Sea": 2,
+    "R2 Neighbor Domain Restriction": 2,
+    "R3 Mandatory Expansion": 4,
+    "R4 Global Sea Connectivity": 1
+  },
+  "steps_total": 10
+}

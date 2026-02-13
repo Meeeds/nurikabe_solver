@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(3)",
+      "LAND(3)",
+      "LAND(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "LAND(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(5)",
+      "LAND(2)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "CLUE(5)",
+      "SEA",
+      "CLUE(2)",
+      "LAND(4)",
+      "SEA",
+      "LAND(2)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(2)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(9)",
+      "SEA",
+      "LAND(5)",
+      "LAND(5)",
+      "SEA",
+      "LAND(6)",
+      "SEA",
+      "LAND(2)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(9)",
+      "SEA",
+      "LAND(5)",
+      "SEA",
+      "LAND(6)",
+      "LAND(6)",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(9)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "LAND(10)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(9)",
+      "SEA",
+      "LAND(7)",
+      "CLUE(3)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "LAND(10)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(9)",
+      "CLUE(6)",
+      "SEA",
+      "LAND(7)",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "CLUE(3)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
+  "rules_triggered": {
+    "B0 Distance Pruning": 26,
+    "R0 Empty domain -> Sea": 56,
+    "R1 Anti 2x2": 6,
+    "R2 Neighbor Domain Restriction": 44,
+    "R3 Mandatory Expansion": 20,
+    "R4 Global Sea Connectivity": 8
+  },
+  "steps_total": 160
+}

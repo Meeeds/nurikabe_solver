@@ -1,0 +1,134 @@
+{
+  "final_grid": [
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "LAND(1)",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "LAND(4)"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "CLUE(6)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(4)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "CLUE(4)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "CLUE(1)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(7)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "CLUE(7)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(9)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(6)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "CLUE(4)",
+      "UNKNOWN",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 37,
+  "rules_triggered": {
+    "B0 Distance Pruning": 17,
+    "R0 Empty domain -> Sea": 18,
+    "R2 Neighbor Domain Restriction": 33,
+    "R3 Mandatory Expansion": 3,
+    "R4 Global Sea Connectivity": 4
+  },
+  "steps_total": 75
+}

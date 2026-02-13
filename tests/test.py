@@ -145,14 +145,20 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
         "final_grid": serialize_grid(model)
     }, None
 
-def generate_reference(grid_path: str) -> bool:
+def get_reference_path(grid_path: str, model_name: str) -> str:
+    """Returns the reference file path based on the model name."""
+    if model_name == "v2":
+        return grid_path + ".reference.v2.json"
+    return grid_path + ".reference.json"
+
+def generate_reference(grid_path: str, model_name: str) -> bool:
     """Runs solver and saves the result as a reference JSON."""
     result, error_msg = run_solver(grid_path)
     if error_msg:
         print(f"Error for {grid_path}: {error_msg}")
         return False
         
-    ref_path = grid_path + ".reference.json"
+    ref_path = get_reference_path(grid_path, model_name)
     
     with open(ref_path, 'w') as f:
         json.dump(result, f, indent=2, sort_keys=True)
@@ -172,7 +178,7 @@ def run_and_print_stats(grid_path: str) -> bool:
     print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
     return True
 
-def check_regression(grid_path: str) -> bool:
+def check_regression(grid_path: str, model_name: str) -> bool:
     """Runs solver and compares result with existing reference JSON."""
     global NEW_CELLS_FOUND, CELLS_NOW_NOT_FOUND
     current_result, error_msg = run_solver(grid_path)
@@ -180,7 +186,7 @@ def check_regression(grid_path: str) -> bool:
         print(f"Error for {grid_path}: {error_msg}")
         return False
 
-    ref_path = grid_path + ".reference.json"
+    ref_path = get_reference_path(grid_path, model_name)
     
     try:
         with open(ref_path, 'r') as f:
@@ -295,11 +301,11 @@ if __name__ == "__main__":
         start_time = time.time()
         
         if args.mode == "generate":
-            passed = generate_reference(test_file)
+            passed = generate_reference(test_file, args.model)
         elif args.mode == "stats":
             passed = run_and_print_stats(test_file)
         else: # mode == "test"
-            passed = check_regression(test_file)
+            passed = check_regression(test_file, args.model)
         
         elapsed = time.time() - start_time
         execution_times.append((test_name, elapsed))
