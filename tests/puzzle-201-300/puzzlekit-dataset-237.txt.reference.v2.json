@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "CLUE(10)",
+      "SEA",
+      "CLUE(3)",
+      "LAND(2)",
+      "LAND(2)",
+      "SEA",
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "CLUE(1)"
+    ],
+    [
+      "LAND(1)",
+      "LAND(1)",
+      "LAND(1)",
+      "SEA",
+      "LAND(3)",
+      "LAND(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(6)",
+      "LAND(6)",
+      "CLUE(4)"
+    ],
+    [
+      "CLUE(5)",
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "LAND(8)",
+      "LAND(8)",
+      "SEA",
+      "LAND(6)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(7)",
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "CLUE(12)"
+    ],
+    [
+      "LAND(7)",
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "SEA",
+      "LAND(11)",
+      "SEA",
+      "LAND(9)"
+    ],
+    [
+      "LAND(7)",
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "LAND(10)",
+      "SEA",
+      "CLUE(3)",
+      "LAND(11)",
+      "SEA",
+      "LAND(9)"
+    ],
+    [
+      "LAND(7)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(9)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
+  "rules_triggered": {
+    "B0 Distance Pruning": 25,
+    "R0 Empty domain -> Sea": 39,
+    "R1 Anti 2x2": 5,
+    "R2 Neighbor Domain Restriction": 68,
+    "R3 Mandatory Expansion": 33,
+    "R4 Global Sea Connectivity": 12
+  },
+  "steps_total": 182
+}

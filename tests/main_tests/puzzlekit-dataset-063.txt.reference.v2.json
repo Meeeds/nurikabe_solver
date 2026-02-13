@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(1)",
+      "LAND(1)",
+      "CLUE(3)",
+      "SEA",
+      "LAND(3)",
+      "SEA",
+      "LAND(4)"
+    ],
+    [
+      "SEA",
+      "LAND(2)",
+      "CLUE(2)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "CLUE(2)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(5)",
+      "LAND(5)",
+      "LAND(5)",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(6)",
+      "LAND(6)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(4)",
+      "SEA",
+      "LAND(8)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "LAND(7)",
+      "CLUE(4)",
+      "SEA",
+      "CLUE(3)",
+      "LAND(8)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "LAND(7)",
+      "LAND(7)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(9)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(5)",
+      "LAND(10)",
+      "LAND(10)",
+      "LAND(10)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(9)",
+      "SEA",
+      "LAND(11)",
+      "CLUE(5)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(10)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(11)",
+      "LAND(11)",
+      "LAND(11)",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "CLUE(3)",
+      "LAND(12)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "LAND(13)"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
+  "rules_triggered": {
+    "B0 Distance Pruning": 20,
+    "R0 Empty domain -> Sea": 43,
+    "R1 Anti 2x2": 6,
+    "R2 Neighbor Domain Restriction": 44,
+    "R3 Mandatory Expansion": 22,
+    "R4 Global Sea Connectivity": 16
+  },
+  "steps_total": 151
+}

@@ -1,0 +1,62 @@
+{
+  "final_grid": [
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(2)",
+      "UNKNOWN",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(1)",
+      "SEA"
+    ],
+    [
+      "CLUE(4)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)"
+    ],
+    [
+      "UNKNOWN",
+      "CLUE(2)",
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "UNKNOWN"
+    ],
+    [
+      "SEA",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 16,
+  "rules_triggered": {
+    "G1b Separation: match neighbor owners": 6,
+    "G3 Closure: complete island forces sea neighbors": 7,
+    "G5 Distance Pruning (Enhanced)": 2,
+    "G6 Empty domain -> sea": 2,
+    "G9 Global Sea Connectivity (Articulation Point)": 1
+  },
+  "steps_total": 18
+}

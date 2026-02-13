@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "LAND(1)",
+      "CLUE(2)",
+      "SEA",
+      "SEA",
+      "LAND(2)",
+      "LAND(2)",
+      "CLUE(3)"
+    ],
+    [
+      "LAND(4)",
+      "LAND(4)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "LAND(3)",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "CLUE(1)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(11)",
+      "SEA",
+      "SEA",
+      "LAND(9)",
+      "LAND(9)",
+      "SEA",
+      "LAND(8)",
+      "CLUE(5)",
+      "SEA",
+      "LAND(13)"
+    ],
+    [
+      "LAND(11)",
+      "SEA",
+      "CLUE(4)",
+      "LAND(9)",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "SEA",
+      "LAND(13)"
+    ],
+    [
+      "LAND(11)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(14)",
+      "SEA",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "LAND(13)"
+    ],
+    [
+      "CLUE(4)",
+      "SEA",
+      "LAND(15)",
+      "SEA",
+      "LAND(14)",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "SEA",
+      "CLUE(5)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(15)",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "LAND(12)",
+      "LAND(12)",
+      "SEA",
+      "LAND(13)"
+    ],
+    [
+      "CLUE(5)",
+      "LAND(15)",
+      "LAND(15)",
+      "SEA",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 98,
+  "rules_triggered": {
+    "B0 Distance Pruning": 20,
+    "R0 Empty domain -> Sea": 46,
+    "R1 Anti 2x2": 7,
+    "R2 Neighbor Domain Restriction": 52,
+    "R3 Mandatory Expansion": 21,
+    "R4 Global Sea Connectivity": 8
+  },
+  "steps_total": 154
+}

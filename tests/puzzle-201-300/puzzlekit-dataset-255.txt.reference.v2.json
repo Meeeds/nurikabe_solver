@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "SEA",
+      "SEA",
+      "CLUE(4)",
+      "LAND(1)",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "SEA",
+      "CLUE(5)",
+      "LAND(3)"
+    ],
+    [
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "LAND(2)",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "LAND(3)"
+    ],
+    [
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "LAND(2)",
+      "SEA",
+      "LAND(5)",
+      "SEA",
+      "LAND(3)"
+    ],
+    [
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(5)",
+      "SEA",
+      "LAND(3)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "CLUE(3)",
+      "LAND(6)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "SEA",
+      "LAND(6)",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "LAND(9)",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "LAND(14)",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "SEA",
+      "LAND(10)",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "LAND(14)",
+      "SEA",
+      "LAND(11)",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(14)",
+      "SEA",
+      "CLUE(2)",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "CLUE(6)",
+      "SEA",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "LAND(14)",
+      "CLUE(5)",
+      "SEA",
+      "SEA"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
+  "rules_triggered": {
+    "B0 Distance Pruning": 25,
+    "R0 Empty domain -> Sea": 54,
+    "R1 Anti 2x2": 11,
+    "R2 Neighbor Domain Restriction": 36,
+    "R3 Mandatory Expansion": 18,
+    "R4 Global Sea Connectivity": 3
+  },
+  "steps_total": 147
+}

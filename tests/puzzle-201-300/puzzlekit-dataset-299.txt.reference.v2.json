@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "CLUE(6)",
+      "SEA",
+      "CLUE(4)",
+      "LAND(2)",
+      "LAND(2)",
+      "LAND(2)",
+      "SEA",
+      "UNKNOWN",
+      "CLUE(6)",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(1)",
+      "LAND(1)",
+      "LAND(1)",
+      "LAND(1)",
+      "SEA",
+      "LAND(MULTIPLE)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(4)",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "CLUE(4)",
+      "SEA",
+      "CLUE(4)",
+      "LAND(6)",
+      "SEA",
+      "CLUE(2)",
+      "LAND(7)",
+      "SEA",
+      "UNKNOWN",
+      "CLUE(4)"
+    ],
+    [
+      "LAND(5)",
+      "SEA",
+      "LAND(6)",
+      "SEA",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(5)",
+      "SEA",
+      "LAND(6)",
+      "SEA",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "SEA",
+      "LAND(8)",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(5)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "CLUE(6)",
+      "LAND(10)",
+      "LAND(10)",
+      "LAND(10)",
+      "LAND(10)",
+      "LAND(10)",
+      "SEA",
+      "LAND(11)",
+      "CLUE(2)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 84,
+  "rules_triggered": {
+    "B0 Distance Pruning": 18,
+    "R0 Empty domain -> Sea": 38,
+    "R1 Anti 2x2": 6,
+    "R2 Neighbor Domain Restriction": 58,
+    "R3 Mandatory Expansion": 20,
+    "R4 Global Sea Connectivity": 9
+  },
+  "steps_total": 149
+}

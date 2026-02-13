@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "SEA",
+      "LAND(1)",
+      "CLUE(2)",
+      "SEA",
+      "LAND(2)",
+      "CLUE(5)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(2)",
+      "SEA",
+      "CLUE(7)",
+      "LAND(3)",
+      "LAND(3)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "LAND(2)",
+      "LAND(2)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(3)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(4)",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "LAND(5)",
+      "SEA",
+      "LAND(3)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "LAND(7)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(3)",
+      "SEA"
+    ],
+    [
+      "CLUE(2)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(7)",
+      "CLUE(4)",
+      "LAND(7)",
+      "SEA",
+      "LAND(3)",
+      "SEA"
+    ],
+    [
+      "LAND(6)",
+      "SEA",
+      "LAND(9)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "LAND(10)",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(11)",
+      "SEA",
+      "SEA",
+      "CLUE(5)",
+      "SEA",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(6)",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(11)",
+      "LAND(11)",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 91,
+  "rules_triggered": {
+    "B0 Distance Pruning": 23,
+    "R0 Empty domain -> Sea": 33,
+    "R1 Anti 2x2": 7,
+    "R2 Neighbor Domain Restriction": 48,
+    "R3 Mandatory Expansion": 20,
+    "R4 Global Sea Connectivity": 20
+  },
+  "steps_total": 151
+}

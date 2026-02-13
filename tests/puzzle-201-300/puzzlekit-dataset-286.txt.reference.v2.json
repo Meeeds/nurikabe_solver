@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "CLUE(5)",
+      "SEA",
+      "SEA",
+      "LAND(2)",
+      "LAND(2)",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "LAND(2)",
+      "SEA",
+      "CLUE(4)",
+      "SEA",
+      "CLUE(1)",
+      "SEA"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(4)",
+      "LAND(4)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(1)",
+      "LAND(1)",
+      "SEA",
+      "LAND(7)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "LAND(12)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(7)",
+      "SEA",
+      "LAND(6)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(12)"
+    ],
+    [
+      "CLUE(8)",
+      "LAND(7)",
+      "LAND(7)",
+      "LAND(7)",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "CLUE(2)",
+      "SEA",
+      "LAND(12)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(7)",
+      "LAND(7)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(12)"
+    ],
+    [
+      "CLUE(5)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "CLUE(4)",
+      "LAND(11)",
+      "SEA",
+      "LAND(12)",
+      "CLUE(6)"
+    ],
+    [
+      "LAND(9)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(11)",
+      "LAND(11)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(9)",
+      "LAND(9)",
+      "LAND(9)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(13)",
+      "LAND(13)",
+      "CLUE(3)"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
+  "rules_triggered": {
+    "B0 Distance Pruning": 27,
+    "R0 Empty domain -> Sea": 43,
+    "R1 Anti 2x2": 7,
+    "R2 Neighbor Domain Restriction": 55,
+    "R3 Mandatory Expansion": 26,
+    "R4 Global Sea Connectivity": 11
+  },
+  "steps_total": 169
+}

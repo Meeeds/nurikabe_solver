@@ -1,0 +1,136 @@
+{
+  "final_grid": [
+    [
+      "CLUE(4)",
+      "LAND(1)",
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "CLUE(3)",
+      "LAND(3)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "LAND(4)",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(3)"
+    ],
+    [
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "LAND(7)",
+      "LAND(7)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "CLUE(2)",
+      "LAND(6)",
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "SEA",
+      "LAND(9)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "CLUE(2)"
+    ],
+    [
+      "CLUE(5)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "LAND(12)",
+      "LAND(12)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(10)",
+      "SEA",
+      "SEA",
+      "CLUE(5)",
+      "LAND(12)",
+      "LAND(12)",
+      "SEA",
+      "LAND(13)",
+      "CLUE(2)",
+      "SEA"
+    ],
+    [
+      "LAND(10)",
+      "LAND(10)",
+      "LAND(10)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(1)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "LAND(15)",
+      "SEA",
+      "LAND(18)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(16)",
+      "CLUE(2)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(18)",
+      "LAND(18)",
+      "CLUE(4)"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
+  "rules_triggered": {
+    "B0 Distance Pruning": 17,
+    "R0 Empty domain -> Sea": 42,
+    "R1 Anti 2x2": 8,
+    "R2 Neighbor Domain Restriction": 41,
+    "R3 Mandatory Expansion": 18,
+    "R4 Global Sea Connectivity": 12,
+    "R5 Generalized Theorem": 2
+  },
+  "steps_total": 140
+}

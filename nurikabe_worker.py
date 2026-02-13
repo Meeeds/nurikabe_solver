@@ -5,6 +5,7 @@ from typing import Optional, Dict, Any, List
 
 from nurikabe_model import NurikabeModel
 from nurikabe_rules import NurikabeSolver
+from nurikabe_rules_v2 import NurikabeSolverV2
 
 @dataclass
 class WorkerCommand:
@@ -17,14 +18,15 @@ class WorkerResult:
     payload: Dict[str, Any]
 
 class SolverWorker:
-    def __init__(self) -> None:
+    def __init__(self, solver_class=NurikabeSolver) -> None:
         self._cmd_q: "queue.Queue[WorkerCommand]" = queue.Queue()
         self._res_q: "queue.Queue[WorkerResult]" = queue.Queue()
         self._stop_evt = threading.Event()
         self._thread = threading.Thread(target=self._run, name="SolverWorker", daemon=True)
 
         self._model = NurikabeModel()
-        self._solver = NurikabeSolver(self._model)
+        self._solver_class = solver_class
+        self._solver = self._solver_class(self._model)
 
     def start(self) -> None:
         self._thread.start()
@@ -67,7 +69,7 @@ class SolverWorker:
                 if isinstance(state, dict):
                     try:
                         self._model.restore(state)
-                        self._solver = NurikabeSolver(self._model)
+                        self._solver = self._solver_class(self._model)
                         self._emit_state("synced")
                     except Exception as e:
                         self._res_q.put(WorkerResult(kind="error", payload={"message": f"Restore failed: {e}"}))
@@ -132,7 +134,7 @@ class SolverWorker:
                     s = (cmd.payload or {}).get("state")
                     if isinstance(s, dict):
                         self._model.restore(s)
-                        self._solver = NurikabeSolver(self._model)
+                        self._solver = self._solver_class(self._model)
                         self._emit_state("reset_done")
                     else:
                         self._res_q.put(WorkerResult(kind="error", payload={"message": "Reset missing state."}))
@@ -145,7 +147,7 @@ class SolverWorker:
                     grid = (cmd.payload or {}).get("grid")
                     if isinstance(grid, list) and grid and isinstance(grid[0], list):
                         self._model.load_grid([[int(v) for v in row] for row in grid])
-                        self._solver = NurikabeSolver(self._model)
+                        self._solver = self._solver_class(self._model)
                         self._emit_state("loaded")
                     else:
                         self._res_q.put(WorkerResult(kind="error", payload={"message": "Load missing/invalid grid."}))

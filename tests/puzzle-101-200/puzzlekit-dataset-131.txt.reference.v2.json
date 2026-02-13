@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "LAND(1)",
+      "CLUE(10)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(3)",
+      "LAND(2)",
+      "SEA",
+      "CLUE(3)"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "CLUE(5)",
+      "LAND(4)",
+      "LAND(4)",
+      "SEA",
+      "SEA",
+      "LAND(2)",
+      "SEA",
+      "LAND(3)"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(4)",
+      "LAND(4)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(3)"
+    ],
+    [
+      "LAND(1)",
+      "LAND(1)",
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(5)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(1)",
+      "LAND(1)",
+      "SEA",
+      "CLUE(5)",
+      "LAND(5)",
+      "LAND(5)",
+      "SEA",
+      "CLUE(4)"
+    ],
+    [
+      "CLUE(5)",
+      "SEA",
+      "LAND(1)",
+      "SEA",
+      "CLUE(4)",
+      "SEA",
+      "SEA",
+      "LAND(5)",
+      "SEA",
+      "LAND(6)"
+    ],
+    [
+      "LAND(7)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "LAND(8)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(6)"
+    ],
+    [
+      "LAND(7)",
+      "LAND(7)",
+      "LAND(7)",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "SEA",
+      "LAND(9)",
+      "SEA",
+      "LAND(6)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(9)",
+      "CLUE(3)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "CLUE(2)",
+      "LAND(10)",
+      "SEA",
+      "CLUE(2)",
+      "LAND(11)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "LAND(12)"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
+  "rules_triggered": {
+    "B0 Distance Pruning": 24,
+    "R0 Empty domain -> Sea": 32,
+    "R1 Anti 2x2": 7,
+    "R2 Neighbor Domain Restriction": 57,
+    "R3 Mandatory Expansion": 29,
+    "R4 Global Sea Connectivity": 20
+  },
+  "steps_total": 169
+}

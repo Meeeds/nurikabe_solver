@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(2)",
+      "LAND(2)",
+      "LAND(2)",
+      "CLUE(4)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "CLUE(3)",
+      "LAND(3)",
+      "LAND(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(6)",
+      "LAND(6)",
+      "LAND(6)",
+      "LAND(6)"
+    ],
+    [
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "CLUE(3)",
+      "LAND(5)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(5)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "LAND(5)",
+      "SEA",
+      "LAND(8)",
+      "CLUE(3)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "SEA",
+      "LAND(7)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "LAND(11)",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "LAND(9)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(11)",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "SEA",
+      "LAND(10)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(14)",
+      "SEA",
+      "LAND(11)",
+      "SEA"
+    ],
+    [
+      "LAND(12)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "LAND(13)",
+      "SEA",
+      "LAND(14)",
+      "SEA",
+      "CLUE(4)",
+      "SEA"
+    ],
+    [
+      "CLUE(5)",
+      "SEA",
+      "SEA",
+      "CLUE(3)",
+      "LAND(13)",
+      "SEA",
+      "LAND(14)",
+      "CLUE(4)",
+      "SEA",
+      "SEA"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
+  "rules_triggered": {
+    "B0 Distance Pruning": 22,
+    "R0 Empty domain -> Sea": 51,
+    "R1 Anti 2x2": 10,
+    "R2 Neighbor Domain Restriction": 29,
+    "R3 Mandatory Expansion": 19,
+    "R4 Global Sea Connectivity": 6
+  },
+  "steps_total": 137
+}

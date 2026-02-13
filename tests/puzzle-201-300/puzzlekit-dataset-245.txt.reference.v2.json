@@ -1,0 +1,135 @@
+{
+  "final_grid": [
+    [
+      "CLUE(5)",
+      "SEA",
+      "CLUE(3)",
+      "LAND(2)",
+      "LAND(2)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "LAND(4)",
+      "CLUE(2)"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(3)",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "LAND(1)",
+      "LAND(1)",
+      "LAND(1)",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(5)",
+      "CLUE(2)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "CLUE(3)",
+      "LAND(7)",
+      "LAND(7)",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "LAND(6)",
+      "SEA",
+      "LAND(10)",
+      "LAND(10)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(3)"
+    ],
+    [
+      "LAND(12)",
+      "LAND(12)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(16)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "CLUE(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(15)",
+      "LAND(15)",
+      "SEA",
+      "LAND(16)",
+      "LAND(16)",
+      "LAND(16)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(14)",
+      "SEA",
+      "SEA",
+      "LAND(15)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(16)"
+    ],
+    [
+      "CLUE(1)",
+      "SEA",
+      "LAND(14)",
+      "CLUE(3)",
+      "SEA",
+      "LAND(15)",
+      "LAND(15)",
+      "CLUE(6)",
+      "SEA",
+      "CLUE(6)"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
+  "rules_triggered": {
+    "B0 Distance Pruning": 13,
+    "R0 Empty domain -> Sea": 42,
+    "R1 Anti 2x2": 9,
+    "R2 Neighbor Domain Restriction": 40,
+    "R3 Mandatory Expansion": 21,
+    "R4 Global Sea Connectivity": 12
+  },
+  "steps_total": 137
+}

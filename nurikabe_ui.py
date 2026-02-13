@@ -18,7 +18,7 @@ Controls (Editor):
 """
 
 import os
-import glob
+import argparse
 from dataclasses import dataclass, field
 from typing import Tuple, Optional, List, Dict, Any
 
@@ -27,6 +27,7 @@ import pygame_gui
 
 from nurikabe_model import NurikabeModel
 from nurikabe_rules import NurikabeSolver
+from nurikabe_rules_v2 import NurikabeSolverV2
 from nurikabe_worker import SolverWorker, WorkerCommand
 from nurikabe_drawing import Camera, draw_grid, pick_cell_from_mouse, clamp_int
 import grid_style
@@ -72,7 +73,8 @@ class TreeNode:
 class MainState:
     mode: int = MODE_MAIN
     model: NurikabeModel = NurikabeModel()
-    solver: NurikabeSolver = NurikabeSolver(NurikabeModel())
+    solver: Any = None
+    solver_class: Any = NurikabeSolver
     debug_cell: Optional[Tuple[int, int]] = None
     last_step_msg: str = ""
     affected_cells: List[Tuple[int, int]] = field(default_factory=list)
@@ -243,8 +245,14 @@ def save_editor_grid_to_file(
 # ----------------------------
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", choices=["v1", "v2"], default="v1")
+    args = parser.parse_args()
+
+    solver_class = NurikabeSolver if args.model == "v1" else NurikabeSolverV2
+
     pygame.init()
-    pygame.display.set_caption("Nurikabe Assistant")
+    pygame.display.set_caption(f"Nurikabe Assistant ({args.model})")
 
     screen = pygame.display.set_mode((1200, 800), pygame.RESIZABLE)
     clock = pygame.time.Clock()
@@ -367,8 +375,9 @@ def main() -> None:
     )
 
     state = MainState()
+    state.solver_class = solver_class
     state.model = NurikabeModel()
-    state.solver = NurikabeSolver(state.model)
+    state.solver = state.solver_class(state.model)
 
     editor = EditorState()
     editor.grid = grid_default(editor.rows, editor.cols)
@@ -435,7 +444,7 @@ def main() -> None:
         log_lines.clear()
         log_box.set_text("")
 
-    worker = SolverWorker()
+    worker = SolverWorker(solver_class=solver_class)
     worker.start()
 
     undo_stack: List[Dict[str, object]] = []
@@ -483,7 +492,7 @@ def main() -> None:
             log_append(f"Auto-load failed: {e}")
 
     state.model.load_grid(editor.grid)
-    state.solver = NurikabeSolver(state.model)
+    state.solver = state.solver_class(state.model)
     center_camera_on_model(state.model)
     sync_worker()
     log_append("Ready.")
@@ -579,7 +588,7 @@ def main() -> None:
                     if editor.grid is not None:
                         push_undo()
                         state.model.load_grid(editor.grid)
-                        state.solver = NurikabeSolver(state.model)
+                        state.solver = state.solver_class(state.model)
                         center_camera_on_model(state.model)
                         sync_worker()
                         log_append("Grid loaded into solver.")
@@ -612,7 +621,7 @@ def main() -> None:
                         snap0 = undo_stack[0]
                         undo_stack.clear()
                         apply_worker_state(snap0)
-                        state.solver = NurikabeSolver(state.model)
+                        state.solver = state.solver_class(state.model)
                         state.affected_cells.clear()
                         sync_worker()
                         log_append("Reset to first undo snapshot.")

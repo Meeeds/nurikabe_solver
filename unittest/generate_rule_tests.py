@@ -3,24 +3,24 @@ import sys
 import json
 import random
 import glob
+import argparse
 from collections import defaultdict
 
 # Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from nurikabe_model import NurikabeModel
-from nurikabe_rules import NurikabeSolver, _RULES
 
 def get_puzzle_files():
-    # Assuming puzzles are in puzzles/ folder relative to project root
+    # Assuming puzzles are in tests/ folder relative to project root
     puzzle_dir = os.path.join(os.path.dirname(__file__), '..', 'tests')
-    return sorted(glob.glob(os.path.join(puzzle_dir, '*.txt')))
+    return sorted(glob.glob(os.path.join(puzzle_dir, '**', '*.txt'), recursive=True))
 
 def sanitize_filename(name):
     # Replace non-alphanumeric characters with underscores
     return "".join(c if c.isalnum() else "_" for c in name).strip("_")
 
-def collect_samples():
+def collect_samples(solver_class, model_name):
     samples = defaultdict(list)
     puzzle_files = get_puzzle_files()
     
@@ -40,9 +40,10 @@ def collect_samples():
             print(f"Error reading {p_file}: {e}")
             continue
 
-        solver = NurikabeSolver(model)
+        solver = solver_class(model)
         
-        while True:
+        steps = 0
+        while steps < 1000:
             # Capture state before
             before_snapshot = model.snapshot()
             
@@ -62,12 +63,19 @@ def collect_samples():
                 "grid_after": after_snapshot,
                 "source_puzzle": os.path.basename(p_file)
             })
+            steps += 1
             
     return samples
 
-def generate_tests(samples):
-    unittest_dir = os.path.dirname(__file__)
+def generate_tests(samples, model_name):
+    unittest_dir_name = "unittest" if model_name == "v1" else "unittest_v2"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    unittest_dir = os.path.join(project_root, unittest_dir_name)
+    os.makedirs(unittest_dir, exist_ok=True)
     
+    solver_module = "nurikabe_rules" if model_name == "v1" else "nurikabe_rules_v2"
+    solver_class_name = "NurikabeSolver" if model_name == "v1" else "NurikabeSolverV2"
+
     for rule_name, instances in samples.items():
         print(f"Generating tests for rule: {rule_name} ({len(instances)} instances found)")
         
@@ -93,12 +101,29 @@ def generate_tests(samples):
                 json.dump(data, f, indent=2)
             
             # Store relative path for the python test (relative to project root)
-            json_filenames.append(os.path.join('unittest', sanitized_rule_name, 'data', json_filename))
+            json_filenames.append(os.path.join(unittest_dir_name, sanitized_rule_name, 'data', json_filename))
             
         # Generate Python Test File
         test_filename = f"test_rule_{sanitized_rule_name}.py"
         test_path = os.path.join(unittest_dir, test_filename)
         
+        if model_name == "v1":
+            rule_func_logic = """
+def get_rule_func(solver, rule_name):
+    from nurikabe_rules import _RULES
+    for _, func, name in _RULES:
+        if name == rule_name:
+            return lambda: func(solver)
+    return None
+"""
+        else:
+            rule_func_logic = """
+def get_rule_func(solver, rule_name):
+    code = rule_name.split()[0]
+    func = getattr(solver, f"try_{code}", None)
+    return func
+"""
+
         test_content = f"""
 import pytest
 import json
@@ -109,13 +134,9 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from nurikabe_model import NurikabeModel
-from nurikabe_rules import NurikabeSolver, _RULES
+from {solver_module} import {solver_class_name}
 
-def get_rule_func(rule_name):
-    for _, func, name in _RULES:
-        if name == rule_name:
-            return func
-    return None
+{rule_func_logic}
 
 TEST_DATA_FILES = [
     {', '.join([repr(f) for f in json_filenames])}
@@ -123,10 +144,6 @@ TEST_DATA_FILES = [
 
 @pytest.mark.parametrize("data_file", TEST_DATA_FILES)
 def test_{sanitized_rule_name}(data_file):
-    # Resolve absolute path to data file
-    # Assuming test is run from project root or unittest folder
-    # We try to locate the file relative to the project root
-    
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     abs_path = os.path.join(project_root, data_file)
     
@@ -138,40 +155,34 @@ def test_{sanitized_rule_name}(data_file):
     
     assert data['grid_before'] != data['grid_after'], "grid is the same before and after"
     model = NurikabeModel()
-    # Restore 'before' state
     model.restore(data['grid_before'])
     
-    solver = NurikabeSolver(model)
+    solver = {solver_class_name}(model)
     rule_name = data['rule_applied']
     
-    rule_func = get_rule_func(rule_name)
-    assert rule_func is not None, f"Rule {{rule_name}} not found in solver registry."
+    rule_func = get_rule_func(solver, rule_name)
+    assert rule_func is not None, f"Rule {{rule_name}} not found in solver."
     
-    # Apply the rule
-    res = rule_func(solver)
+    res = rule_func()
     
     assert res is not None, f"Rule {{rule_name}} expected to apply but returned None."
     
-    # Restore 'after' state for comparison
-    expected_model = NurikabeModel()
-    expected_model.restore(data['grid_after'])
-    
-    # Compare cells (state and owners)
-    # Using snapshot 'cells' structure: List[List[Tuple[state, owners]]]
     current_snapshot = model.snapshot()
-    
-    # Compare structure
     assert current_snapshot['cells'] == data['grid_after']['cells'], "Grid state (cells/owners) mismatch after rule application."
-    
-    # Optionally check changed cells if recorded
-    if res.changed_cells:
-        # Check that the reported changed cells actually changed
-        pass 
 """
         with open(test_path, 'w') as f:
             f.write(test_content.strip())
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", choices=["v1", "v2"], default="v1")
+    args = parser.parse_args()
+
+    if args.model == "v1":
+        from nurikabe_rules import NurikabeSolver as SolverClass
+    else:
+        from nurikabe_rules_v2 import NurikabeSolverV2 as SolverClass
+
     random.seed(42) # Reproducibility
-    samples = collect_samples()
-    generate_tests(samples)
+    samples = collect_samples(SolverClass, args.model)
+    generate_tests(samples, args.model)
