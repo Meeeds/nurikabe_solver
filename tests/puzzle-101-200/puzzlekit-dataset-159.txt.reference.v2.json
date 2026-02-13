@@ -1,0 +1,62 @@
+{
+  "final_grid": [
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)"
+    ],
+    [
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "LAND(3)",
+      "LAND(3)",
+      "CLUE(3)"
+    ],
+    [
+      "CLUE(3)",
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "LAND(5)",
+      "LAND(5)",
+      "CLUE(3)"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 20,
+  "rules_triggered": {
+    "B0 Distance Pruning": 1,
+    "R0 Empty domain -> Sea": 9,
+    "R2 Neighbor Domain Restriction": 5,
+    "R3 Mandatory Expansion": 4,
+    "R4 Global Sea Connectivity": 2
+  },
+  "steps_total": 21
+}

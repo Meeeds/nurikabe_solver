@@ -1,0 +1,62 @@
+{
+  "final_grid": [
+    [
+      "SEA",
+      "LAND(1)",
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "LAND(3)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "LAND(3)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "LAND(4)",
+      "SEA",
+      "CLUE(3)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(4)",
+      "LAND(4)",
+      "CLUE(4)",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(1)"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 36,
+  "rules_triggered": {
+    "B0 Distance Pruning": 9,
+    "R0 Empty domain -> Sea": 24,
+    "R1 Anti 2x2": 4,
+    "R2 Neighbor Domain Restriction": 7,
+    "R3 Mandatory Expansion": 3
+  },
+  "steps_total": 47
+}

@@ -1,0 +1,138 @@
+{
+  "final_grid": [
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "LAND(1)",
+      "LAND(1)",
+      "CLUE(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "CLUE(3)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(3)",
+      "LAND(3)",
+      "LAND(3)",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "LAND(MULTIPLE)",
+      "SEA",
+      "LAND(8)",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "LAND(8)",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "CLUE(3)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)",
+      "SEA",
+      "CLUE(3)",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "SEA",
+      "CLUE(3)",
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "LAND(10)",
+      "LAND(10)",
+      "SEA",
+      "LAND(11)",
+      "LAND(11)",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(3)",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "CLUE(3)",
+      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "LAND(13)",
+      "LAND(13)",
+      "CLUE(3)",
+      "SEA",
+      "SEA"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 68,
+  "rules_triggered": {
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 10,
+    "G1b Separation: match neighbor owners": 19,
+    "G3 Closure: complete island forces sea neighbors": 10,
+    "G4 Anti-Pool: 3 seas -> land": 5,
+    "G5 Distance Pruning (Enhanced)": 13,
+    "G6 Empty domain -> sea": 16,
+    "G7 Generic Mandatory Expansion": 7,
+    "G7b Global Brute Force Intersection & Pruning": 1,
+    "G9 Global Sea Connectivity (Articulation Point)": 6
+  },
+  "steps_total": 87
+}

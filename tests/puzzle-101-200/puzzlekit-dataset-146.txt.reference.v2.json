@@ -1,0 +1,136 @@
+{
+  "final_grid": [
+    [
+      "CLUE(33)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "LAND(1)",
+      "LAND(1)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "LAND(3)",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "CLUE(3)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "LAND(1)",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(2)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "LAND(1)"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(9)",
+      "SEA",
+      "LAND(1)"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(4)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "LAND(1)"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "LAND(1)",
+      "LAND(1)",
+      "LAND(1)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 37,
+  "rules_triggered": {
+    "B0 Distance Pruning": 5,
+    "R0 Empty domain -> Sea": 14,
+    "R1 Anti 2x2": 1,
+    "R2 Neighbor Domain Restriction": 41,
+    "R3 Mandatory Expansion": 12,
+    "R4 Global Sea Connectivity": 1,
+    "R5 Generalized Theorem": 1
+  },
+  "steps_total": 75
+}

@@ -1,0 +1,94 @@
+{
+  "final_grid": [
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)",
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(4)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA"
+    ],
+    [
+      "CLUE(3)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA"
+    ],
+    [
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(2)",
+      "UNKNOWN"
+    ],
+    [
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(5)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "CLUE(1)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "UNKNOWN",
+      "CLUE(5)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(8)",
+      "CLUE(2)",
+      "SEA",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN"
+    ]
+  ],
+  "is_fully_solved": false,
+  "number_of_cell_found": 25,
+  "rules_triggered": {
+    "G1b Separation: match neighbor owners": 17,
+    "G3 Closure: complete island forces sea neighbors": 9,
+    "G4 Anti-Pool: 3 seas -> land": 2,
+    "G5 Distance Pruning (Enhanced)": 5,
+    "G6 Empty domain -> sea": 6
+  },
+  "steps_total": 39
+}

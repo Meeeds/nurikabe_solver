@@ -23,10 +23,10 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirement.txt ]; then pip install -r requirement.txt; fi
 
-    - name: Run pytest v1
+    - name: Run pytest v2
       run: |
-        pytest unittest/
+        pytest unittest_v2/
 
-    - name: Run custom tests v1 
+    - name: Run custom tests v2
       run: |
-        python tests/test.py --mode test --model v1 -v tests
+        python tests/test.py --mode test --model v2 -v tests

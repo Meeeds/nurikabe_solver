@@ -1,0 +1,77 @@
+{
+  "final_grid": [
+    [
+      "CLUE(2)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(2)",
+      "CLUE(2)",
+      "SEA"
+    ],
+    [
+      "LAND(1)",
+      "SEA",
+      "LAND(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "SEA",
+      "CLUE(2)",
+      "LAND(4)",
+      "SEA"
+    ],
+    [
+      "LAND(5)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "CLUE(2)",
+      "SEA",
+      "CLUE(2)",
+      "LAND(6)",
+      "SEA",
+      "LAND(7)",
+      "CLUE(2)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "CLUE(2)",
+      "LAND(8)",
+      "SEA",
+      "LAND(9)",
+      "CLUE(2)",
+      "SEA"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 49,
+  "rules_triggered": {
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 4,
+    "G3 Closure: complete island forces sea neighbors": 13,
+    "G4 Anti-Pool: 3 seas -> land": 9,
+    "G5 Distance Pruning (Enhanced)": 10,
+    "G6 Empty domain -> sea": 14
+  },
+  "steps_total": 50
+}

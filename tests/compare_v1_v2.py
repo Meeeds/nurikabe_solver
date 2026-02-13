@@ -5,16 +5,15 @@ import os
 def compare_references():
     v2_refs = sorted(glob.glob("tests/**/*.reference.v2.json", recursive=True))
     
-    total_checked = 0
+    results = []
     total_conflicts = 0
-    puzzles_with_conflicts = []
 
-    print(f"{'Puzzle':<40} | {'Status':<15} | {'V1 Found':>8} | {'V2 Found':>8}")
-    print("-" * 80)
+    print("Comparing V1 and V2 references...")
 
     for f2 in v2_refs:
         f1 = f2.replace(".reference.v2.json", ".reference.json")
-        puzzle_name = os.path.basename(f2).replace(".reference.v2.json", "")
+        # Get relative path for display
+        rel_path = os.path.relpath(f2, "tests").replace(".reference.v2.json", "")
         
         if not os.path.exists(f1):
             continue
@@ -42,28 +41,52 @@ def compare_references():
                 if type1 != "UNKNOWN" and type2 != "UNKNOWN" and type1 != type2:
                     conflicts.append(f"({r},{c}): V1={s1} vs V2={s2}")
 
-        total_checked += 1
         v1_count = data1.get('number_of_cell_found', 0)
         v2_count = data2.get('number_of_cell_found', 0)
+        total_conflicts += len(conflicts)
 
-        if conflicts:
-            total_conflicts += len(conflicts)
-            puzzles_with_conflicts.append(puzzle_name)
-            print(f"{puzzle_name:<40} | {len(conflicts):>3} CONFLICTS | {v1_count:>8} | {v2_count:>8}")
-            for cmd in conflicts[:3]: # Show first 3 conflicts
-                print(f"    {cmd}")
-            if len(conflicts) > 3:
+        results.append({
+            'name': rel_path,
+            'v1': v1_count,
+            'v2': v2_count,
+            'conflicts': len(conflicts),
+            'conflict_details': conflicts
+        })
+
+    # Display final table
+    header = f"{'Puzzle':<50} | {'V1':>6} | {'V2':>6} | {'Delta':>6} | {'Status':<12}"
+    print("\n" + "=" * len(header))
+    print(header)
+    print("-" * len(header))
+
+    for res in results:
+        delta = res['v2'] - res['v1']
+        delta_str = f"{delta:+d}" if delta != 0 else "0"
+        status = "OK" if res['conflicts'] == 0 else f"{res['conflicts']} CONFLICTS"
+        
+        # Color coding simulation for terminal if delta > 0 (Improvement)
+        # Using simple markers since we are in a text-only output
+        imp_marker = " (+)" if delta > 0 else ""
+        
+        print(f"{res['name']:<50} | {res['v1']:>6} | {res['v2']:>6} | {delta_str:>6} | {status:<12}{imp_marker}")
+        if res['conflict_details']:
+            for detail in res['conflict_details'][:2]:
+                print(f"    CONFLICT: {detail}")
+            if len(res['conflict_details']) > 2:
                 print(f"    ...")
-        else:
-            print(f"{puzzle_name:<40} | OK              | {v1_count:>8} | {v2_count:>8}")
 
-    print("-" * 80)
-    print(f"Total Puzzles Compared: {total_checked}")
+    print("-" * len(header))
+    print(f"Total Puzzles Compared: {len(results)}")
     print(f"Total Contradictions Found: {total_conflicts}")
-    if puzzles_with_conflicts:
-        print(f"Puzzles with errors: {', '.join(puzzles_with_conflicts)}")
+    
+    better_v2 = [r['name'] for r in results if r['v2'] > r['v1']]
+    if better_v2:
+        print(f"Puzzles where V2 found more cells: {len(better_v2)}")
+    
+    if total_conflicts == 0:
+        print("\nConsistency check PASSED: No contradictions found between V1 and V2.")
     else:
-        print("Consistency check PASSED: No contradictions found between V1 and V2.")
+        print(f"\nConsistency check FAILED: {total_conflicts} cell contradictions found.")
 
 if __name__ == "__main__":
     compare_references()

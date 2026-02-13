@@ -1,0 +1,95 @@
+{
+  "final_grid": [
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "CLUE(2)",
+      "LAND(1)",
+      "SEA",
+      "LAND(2)",
+      "CLUE(4)",
+      "SEA",
+      "CLUE(3)"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(2)",
+      "SEA",
+      "LAND(3)",
+      "LAND(3)"
+    ],
+    [
+      "CLUE(3)",
+      "LAND(4)",
+      "LAND(4)",
+      "SEA",
+      "LAND(2)",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "CLUE(2)",
+      "LAND(5)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(7)",
+      "LAND(7)",
+      "SEA",
+      "CLUE(1)",
+      "SEA",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "CLUE(3)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(8)",
+      "LAND(8)",
+      "LAND(8)",
+      "CLUE(5)",
+      "SEA"
+    ]
+  ],
+  "is_fully_solved": true,
+  "number_of_cell_found": 64,
+  "rules_triggered": {
+    "B0 Distance Pruning": 14,
+    "R0 Empty domain -> Sea": 39,
+    "R1 Anti 2x2": 9,
+    "R2 Neighbor Domain Restriction": 12,
+    "R3 Mandatory Expansion": 6,
+    "R4 Global Sea Connectivity": 2
+  },
+  "steps_total": 82
+}
