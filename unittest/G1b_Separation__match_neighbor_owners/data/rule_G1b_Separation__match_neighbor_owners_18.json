@@ -1197,8 +1197,8 @@
           1
         ]
       ],
-      "message": "Forced black because cell touches multiple distinct fixed islands [1, 2].",
-      "rule": "G1 Separation: neighbor of >=2 fixed owners -> black"
+      "message": "Forced sea because cell touches multiple distinct fixed islands [1, 2].",
+      "rule": "G1 Separation: neighbor of >=2 fixed owners -> sea"
     }
   },
   "grid_after": {

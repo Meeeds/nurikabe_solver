@@ -768,8 +768,8 @@
           8
         ]
       ],
-      "message": "Forced land to avoid a 2x2 black pool at block (3,7).",
-      "rule": "G4 Anti-2x2: 3 blacks -> land"
+      "message": "Forced land to avoid a Pool sea pool at block (3,7).",
+      "rule": "G4 Anti-Pool: 3 seas -> land"
     }
   },
   "grid_after": {

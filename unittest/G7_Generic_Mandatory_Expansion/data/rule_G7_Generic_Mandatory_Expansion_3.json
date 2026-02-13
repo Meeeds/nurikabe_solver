@@ -552,8 +552,8 @@
           2
         ]
       ],
-      "message": "Island 11 is complete (3/3); neighbor (9,2) must be black.",
-      "rule": "G3 Closure: complete island forces black neighbors"
+      "message": "Island 11 is complete (3/3); neighbor (9,2) must be sea.",
+      "rule": "G3 Closure: complete island forces sea neighbors"
     }
   },
   "grid_after": {

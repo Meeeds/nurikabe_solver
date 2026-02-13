@@ -1198,7 +1198,7 @@
         ]
       ],
       "message": "Global Sea Connectivity: Cell (2,13) is a mandatory articulation point.",
-      "rule": "G9 Global Black Connectivity (Articulation Point)"
+      "rule": "G9 Global Sea Connectivity (Articulation Point)"
     }
   },
   "grid_after": {

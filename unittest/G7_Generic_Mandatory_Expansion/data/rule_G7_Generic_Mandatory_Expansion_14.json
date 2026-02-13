@@ -552,8 +552,8 @@
           5
         ]
       ],
-      "message": "Owners domain became empty; forced black (no island can own this cell).",
-      "rule": "G6 Empty domain -> black"
+      "message": "Owners domain became empty; forced sea (no island can own this cell).",
+      "rule": "G6 Empty domain -> sea"
     }
   },
   "grid_after": {
