@@ -98,9 +98,10 @@ Summary of Representation from class CellState and OwnerMask
   ┌─────────────────────────────────────────────────────────┬───────────────────────────────────────────────────────────────┐
   │ Condition                                               │ Representation in Cell                                        │
   ├─────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
-  │ Possible States: Black OR Island $X$                    │ state = CellState.UNKNOWN, owners = {Island X}                │
+  │ Possible States: Sea OR Island X                        │ state = CellState.UNKNOWN, owners = {Island X}                │
   │ Definitively Sea                                        │ state = CellState.SEA, owners = {} (empty)                    │
-  │ Definitively Island $X$                                 │ state = CellState.LAND, owners = {Island X}                   │
-  │ Possible States: Sea   OR {Island $X$, Island $Y$, ...} │ state = CellState.UNKNOWN, owners = {Island X, Island Y, ...} │
+  │ Definitively Island X                                   │ state = CellState.LAND, owners = {Island X}                   │
+  │ Definitively Land, Island Unknown                       │ state = CellState.LAND, owners = {Island X, Island Y, ...}    │
+  │ Possible States: Sea OR {Island X, Island Y, ...}.      │ state = CellState.UNKNOWN, owners = {Island X, Island Y, ...} │
   └─────────────────────────────────────────────────────────┴───────────────────────────────────────────────────────────────┘
 
