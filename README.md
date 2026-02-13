@@ -9,7 +9,11 @@ pip install -r requirement.txt
 
 ## Run the program 
 ```bash
+# Default (V1)
 python nurikabe_ui.py
+
+# Using V2 Solver
+python nurikabe_ui.py --model v2
 ```
 
 ## High level description of the code : 
@@ -17,61 +21,75 @@ python nurikabe_ui.py
 1. `nurikabe_model.py` 
     - Defines the core data structures (`NurikabeModel`, `Island`, `StepResult`) and manages the grid state, including cell owners and validity checks.
 1. `nurikabe_rules.py`
-    - Implements the `NurikabeSolver` logic with various rule-based heuristics (e.g., connectivity, separation, global bottlenecks) to iteratively solve the puzzle.
+    - Implements the original `NurikabeSolver` (V1) with heuristic rules (G1-G10).
+1. `nurikabe_rules_v2.py`
+    - Implements `NurikabeSolverV2`, a more streamlined rule-based solver (B0, R0-R5).
 1. `nurikabe_worker.py`
-    - Handles the background solver thread (SolverWorker).
-    - Contains worker-related data structures (WorkerCommand, WorkerResult).
+    - Handles the background solver thread (SolverWorker). Supports multiple solver classes.
 1. `nurikabe_drawing.py`
     - Handles grid rendering (draw_grid).
     - Manages the camera/view transformation (Camera).
-    - Contains coordinate utilities (pick_cell_from_mouse, clamp_int).
-1. `nurikabe_ui.py` (Updated)
-    - Remains the entry point (main).
-    - Manages UI state (EditorState, MainState).
-    - Handles events and Pygame GUI integration.
-    - Imports necessary components from the new files.
+1. `nurikabe_ui.py`
+    - Entry point. Manages UI state and events. Supports `--model [v1|v2]`.
 
 
 ## Unit test
 
-Unit test has been first generated using `unittest/generate_rule_tests.py`
+Unit tests are generated based on rule applications seen during a solve.
 
-How to run them
+### Generating Unit Tests
+```bash
+# Generate for V1 (output to unittest/)
+python unittest/generate_rule_tests.py --model v1
+
+# Generate for V2 (output to unittest_v2/)
+python unittest/generate_rule_tests.py --model v2
 ```
-pytest
-pytest unittest/test_rule_G1b_Separation__match_neighbor_owners.py 
+
+### Running with Pytest
+```bash
+# Run V1 tests
+pytest unittest/
+
+# Run V2 tests
+pytest unittest_v2/
 ```
 
 ### Generating Test Images
 
-The `unittest/generate_test_images.py` script creates visual representations of the "before" and "after" states for each generated unit test. This is useful for quickly understanding the effect of each rule application. The "after" image highlights the cells that were changed by the rule.
-
-To generate these images:
+Side-by-side PNG images of "before" and "after" states for each generated unit test.
 
 ```bash
-python unittest/generate_test_images.py
+# For V1
+python unittest/generate_test_images.py --model v1
+
+# For V2
+python unittest/generate_test_images.py --model v2
 ```
 
-The images will be saved in the `unittest/images/` directory.
+The images are saved in `unittest/RULE_NAME/images/` or `unittest_v2/RULE_NAME/images/`.
 
 
-## Test Framework
+## Test Framework (Regression Testing)
 
-The `test.py` script allows for automated regression testing of the solver:
+The `tests/test.py` script performs automated regression testing against reference solutions.
 
-Run all tests : 
+```bash
+# Run all tests for V1
+python tests/test.py --all --model v1
+
+# Run all tests for V2 (uses .reference.v2.json)
+python tests/test.py --all --model v2
 ```
-python tests/test.py --all
-```
 
-Run one Test : 
-- **Generate Mode**: Runs the solver on a grid and saves the final state and rule counts as a reference JSON.
+### Individual Puzzle commands:
+- **Generate Mode**: Saves the final state as a reference.
   ```bash
-  python tests/test.py <grid_file> --mode generate
+  python tests/test.py <grid_file> --model v2 --mode generate
   ```
-- **Test Mode**: Compares the solver's current output against an existing reference JSON to detect regressions.
+- **Test Mode**: Compares output against the reference.
   ```bash
-  python tests/test.py <grid_file> --mode test
+  python tests/test.py <grid_file> --model v2 --mode test
   ```
 
 
