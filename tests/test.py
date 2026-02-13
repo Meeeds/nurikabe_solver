@@ -11,9 +11,17 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from nurikabe_model import NurikabeModel
 from nurikabe_rules import NurikabeSolver
+from nurikabe_rules_v2 import NurikabeSolverV2
+
+# Global variable to store the selected solver class
+SOLVER_CLASS = NurikabeSolver
 
 # Master list of rules defined in the solver and model
-KNOWN_RULES = sorted(set(NurikabeSolver.RULE_NAMES) | {"BROKEN_NURIKABE_RULES"})
+KNOWN_RULES = []
+
+def update_known_rules(solver_class):
+    global KNOWN_RULES
+    KNOWN_RULES = sorted(set(solver_class.RULE_NAMES) | {"BROKEN_NURIKABE_RULES"})
 
 GLOBAL_RULE_COUNTS = Counter()
 NEW_CELLS_FOUND = 0
@@ -91,7 +99,7 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
     if not success:
         return None, f"Error parsing grid: {msg}"
 
-    solver = NurikabeSolver(model)
+    solver = SOLVER_CLASS(model)
     
     rule_counts = Counter()
     steps_taken = 0
@@ -233,12 +241,20 @@ if __name__ == "__main__":
     parser.add_argument("path", nargs='?', help="Path to a .txt grid file OR a directory containing .txt files. (Optional if --all is used)")
     parser.add_argument("--mode", choices=["generate", "test", "stats"], default="test", 
                         help="Mode: 'generate' to create reference JSON, 'test' to compare against it, 'stats' to just run and show stats.")
+    parser.add_argument("--model", choices=["v1", "v2"], default="v1", help="Solver model to use.")
     parser.add_argument("--all", action="store_true", 
                         help="Run all tests on *.txt files in the test directory (deprecated behavior, prefer providing a directory path).")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Print summary of execution times and global rule statistics.")
     
     args = parser.parse_args()
+
+    if args.model == "v2":
+        SOLVER_CLASS = NurikabeSolverV2
+    else:
+        SOLVER_CLASS = NurikabeSolver
+    
+    update_known_rules(SOLVER_CLASS)
 
     files_to_process = []
 

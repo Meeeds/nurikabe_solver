@@ -605,7 +605,7 @@ class NurikabeModel:
                             break
                     if not is_sealed: break
                 if is_sealed:
-                    return False, f"Land component at {comp[0]} has no clue and is sealed"
+                    return False, f"Land component at {next(iter(comp))} has no clue and is sealed"
 
         # 3. Check for completion
         is_complete = True
