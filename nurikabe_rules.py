@@ -1,5 +1,5 @@
 from typing import Optional, Set, List, Tuple, Callable
-from nurikabe_model import NurikabeModel, StepResult, CellState
+from nurikabe_model import NurikabeModel, StepResult, CellState, OwnerMask
 
 # Global registry for rules: list of (priority, func, name)
 _RULES = []
@@ -68,11 +68,11 @@ class NurikabeSolver:
                 
                 # Combine masks from all LAND neighbors
                 has_restriction = False
-                combined_neighbor_mask = (1 << len(self.model.islands)) - 1
+                combined_neighbor_mask = OwnerMask((1 << len(self.model.islands)) - 1)
                 
                 for nr, nc in self.model.neighbors4(r, c):
                     if self.model.is_land_certain(nr, nc):
-                        combined_neighbor_mask &= self.model.cells[nr][nc].owners
+                        combined_neighbor_mask.intersect(self.model.cells[nr][nc].owners)
                         has_restriction = True
                 
                 if has_restriction:
@@ -133,17 +133,16 @@ class NurikabeSolver:
     def try_rule_land_cluster_unification(self) -> Optional[StepResult]:
         land_components = self.model.get_all_components(self.model.is_land_certain)
         K = len(self.model.islands)
-        full_mask = (1 << K) - 1
+        full_mask = OwnerMask((1 << K) - 1)
         
         for component in land_components:
-            common_mask = full_mask
+            common_mask = OwnerMask(full_mask.bits)
             for cr, cc in component:
-                common_mask &= self.model.cells[cr][cc].owners
+                common_mask.intersect(self.model.cells[cr][cc].owners)
             
             # Apply the intersection mask to all cells in this cluster
             for cr, cc in component:
-                if self.model.cells[cr][cc].owners != common_mask:
-                    self.model.cells[cr][cc].owners = common_mask
+                if self.model.restrict_owners_intersection(cr, cc, common_mask):
                     return StepResult(
                         changed_cells=[(cr, cc)],
                         format_args=(list(component)[0],)
@@ -196,11 +195,10 @@ class NurikabeSolver:
         for isl in self.model.islands:
             iid = isl.island_id
             clue = isl.clue
-            bit = self.model.bit(iid)
             
             # 1. Identify current connected component for this island
             component = self.model.get_connected_component(isl.pos[0], isl.pos[1],
-                lambda r, c: self.model.is_land_certain(r, c) and self.model.cells[r][c].owners == bit)
+                lambda r, c: self.model.is_fixed_to(r, c, iid))
             
             if len(component) >= clue:
                 continue
@@ -209,7 +207,7 @@ class NurikabeSolver:
             potential = set()
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
-                    if not self.model.is_black_certain(r, c) and (self.model.cells[r][c].owners & bit):
+                    if self.model.can_be_land(r, c, iid):
                         potential.add((r, c))
             
             # 3. Check neighbors of the current component for bottlenecks
@@ -220,27 +218,11 @@ class NurikabeSolver:
                         neighbors.add((nr, nc))
             
             for n in neighbors:
-                # Test if island can reach 'clue' size WITHOUT using neighbor 'n'
-                test_potential = potential - {n}
-                q = list(component)
-                seen = set(component)
-                reached_count = 0
-                idx = 0
-                while idx < len(q):
-                    curr = q[idx]
-                    idx += 1
-                    reached_count += 1
-                    if reached_count >= clue: break
-                    for nn in self.model.neighbors4(*curr):
-                        if nn in test_potential and nn not in seen:
-                            seen.add(nn)
-                            q.append(nn)
-                
-                if reached_count < clue:
+                if self.model.is_mandatory_for_reach_size(n, component, clue, potential):
                     # 'n' is mandatory for island iid to ever reach its size
                     tr, tc = n
                     self.model.force_land(tr, tc)
-                    self.model.cells[tr][tc].owners = bit
+                    self.model.force_owner(tr, tc, iid)
                     return StepResult(
                         changed_cells=[(tr, tc)],
                         format_args=(iid, tr, tc, clue)
@@ -265,7 +247,6 @@ class NurikabeSolver:
         MAX_STATES = 50000
         iid = isl.island_id
         clue = isl.clue
-        bit = self.model.bit(iid)
 
         # 1. Identify fixed core (globally) and potential cells
         fixed_core = self.model.get_island_core_cells(iid)
@@ -273,8 +254,7 @@ class NurikabeSolver:
         potential = set()
         for r in range(self.model.rows):
             for c in range(self.model.cols):
-                cell = self.model.cells[r][c]
-                if not self.model.is_black_certain(r, c) and (cell.owners & bit):
+                if self.model.can_be_land(r, c, iid):
                     potential.add((r, c))
 
         # Filter potential: Must not touch any other island's fixed cells
@@ -289,9 +269,8 @@ class NurikabeSolver:
             touches_other = False
             for nr, nc in self.model.neighbors4(r, c):
                 # Check if neighbor is Land and CANNOT be this island
-                # If it's Land and doesn't include our bit, it belongs to others.
-                n_cell = self.model.cells[nr][nc]
-                if self.model.is_land_certain(nr, nc) and (n_cell.owners & bit) == 0:
+                # If it's Land and doesn't include our island, it belongs to others.
+                if self.model.is_land_certain(nr, nc) and not self.model.cells[nr][nc].owners.has(iid):
                     touches_other = True
                     break
             
@@ -388,19 +367,19 @@ class NurikabeSolver:
             union_set, common_set = result
             
             changed_list = []
-            bit = self.model.bit(isl.island_id)
+            iid = isl.island_id
             
             # Use get_island_core_cells for global discovery
-            fixed_core = self.model.get_island_core_cells(isl.island_id)
+            fixed_core = self.model.get_island_core_cells(iid)
             
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
                     if (r, c) in fixed_core:
                         continue
-                    if self.model.cells[r][c].owners & bit:
+                    if self.model.can_be_land(r, c, iid):
                         if (r, c) not in union_set:
-                            # This cell allows 'bit' but is not in any valid extension -> prune it
-                            if self.model.remove_owner(r, c, isl.island_id):
+                            # This cell allows 'iid' but is not in any valid extension -> prune it
+                            if self.model.remove_owner(r, c, iid):
                                 changed_list.append((r, c))
 
             # 2. Bottleneck: Force cells that are in ALL valid extensions
@@ -409,19 +388,17 @@ class NurikabeSolver:
                     if self.model.cells[r][c].state == CellState.BLACK: 
                         continue
                     
-                    if self.model.force_land(r, c):
+                    forced_land = self.model.force_land(r, c)
+                    forced_owner = self.model.force_owner(r, c, iid)
+                    
+                    if forced_land or forced_owner:
                         if (r, c) not in changed_list:
                              changed_list.append((r, c))
-                    
-                    if self.model.cells[r][c].owners != bit:
-                        self.model.cells[r][c].owners = bit
-                        if (r, c) not in changed_list:
-                            changed_list.append((r, c))
 
             if changed_list:
                 return StepResult(
                     changed_cells=changed_list,
-                    format_args=(isl.island_id,)
+                    format_args=(iid,)
                 )
 
         return None
@@ -455,13 +432,8 @@ class NurikabeSolver:
                 cell_to_comp_idx[cell] = idx
 
         # Helper to find reachable component INDICES from a start cell
-        def get_reachable_component_indices(start_cell: Tuple[int, int], forbidden: Optional[Tuple[int, int]]) -> Set[int]:
-            def predicate(r, c):
-                if (r, c) == forbidden: return False
-                return (r, c) in potential_sea
-            
-            reachable_cells = self.model.get_connected_component(start_cell[0], start_cell[1], predicate)
-            
+        def get_reachable_component_indices(start_cell: Tuple[int, int]) -> Set[int]:
+            reachable_cells = self.model.get_connected_component(start_cell[0], start_cell[1], lambda r, c: (r, c) in potential_sea)
             reached_comp_indices = set()
             for cell in reachable_cells:
                 if cell in cell_to_comp_idx:
@@ -477,7 +449,7 @@ class NurikabeSolver:
                 continue
             
             # BFS from component i to find all connected components
-            reached = get_reachable_component_indices(list(black_components[i])[0], None)
+            reached = get_reachable_component_indices(list(black_components[i])[0])
             comp_partitions.append(reached)
             assigned_comps.update(reached)
 
@@ -493,15 +465,9 @@ class NurikabeSolver:
                 # Pick a representative component from the partition
                 start_comp_idx = next(iter(partition))
                 start_cell = list(black_components[start_comp_idx])[0]
+                other_targets = [list(black_components[i])[0] for i in partition if i != start_comp_idx]
                 
-                # Check reachability with 'cand' blocked
-                reachable_indices = get_reachable_component_indices(start_cell, cand)
-                
-                # Check if we lost any components in this partition
-                original_count = len(partition)
-                found_count = len(reachable_indices & partition)
-                
-                if found_count < original_count:
+                if self.model.is_mandatory_for_connectivity(cand, start_cell, other_targets, potential_sea):
                     # Split detected!
                     tr, tc = cand
                     if self.model.cells[tr][tc].state != CellState.BLACK:
@@ -518,11 +484,10 @@ class NurikabeSolver:
         for isl in self.model.islands:
             iid = isl.island_id
             clue = isl.clue
-            bit = self.model.bit(iid)
             
             # Identify current connected component for this island
             component = self.model.get_connected_component(isl.pos[0], isl.pos[1],
-                lambda r, c: self.model.is_land_certain(r, c) and self.model.cells[r][c].owners == bit)
+                lambda r, c: self.model.is_fixed_to(r, c, iid))
             
             if len(component) != clue - 1:
                 continue
@@ -530,8 +495,8 @@ class NurikabeSolver:
             candidates = set()
             for r, c in component:
                 for nr, nc in self.model.neighbors4(r, c):
-                    if (nr, nc) not in component and not self.model.is_black_certain(nr, nc):
-                        if not self.model.is_clue(nr, nc) and (self.model.cells[nr][nc].owners & bit):
+                    if (nr, nc) not in component and self.model.can_be_land(nr, nc, iid):
+                        if not self.model.is_clue(nr, nc):
                             candidates.add((nr, nc))
             
             if len(candidates) == 2:
@@ -556,62 +521,33 @@ class NurikabeSolver:
     def try_rule_distance_pruning(self) -> Optional[StepResult]:
         changed_cells = []
         
-        # Pre-compute fixed cells for each island to optimize
-        fixed_cells_by_island = {isl.island_id: [] for isl in self.model.islands}
-        for r in range(self.model.rows):
-            for c in range(self.model.cols):
-                cell = self.model.cells[r][c]
-                if cell.is_land and cell.owners != 0:
-                    # Check if singleton owner
-                    iid = self.model.owners_singleton(r, c)
-                    if iid is not None:
-                         if iid in fixed_cells_by_island:
-                             fixed_cells_by_island[iid].append((r, c))
+        # Get all fixed cells for each island in a single pass to optimize and maintain determinism
+        all_cores = self.model.get_all_island_core_cells()
 
         for isl in self.model.islands:
             iid = isl.island_id
             clue = isl.clue
-            bit = self.model.bit(iid)
             
             # Start BFS from ALL cells currently fixed to this island
-            # Note: The clue cell itself is always fixed owner, so it's included.
-            current_fixed = fixed_cells_by_island[iid]
+            current_fixed = all_cores[iid]
             current_size = len(current_fixed)
             
             remaining = clue - current_size
             if remaining < 0:
                 continue
-                
-            reachable = set(current_fixed)
-            queue = [(r, c, 0) for r, c in current_fixed]
             
-            idx = 0
-            while idx < len(queue):
-                r, c, d = queue[idx]
-                idx += 1
-                
-                if d < remaining:
-                    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        nr, nc = r + dr, c + dc
-                        if self.model.in_bounds(nr, nc):
-                            if (nr, nc) not in reachable:
-                                # Obstacles: clues of OTHER islands, certain black cells, or cells owned by OTHER islands
-                                is_obstacle = False
-                                if self.model.is_black_certain(nr, nc):
-                                    is_obstacle = True
-                                elif (self.model.cells[nr][nc].owners & bit) == 0:
-                                    is_obstacle = True
+            def obstacle_predicate(nr, nc):
+                # Obstacles: certain black cells, or cells that CANNOT be owned by this island
+                return not self.model.can_be_land(nr, nc, iid)
 
-                                if not is_obstacle:
-                                    reachable.add((nr, nc))
-                                    queue.append((nr, nc, d + 1))
+            reachable = self.model.get_reachable_cells(current_fixed, remaining, obstacle_predicate)
             
             # Prune this island bit from all cells it cannot reach
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
                     if (r, c) not in reachable:
-                        if self.model.cells[r][c].owners & bit:
-                            self.model.cells[r][c].owners &= ~bit
+                        if self.model.cells[r][c].owners.has(iid):
+                            self.model.cells[r][c].owners.remove(iid)
                             changed_cells.append((r, c))
         
         if changed_cells:

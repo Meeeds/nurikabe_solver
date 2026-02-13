@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple, Dict, Optional, Any, Set, Callable
+from typing import List, Tuple, Dict, Optional, Any, Set, Callable, Iterable
 from enum import IntEnum
 
 # ----------------------------
@@ -13,6 +13,98 @@ class CellState(IntEnum):
 
 RuleName = str
 
+class OwnerMask:
+    """Encapsulates island ownership bitmask logic."""
+    __slots__ = ("bits",)
+    
+    def __init__(self, bits: Any = 0) -> None:
+        if isinstance(bits, OwnerMask):
+            self.bits = bits.bits
+        else:
+            self.bits = int(bits)
+
+    @staticmethod
+    def from_island_id(island_id: int) -> 'OwnerMask':
+        return OwnerMask(1 << (island_id - 1))
+
+    def has(self, island_id: int) -> bool:
+        return bool(self.bits & (1 << (island_id - 1)))
+
+    def add(self, island_id: int) -> None:
+        self.bits |= (1 << (island_id - 1))
+
+    def remove(self, island_id: int) -> None:
+        self.bits &= ~(1 << (island_id - 1))
+
+    def intersect(self, other: Any) -> bool:
+        """Self := Self & other. Returns True if changed."""
+        before = self.bits
+        if isinstance(other, OwnerMask):
+            self.bits &= other.bits
+        else:
+            self.bits &= int(other)
+        return self.bits != before
+
+    def is_empty(self) -> bool:
+        return self.bits == 0
+
+    def is_singleton(self) -> bool:
+        return self.bits != 0 and (self.bits & (self.bits - 1)) == 0
+
+    def get_singleton_id(self) -> Optional[int]:
+        if self.is_singleton():
+            return self.bits.bit_length()
+        return None
+
+    def to_ids(self) -> List[int]:
+        ids = []
+        i = 1
+        b = self.bits
+        while b:
+            if b & 1:
+                ids.append(i)
+            b >>= 1
+            i += 1
+        return ids
+
+    def __bool__(self) -> bool:
+        return self.bits != 0
+
+    def __int__(self) -> int:
+        return self.bits
+
+    def __and__(self, other: Any) -> 'OwnerMask':
+        if isinstance(other, OwnerMask):
+            return OwnerMask(self.bits & other.bits)
+        return OwnerMask(self.bits & int(other))
+
+    def __iand__(self, other: Any) -> 'OwnerMask':
+        if isinstance(other, OwnerMask):
+            self.bits &= other.bits
+        else:
+            self.bits &= int(other)
+        return self
+
+    def __invert__(self) -> 'OwnerMask':
+        return OwnerMask(~self.bits)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, OwnerMask):
+            return self.bits == other.bits
+        try:
+            return self.bits == int(other) # type: ignore
+        except (ValueError, TypeError):
+            return False
+
+    def __ne__(self, other: object) -> bool:
+        return not self.__eq__(other)
+
+    def __repr__(self) -> str:
+        return f"OwnerMask({self.bits})"
+
+    def __str__(self) -> str:
+        return bin(self.bits)
+
 @dataclass
 class Island:
     island_id: int
@@ -22,7 +114,15 @@ class Island:
 @dataclass
 class Cell:
     state: CellState = CellState.UNKNOWN
-    owners: int = 0  # bitmask of potential island owners
+    _owners: OwnerMask = field(default_factory=OwnerMask)
+
+    @property
+    def owners(self) -> OwnerMask:
+        return self._owners
+
+    @owners.setter
+    def owners(self, value: Any) -> None:
+        self._owners = OwnerMask(value)
 
     @property
     def is_land(self) -> bool:
@@ -103,34 +203,32 @@ class NurikabeModel:
         # island_id is 1..K
         return 1 << (island_id - 1)
 
-    def bitset_to_ids(self, bits: int) -> List[int]:
-        ids = []
-        i = 1
-        b = bits
-        while b:
-            if b & 1:
-                ids.append(i)
-            b >>= 1
-            i += 1
-        return ids
-
     def get_cell(self, r: int, c: int) -> Cell:
         return self.cells[r][c]
 
     def owners_empty(self, r: int, c: int) -> bool:
-        return self.cells[r][c].owners == 0
+        return self.cells[r][c].owners.is_empty()
 
     def owners_singleton(self, r: int, c: int) -> Optional[int]:
-        bits = self.cells[r][c].owners
-        if bits != 0 and (bits & (bits - 1)) == 0:
-            return bits.bit_length()
-        return None
+        return self.cells[r][c].owners.get_singleton_id()
 
     def is_black_certain(self, r: int, c: int) -> bool:
         return self.cells[r][c].state == CellState.BLACK
 
     def is_land_certain(self, r: int, c: int) -> bool:
         return self.cells[r][c].state == CellState.LAND
+
+    def can_be_land(self, r: int, c: int, island_id: Optional[int] = None) -> bool:
+        """Returns True if the cell is not definitely black. If island_id is provided, also checks if it's a potential owner."""
+        if self.is_black_certain(r, c):
+            return False
+        if island_id is not None:
+            return self.cells[r][c].owners.has(island_id)
+        return True
+
+    def is_fixed_to(self, r: int, c: int, island_id: int) -> bool:
+        """Returns True if the cell is definitely land and uniquely owned by island_id."""
+        return self.is_land_certain(r, c) and self.cells[r][c].owners.get_singleton_id() == island_id
 
     def fixed_owner(self, r: int, c: int) -> Optional[int]:
         if self.is_land_certain(r, c):
@@ -147,7 +245,7 @@ class NurikabeModel:
         
         # If it was Land, this is a contradiction, but we enforce the new state
         cell.state = CellState.BLACK
-        cell.owners = 0  # Black cells have no owners
+        cell.owners = OwnerMask(0)  # Black cells have no owners
         return True
 
     def force_land(self, r: int, c: int) -> bool:
@@ -160,35 +258,35 @@ class NurikabeModel:
         
         cell.state = CellState.LAND
         # Ensure it has potential owners if none were set (recovery/init)
-        if cell.owners == 0:
-            cell.owners = self.get_potential_owners_mask(r, c)
+        if cell.owners.is_empty():
+            cell.owners = OwnerMask(self.get_potential_owners_mask(r, c))
         return True
 
-    def restrict_owners_intersection(self, r: int, c: int, mask: int) -> bool:
-        """Owners := Owners & mask"""
+    def force_owner(self, r: int, c: int, island_id: int) -> bool:
+        """Owners := {island_id}. Returns True if changed."""
         if self.is_clue(r, c):
             return False
         cell = self.cells[r][c]
-        before = cell.owners
-        after = before & mask
-        if after != before:
-            cell.owners = after
-            # If owners becomes empty, it implies it cannot be Land.
-            # If it was Land or Unknown, it should become Black (G6 logic).
-            # However, this method only restricts owners. Rule G6 handles the state transition.
+        new_mask = OwnerMask.from_island_id(island_id)
+        if cell.owners != new_mask:
+            cell.owners = new_mask
             return True
         return False
+
+    def restrict_owners_intersection(self, r: int, c: int, mask: Any) -> bool:
+        """Owners := Owners & mask. Returns True if changed."""
+        if self.is_clue(r, c):
+            return False
+        cell = self.cells[r][c]
+        return cell.owners.intersect(mask)
 
     def remove_owner(self, r: int, c: int, island_id: int) -> bool:
         """Owners := Owners without island_id"""
         if self.is_clue(r, c):
             return False
         cell = self.cells[r][c]
-        b = self.bit(island_id)
-        before = cell.owners
-        after = before & (~b)
-        if after != before:
-            cell.owners = after
+        if cell.owners.has(island_id):
+            cell.owners.remove(island_id)
             return True
         return False
 
@@ -267,10 +365,10 @@ class NurikabeModel:
                 cell = self.cells[r][c]
                 if self.is_clue(r, c):
                     iid = self.island_by_pos[(r, c)]
-                    cell.owners = self.bit(iid)
+                    cell.owners = OwnerMask.from_island_id(iid)
                     cell.state = CellState.LAND
                 else:
-                    cell.owners = all_mask
+                    cell.owners = OwnerMask(all_mask)
                     cell.state = CellState.UNKNOWN
 
         # Clues cannot be adjacent orthogonally to another clue (validation)
@@ -284,37 +382,82 @@ class NurikabeModel:
                         rule="Validate"
                     )
 
+    def get_reachable_cells(self, start_cells: Iterable[Tuple[int, int]], max_dist: int, obstacle_predicate: Callable[[int, int], bool]) -> Set[Tuple[int, int]]:
+        """Returns the set of cells reachable from start_cells within max_dist, avoiding obstacles."""
+        reachable = set(start_cells)
+        queue = [(r, c, 0) for r, c in start_cells]
+        idx = 0
+        while idx < len(queue):
+            r, c, d = queue[idx]
+            idx += 1
+            if d < max_dist:
+                for nr, nc in self.neighbors4(r, c):
+                    if (nr, nc) not in reachable and not obstacle_predicate(nr, nc):
+                        reachable.add((nr, nc))
+                        queue.append((nr, nc, d + 1))
+        return reachable
+
+    def is_mandatory_for_connectivity(self, cell: Tuple[int, int], start_node: Tuple[int, int], target_nodes: Iterable[Tuple[int, int]], potential_area: Set[Tuple[int, int]]) -> bool:
+        """
+        Returns True if 'cell' is mandatory for 'start_node' to reach all 'target_nodes' 
+        within 'potential_area' (excluding 'cell').
+        """
+        if cell == start_node: return True
+        
+        def predicate(r, c):
+            if (r, c) == cell: return False
+            return (r, c) in potential_area
+            
+        reachable = self.get_connected_component(start_node[0], start_node[1], predicate)
+        for target in target_nodes:
+            if target not in reachable:
+                return True
+        return False
+
+    def is_mandatory_for_reach_size(self, cell: Tuple[int, int], start_nodes: Iterable[Tuple[int, int]], target_size: int, potential_area: Set[Tuple[int, int]]) -> bool:
+        """
+        Returns True if 'cell' is mandatory for the 'start_nodes' component to be able 
+        to reach 'target_size' cells within 'potential_area' (excluding 'cell').
+        """
+        q = list(start_nodes)
+        seen = set(start_nodes)
+        if cell in seen: return True
+        
+        reached_count = 0
+        idx = 0
+        while idx < len(q):
+            curr = q[idx]
+            idx += 1
+            reached_count += 1
+            if reached_count >= target_size:
+                return False
+            for nr, nc in self.neighbors4(curr[0], curr[1]):
+                if (nr, nc) not in seen and (nr, nc) != cell and (nr, nc) in potential_area:
+                    seen.add((nr, nc))
+                    q.append((nr, nc))
+        return reached_count < target_size
+
     def apply_distance_pruning_all(self) -> None:
         for isl in self.islands:
             iid = isl.island_id
             limit = isl.clue
             sr, sc = isl.pos
-            bit = self.bit(iid)
-            reachable = {(sr, sc)}
-            queue = [(sr, sc, 0)]
-            idx = 0
-            while idx < len(queue):
-                r, c, d = queue[idx]
-                idx += 1
-                if d < limit - 1:
-                    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        nr, nc = r + dr, c + dc
-                        if 0 <= nr < self.rows and 0 <= nc < self.cols:
-                            if (nr, nc) not in reachable:
-                                cell = self.cells[nr][nc]
-                                # Obstacle if it's strictly Black, or a clue of another island
-                                is_obstacle = (cell.state == CellState.BLACK)
-                                if self.is_clue(nr, nc) and (nr, nc) != (sr, sc):
-                                    is_obstacle = True
-                                
-                                if not is_obstacle:
-                                    reachable.add((nr, nc))
-                                    queue.append((nr, nc, d + 1))
+
+            def obstacle_predicate(nr, nc):
+                cell = self.cells[nr][nc]
+                # Obstacle if it's strictly Black, or a clue of another island
+                if cell.state == CellState.BLACK:
+                    return True
+                if self.is_clue(nr, nc) and (nr, nc) != (sr, sc):
+                    return True
+                return False
+
+            reachable = self.get_reachable_cells([(sr, sc)], limit - 1, obstacle_predicate)
             
             for r in range(self.rows):
                 for c in range(self.cols):
                     if (r, c) not in reachable:
-                        self.cells[r][c].owners &= ~bit
+                        self.cells[r][c].owners.remove(iid)
 
     def reset_domains_from_manual(self) -> None:
         """Rebuild domains from scratch but keep current states."""
@@ -342,14 +485,23 @@ class NurikabeModel:
 
     def get_island_core_cells(self, island_id: int) -> Set[Tuple[int, int]]:
         """Returns the set of land cells uniquely owned by island_id."""
-        b = self.bit(island_id)
         core = set()
         for r in range(self.rows):
             for c in range(self.cols):
-                cell = self.cells[r][c]
-                if cell.state == CellState.LAND and cell.owners == b:
+                if self.is_fixed_to(r, c, island_id):
                     core.add((r, c))
         return core
+
+    def get_all_island_core_cells(self) -> Dict[int, List[Tuple[int, int]]]:
+        """Returns a mapping from island_id to its core cells, in grid order."""
+        cores = {isl.island_id: [] for isl in self.islands}
+        for r in range(self.rows):
+            for c in range(self.cols):
+                iid = self.fixed_owner(r, c)
+                if iid is not None:
+                    if iid in cores:
+                        cores[iid].append((r, c))
+        return cores
 
     def cycle_state(self, r: int, c: int, forward: bool = True) -> None:
         if self.is_clue(r, c):
@@ -366,8 +518,8 @@ class NurikabeModel:
         
         if new_state == CellState.UNKNOWN:
             cell.state = CellState.UNKNOWN
-            if cell.owners == 0:
-                cell.owners = self.get_potential_owners_mask(r, c)
+            if cell.owners.is_empty():
+                cell.owners = OwnerMask(self.get_potential_owners_mask(r, c))
         elif new_state == CellState.BLACK:
             self.force_black(r, c)
         elif new_state == CellState.LAND:
@@ -389,7 +541,7 @@ class NurikabeModel:
             row_data = []
             for c in range(self.cols):
                 cell = self.cells[r][c]
-                row_data.append([int(cell.state), cell.owners])
+                row_data.append([int(cell.state), cell.owners.bits])
             cells_data.append(row_data)
 
         return {
@@ -494,7 +646,7 @@ class NurikabeModel:
                     if r < len(cells_data) and c < len(cells_data[r]):
                         s_val, o_val = cells_data[r][c]
                         self.cells[r][c].state = CellState(s_val)
-                        self.cells[r][c].owners = o_val
+                        self.cells[r][c].owners = OwnerMask(o_val)
 
         last_step = state.get("last_step")
         if last_step and isinstance(last_step, dict):
@@ -505,4 +657,5 @@ class NurikabeModel:
             )
         else:
             self.last_step = None
+
 

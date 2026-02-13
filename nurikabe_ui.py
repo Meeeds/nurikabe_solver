@@ -165,7 +165,7 @@ def format_debug_cell(model: NurikabeModel, r: int, c: int) -> str:
         return f"Cell ({r},{c}) clue={model.clues[r][c]} island_id={model.island_by_pos.get((r,c), '-')}"
     cell = model.cells[r][c]
     owners_bits = cell.owners
-    owners_ids = model.bitset_to_ids(owners_bits)
+    owners_ids = owners_bits.to_ids()
     return (
         f"Cell ({r},{c}) state={cell.state.name}\n"
         f"owners_bits={owners_bits} owners_ids={owners_ids}\n"
