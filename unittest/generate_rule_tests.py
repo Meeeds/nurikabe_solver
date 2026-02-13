@@ -14,7 +14,7 @@ from nurikabe_model import NurikabeModel
 def get_puzzle_files():
     # Assuming puzzles are in tests/ folder relative to project root
     puzzle_dir = os.path.join(os.path.dirname(__file__), '..', 'tests')
-    return sorted(glob.glob(os.path.join(puzzle_dir, '*.txt')))
+    return sorted(glob.glob(os.path.join(puzzle_dir, '**', '*.txt'), recursive=True))
 
 def sanitize_filename(name):
     # Replace non-alphanumeric characters with underscores

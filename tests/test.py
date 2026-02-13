@@ -3,6 +3,7 @@ import json
 import argparse
 import sys
 import time
+import glob
 from collections import Counter
 from typing import Dict, Any, List
 
@@ -267,8 +268,8 @@ if __name__ == "__main__":
     # Determine the target directory or file
     if args.path:
         if os.path.isdir(args.path):
-            # It's a directory, find all .txt files
-            files_to_process = [os.path.join(args.path, f) for f in os.listdir(args.path) if f.endswith(".txt")]
+            # It's a directory, find all .txt files recursively
+            files_to_process = sorted(glob.glob(os.path.join(args.path, "**", "*.txt"), recursive=True))
             if not files_to_process:
                  print(f"No .txt files found in the directory: {args.path}")
                  sys.exit(0)
@@ -280,9 +281,9 @@ if __name__ == "__main__":
             print(f"Error: Path '{args.path}' does not exist.")
             sys.exit(1)
     elif args.all:
-        # Fallback to legacy behavior: current script directory
+        # Fallback to default tests directory, recursive
         test_dir = os.path.dirname(os.path.abspath(__file__))
-        files_to_process = [os.path.join(test_dir, f) for f in os.listdir(test_dir) if f.endswith(".txt")]
+        files_to_process = sorted(glob.glob(os.path.join(test_dir, "**", "*.txt"), recursive=True))
         if not files_to_process:
             print(f"No .txt files found in the test directory: {test_dir}")
             sys.exit(0)
