@@ -95,7 +95,7 @@ class SolverWorker:
                     
                     while True:
                         # Capture certainty before step
-                        pre_certain = [[(self._model.is_land_certain(r, c) or self._model.is_black_certain(r, c))
+                        pre_certain = [[(self._model.is_land_certain(r, c) or self._model.is_sea_certain(r, c))
                                         for c in range(self._model.cols)]
                                        for r in range(self._model.rows)]
                         
@@ -107,7 +107,7 @@ class SolverWorker:
                         
                         # Find all cells that became certain in this step
                         for r, c in step_res.changed_cells:
-                            if (self._model.is_land_certain(r, c) or self._model.is_black_certain(r, c)) and not pre_certain[r][c]:
+                            if (self._model.is_land_certain(r, c) or self._model.is_sea_certain(r, c)) and not pre_certain[r][c]:
                                 print(f"Cell ({r}, {c}) became certain due to rule: {step_res.rule}")
                                 newly_certain_cells.append((r, c))
                         

@@ -74,8 +74,8 @@ def draw_grid(
             if model.is_clue(r, c):
                 pygame.draw.rect(screen, grid_style.COLOR_CLUE, rect)
             else:
-                if model.is_black_certain(r, c):
-                    pygame.draw.rect(screen, grid_style.COLOR_BLACK, rect)
+                if model.is_sea_certain(r, c):
+                    pygame.draw.rect(screen, grid_style.COLOR_SEA, rect)
                 elif model.is_land_certain(r, c):
                     pygame.draw.rect(screen, grid_style.COLOR_LAND, rect)
                 else:

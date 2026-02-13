@@ -2,7 +2,7 @@
   "final_grid": [
     [
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "CLUE(8)",
       "UNKNOWN",
@@ -13,7 +13,7 @@
       "CLUE(2)"
     ],
     [
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -21,14 +21,14 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN"
     ],
     [
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -39,9 +39,9 @@
     [
       "CLUE(5)",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "CLUE(5)",
       "UNKNOWN",
@@ -52,7 +52,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -67,7 +67,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
@@ -78,9 +78,9 @@
       "UNKNOWN",
       "CLUE(4)",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "CLUE(4)"
     ],
@@ -91,13 +91,13 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
     ],
     [
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -105,12 +105,12 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN"
     ],
     [
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "CLUE(2)",
       "UNKNOWN",
@@ -124,9 +124,9 @@
   "is_fully_solved": false,
   "number_of_cell_found": 30,
   "rules_triggered": {
-    "G10 Island Completion: common neighbor of last candidates -> black": 2,
+    "G10 Island Completion: common neighbor of last candidates -> sea": 2,
     "G1b Separation: match neighbor owners": 34,
-    "G3 Closure: complete island forces black neighbors": 12,
+    "G3 Closure: complete island forces sea neighbors": 12,
     "G5 Distance Pruning (Enhanced)": 6
   },
   "steps_total": 54

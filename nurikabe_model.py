@@ -8,7 +8,7 @@ from enum import IntEnum
 
 class CellState(IntEnum):
     UNKNOWN = 0
-    BLACK = 1  # Sea
+    SEA = 1  # Sea
     LAND = 2
 
 RuleName = str
@@ -129,8 +129,8 @@ class Cell:
         return self.state == CellState.LAND
 
     @property
-    def is_black(self) -> bool:
-        return self.state == CellState.BLACK
+    def is_sea(self) -> bool:
+        return self.state == CellState.SEA
 
     @property
     def is_unknown(self) -> bool:
@@ -212,15 +212,15 @@ class NurikabeModel:
     def owners_singleton(self, r: int, c: int) -> Optional[int]:
         return self.cells[r][c].owners.get_singleton_id()
 
-    def is_black_certain(self, r: int, c: int) -> bool:
-        return self.cells[r][c].state == CellState.BLACK
+    def is_sea_certain(self, r: int, c: int) -> bool:
+        return self.cells[r][c].state == CellState.SEA
 
     def is_land_certain(self, r: int, c: int) -> bool:
         return self.cells[r][c].state == CellState.LAND
 
     def can_be_land(self, r: int, c: int, island_id: Optional[int] = None) -> bool:
-        """Returns True if the cell is not definitely black. If island_id is provided, also checks if it's a potential owner."""
-        if self.is_black_certain(r, c):
+        """Returns True if the cell is not definitely sea. If island_id is provided, also checks if it's a potential owner."""
+        if self.is_sea_certain(r, c):
             return False
         if island_id is not None:
             return self.cells[r][c].owners.has(island_id)
@@ -235,17 +235,17 @@ class NurikabeModel:
             return self.owners_singleton(r, c)
         return None
 
-    def force_black(self, r: int, c: int) -> bool:
-        """Force cell to BLACK state."""
+    def force_sea(self, r: int, c: int) -> bool:
+        """Force cell to SEA state."""
         if self.is_clue(r, c):
             return False
         cell = self.cells[r][c]
-        if cell.state == CellState.BLACK:
+        if cell.state == CellState.SEA:
             return False
         
         # If it was Land, this is a contradiction, but we enforce the new state
-        cell.state = CellState.BLACK
-        cell.owners = OwnerMask(0)  # Black cells have no owners
+        cell.state = CellState.SEA
+        cell.owners = OwnerMask(0)  # Sea cells have no owners
         return True
 
     def force_land(self, r: int, c: int) -> bool:
@@ -445,8 +445,8 @@ class NurikabeModel:
 
             def obstacle_predicate(nr, nc):
                 cell = self.cells[nr][nc]
-                # Obstacle if it's strictly Black, or a clue of another island
-                if cell.state == CellState.BLACK:
+                # Obstacle if it's strictly Sea, or a clue of another island
+                if cell.state == CellState.SEA:
                     return True
                 if self.is_clue(nr, nc) and (nr, nc) != (sr, sc):
                     return True
@@ -473,8 +473,8 @@ class NurikabeModel:
                 if self.is_clue(r, c): 
                     continue
                 old_state = states[r][c]
-                if old_state == CellState.BLACK:
-                    self.force_black(r, c)
+                if old_state == CellState.SEA:
+                    self.force_sea(r, c)
                 elif old_state == CellState.LAND:
                     self.force_land(r, c)
                 # If UNKNOWN, we leave it as initialized by load_grid (UNKNOWN with full mask)
@@ -507,11 +507,11 @@ class NurikabeModel:
         if self.is_clue(r, c):
             return
         cell = self.cells[r][c]
-        # UNKNOWN -> LAND -> BLACK -> UNKNOWN
-        cycle = [CellState.UNKNOWN, CellState.BLACK, CellState.LAND] if forward else [CellState.UNKNOWN, CellState.LAND, CellState.BLACK]
-        # Note order: UI requested Unknown -> Land -> Black -> Unknown
-        # Let's match UI request: U -> L -> B -> U
-        cycle = [CellState.UNKNOWN, CellState.LAND, CellState.BLACK]
+        # UNKNOWN -> LAND -> SEA -> UNKNOWN
+        cycle = [CellState.UNKNOWN, CellState.SEA, CellState.LAND] if forward else [CellState.UNKNOWN, CellState.LAND, CellState.SEA]
+        # Note order: UI requested Unknown -> Land -> Sea -> Unknown
+        # Let's match UI request: U -> L -> S -> U
+        cycle = [CellState.UNKNOWN, CellState.LAND, CellState.SEA]
         
         idx = cycle.index(cell.state)
         new_state = cycle[(idx + 1) % len(cycle)]
@@ -520,8 +520,8 @@ class NurikabeModel:
             cell.state = CellState.UNKNOWN
             if cell.owners.is_empty():
                 cell.owners = OwnerMask(self.get_potential_owners_mask(r, c))
-        elif new_state == CellState.BLACK:
-            self.force_black(r, c)
+        elif new_state == CellState.SEA:
+            self.force_sea(r, c)
         elif new_state == CellState.LAND:
             self.force_land(r, c)
 
@@ -552,18 +552,18 @@ class NurikabeModel:
 
     def puzzle_correct_so_far(self) -> Tuple[bool, str]:
         """
-        Checks if the current definitive state (LAND, BLACK, clues) 
+        Checks if the current definitive state (LAND, SEA, clues) 
         respects the basic rules of Nurikabe.
         Returns (is_correct, error_message).
         """
-        # 1. No 2x2 black blocks
+        # 1. No 2x2 sea pools
         for r in range(self.rows - 1):
             for c in range(self.cols - 1):
-                if (self.is_black_certain(r, c) and 
-                    self.is_black_certain(r + 1, c) and 
-                    self.is_black_certain(r, c + 1) and 
-                    self.is_black_certain(r + 1, c + 1)):
-                    return False, f"2x2 sea block at ({r},{c})"
+                if (self.is_sea_certain(r, c) and 
+                    self.is_sea_certain(r + 1, c) and 
+                    self.is_sea_certain(r, c + 1) and 
+                    self.is_sea_certain(r + 1, c + 1)):
+                    return False, f"2x2 sea pool at ({r},{c})"
 
         # 2. Island checks (connectivity, clues, size)
         land_components = self.get_all_components(self.is_land_certain)
@@ -587,7 +587,7 @@ class NurikabeModel:
                 is_sealed = True
                 for rr, cc in comp:
                     for nr, nc in self.neighbors4(rr, cc):
-                        if not self.is_land_certain(nr, nc) and not self.is_black_certain(nr, nc):
+                        if not self.is_land_certain(nr, nc) and not self.is_sea_certain(nr, nc):
                             is_sealed = False
                             break
                     if not is_sealed: break
@@ -600,7 +600,7 @@ class NurikabeModel:
                 is_sealed = True
                 for rr, cc in comp:
                     for nr, nc in self.neighbors4(rr, cc):
-                        if not self.is_land_certain(nr, nc) and not self.is_black_certain(nr, nc):
+                        if not self.is_land_certain(nr, nc) and not self.is_sea_certain(nr, nc):
                             is_sealed = False
                             break
                     if not is_sealed: break
@@ -619,10 +619,10 @@ class NurikabeModel:
         if is_complete:
             # All land cells must have been visited (already checked by component analysis)
             # All sea cells must be connected
-            sea_cells_coords = [(r, c) for r in range(self.rows) for c in range(self.cols) if self.is_black_certain(r, c)]
+            sea_cells_coords = [(r, c) for r in range(self.rows) for c in range(self.cols) if self.is_sea_certain(r, c)]
             if sea_cells_coords:
                 start_sea = sea_cells_coords[0]
-                seen_sea = self.get_connected_component(start_sea[0], start_sea[1], self.is_black_certain)
+                seen_sea = self.get_connected_component(start_sea[0], start_sea[1], self.is_sea_certain)
                 if len(seen_sea) != len(sea_cells_coords):
                     return False, "Sea is not connected"
             

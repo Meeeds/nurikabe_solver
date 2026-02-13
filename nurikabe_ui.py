@@ -6,8 +6,9 @@ Features:
 - Main Mode: Play manually (toggle cell states), Step (auto-solve), Reset.
 
 Controls (Main):
-- Left click: cycle Unknown -> Land -> Black -> Unknown
-- Right click: Display debug info (owners/black possible)
+    - Left click: cycle Unknown -> Land -> Sea -> Unknown
+    - Right click: Display debug info (owners/sea possible)
+
 - Buttons: Edit Grid, Step, Reset
 
 Controls (Editor):
@@ -169,7 +170,7 @@ def format_debug_cell(model: NurikabeModel, r: int, c: int) -> str:
     return (
         f"Cell ({r},{c}) state={cell.state.name}\n"
         f"owners_bits={owners_bits} owners_ids={owners_ids}\n"
-        f"is_black={cell.is_black} is_land={cell.is_land}"
+        f"is_sea={cell.is_sea} is_land={cell.is_land}"
     )
 
 

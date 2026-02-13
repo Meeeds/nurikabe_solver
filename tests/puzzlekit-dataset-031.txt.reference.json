@@ -2,12 +2,12 @@
   "final_grid": [
     [
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "LAND(2)"
     ],
     [
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
       "LAND(2)"
     ],
     [
@@ -20,11 +20,11 @@
   "number_of_cell_found": 9,
   "rules_triggered": {
     "G1b Separation: match neighbor owners": 2,
-    "G3 Closure: complete island forces black neighbors": 2,
+    "G3 Closure: complete island forces sea neighbors": 2,
     "G5 Distance Pruning (Enhanced)": 1,
     "G7 Generic Mandatory Expansion": 3,
     "G7b Global Brute Force Intersection & Pruning": 1,
-    "G9 Global Black Connectivity (Articulation Point)": 1
+    "G9 Global Sea Connectivity (Articulation Point)": 1
   },
   "steps_total": 10
 }

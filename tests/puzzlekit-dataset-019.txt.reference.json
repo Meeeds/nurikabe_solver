@@ -9,7 +9,7 @@
       "UNKNOWN",
       "CLUE(3)",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(1)"
     ],
     [
@@ -22,15 +22,15 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK"
+      "SEA"
     ],
     [
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -39,9 +39,9 @@
     [
       "CLUE(6)",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "CLUE(2)",
       "UNKNOWN",
@@ -52,7 +52,7 @@
       "UNKNOWN",
       "LAND(5)",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -70,7 +70,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK"
+      "SEA"
     ],
     [
       "CLUE(3)",
@@ -81,7 +81,7 @@
       "UNKNOWN",
       "CLUE(7)",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(1)"
     ],
     [
@@ -93,14 +93,14 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
-      "BLACK"
+      "SEA",
+      "SEA"
     ],
     [
-      "BLACK",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -111,9 +111,9 @@
     [
       "CLUE(2)",
       "LAND(13)",
-      "BLACK",
+      "SEA",
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "CLUE(2)",
       "UNKNOWN",
@@ -125,12 +125,12 @@
   "number_of_cell_found": 38,
   "rules_triggered": {
     "G1b Separation: match neighbor owners": 43,
-    "G3 Closure: complete island forces black neighbors": 13,
-    "G4 Anti-2x2: 3 blacks -> land": 1,
+    "G3 Closure: complete island forces sea neighbors": 13,
+    "G4 Anti-Pool: 3 seas -> land": 1,
     "G5 Distance Pruning (Enhanced)": 13,
-    "G6 Empty domain -> black": 4,
+    "G6 Empty domain -> sea": 4,
     "G7b Global Brute Force Intersection & Pruning": 3,
-    "G9 Global Black Connectivity (Articulation Point)": 1
+    "G9 Global Sea Connectivity (Articulation Point)": 1
   },
   "steps_total": 78
 }

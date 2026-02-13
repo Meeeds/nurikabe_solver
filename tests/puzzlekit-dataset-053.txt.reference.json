@@ -10,21 +10,21 @@
     [
       "UNKNOWN",
       "CLUE(4)",
-      "BLACK",
+      "SEA",
       "CLUE(4)",
       "UNKNOWN"
     ],
     [
       "UNKNOWN",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
       "UNKNOWN"
     ],
     [
       "UNKNOWN",
       "CLUE(4)",
-      "BLACK",
+      "SEA",
       "CLUE(4)",
       "UNKNOWN"
     ],
@@ -39,10 +39,10 @@
   "is_fully_solved": false,
   "number_of_cell_found": 9,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 4,
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 4,
     "G1b Separation: match neighbor owners": 8,
     "G5 Distance Pruning (Enhanced)": 4,
-    "G6 Empty domain -> black": 1
+    "G6 Empty domain -> sea": 1
   },
   "steps_total": 17
 }

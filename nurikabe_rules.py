@@ -83,21 +83,21 @@ class NurikabeSolver:
                         )
         return None
 
-    @solver_rule(priority=1, name="G4 Anti-2x2: 3 blacks -> land",
-                 message="Forced land to avoid a 2x2 black pool at block (%d,%d).")
-    def try_rule_anti_2x2_force_land(self) -> Optional[StepResult]:
+    @solver_rule(priority=1, name="G4 Anti-Pool: 3 seas -> land",
+                 message="Forced land to avoid a 2x2 sea pool at block (%d,%d).")
+    def try_rule_anti_pool_force_land(self) -> Optional[StepResult]:
         for r in range(self.model.rows - 1):
             for c in range(self.model.cols - 1):
                 cells = [(r, c), (r + 1, c), (r, c + 1), (r + 1, c + 1)]
-                blacks = [(rr, cc) for (rr, cc) in cells if self.model.is_black_certain(rr, cc)]
-                if len(blacks) == 3:
+                seas = [(rr, cc) for (rr, cc) in cells if self.model.is_sea_certain(rr, cc)]
+                if len(seas) == 3:
                     # the remaining cell forced land
                     for rr, cc in cells:
-                        if not self.model.is_black_certain(rr, cc):
+                        if not self.model.is_sea_certain(rr, cc):
                             if self.model.is_clue(rr, cc):
                                 continue
-                            # If not certain black, and we need to avoid 2x2, we force Land.
-                            if not self.model.cells[rr][cc].is_black:
+                            # If not certain sea, and we need to avoid 2x2, we force Land.
+                            if not self.model.cells[rr][cc].is_sea:
                                 if self.model.force_land(rr, cc):
                                     return StepResult(
                                         changed_cells=[(rr, cc)],
@@ -105,12 +105,12 @@ class NurikabeSolver:
                                     )
         return None
 
-    @solver_rule(priority=2, name="G1 Separation: neighbor of >=2 fixed owners -> black",
-                 message="Forced black because cell touches multiple distinct fixed islands %s.")
-    def try_rule_common_neighbor_two_fixed_owners_black(self) -> Optional[StepResult]:
+    @solver_rule(priority=2, name="G1 Separation: neighbor of >=2 fixed owners -> sea",
+                 message="Forced sea because cell touches multiple distinct fixed islands %s.")
+    def try_rule_common_neighbor_two_fixed_owners_sea(self) -> Optional[StepResult]:
         for r in range(self.model.rows):
             for c in range(self.model.cols):
-                if self.model.is_clue(r, c) or self.model.is_black_certain(r, c):
+                if self.model.is_clue(r, c) or self.model.is_sea_certain(r, c):
                     continue
                 fixed: Set[int] = set()
                 for rr, cc in self.model.neighbors4(r, c):
@@ -118,8 +118,8 @@ class NurikabeSolver:
                     if fo is not None:
                         fixed.add(fo)
                 if len(fixed) >= 2:
-                    # touches at least two distinct fixed islands -> must be black
-                    changed = self.model.force_black(r, c)
+                    # touches at least two distinct fixed islands -> must be sea
+                    changed = self.model.force_sea(r, c)
                     if changed:
                         ids = sorted(list(fixed))[:3]
                         return StepResult(
@@ -149,8 +149,8 @@ class NurikabeSolver:
                     )
         return None
 
-    @solver_rule(priority=5, name="G3 Closure: complete island forces black neighbors",
-                 message="Island %d is complete (%d/%d); neighbor (%d,%d) must be black.")
+    @solver_rule(priority=5, name="G3 Closure: complete island forces sea neighbors",
+                 message="Island %d is complete (%d/%d); neighbor (%d,%d) must be sea.")
     def try_rule_close_complete_island(self) -> Optional[StepResult]:
         for isl in self.model.islands:
             iid = isl.island_id
@@ -159,7 +159,7 @@ class NurikabeSolver:
             # 1. Get all cells definitively belonging to this island (globally)
             island_cells = self.model.get_island_core_cells(iid)
             
-            # 2. If the island is complete, neighbors that are NOT in the island must be black
+            # 2. If the island is complete, neighbors that are NOT in the island must be sea
             if len(island_cells) == clue:
                 for r, c in island_cells:
                     for rr, cc in self.model.neighbors4(r, c):
@@ -167,25 +167,25 @@ class NurikabeSolver:
                         if (rr, cc) not in island_cells:
                             if self.model.is_clue(rr, cc):
                                 continue
-                            if not self.model.is_black_certain(rr, cc):
-                                self.model.force_black(rr, cc)
+                            if not self.model.is_sea_certain(rr, cc):
+                                self.model.force_sea(rr, cc)
                                 return StepResult(
                                     changed_cells=[(rr, cc)],
                                     format_args=(iid, clue, clue, rr, cc)
                                 )
         return None
 
-    @solver_rule(priority=6, name="G6 Empty domain -> black", 
-                 message="Owners domain became empty; forced black (no island can own this cell).")
-    def try_rule_empty_owners_becomes_black(self) -> Optional[StepResult]:
+    @solver_rule(priority=6, name="G6 Empty domain -> sea", 
+                 message="Owners domain became empty; forced sea (no island can own this cell).")
+    def try_rule_empty_owners_becomes_sea(self) -> Optional[StepResult]:
         for r in range(self.model.rows):
             for c in range(self.model.cols):
                 if self.model.is_clue(r, c):
                     continue
                 cell = self.model.cells[r][c]
-                # If owners domain is empty and it's not already black (and not land), force black.
-                if cell.owners == 0 and not cell.is_land and cell.state != CellState.BLACK:
-                    self.model.force_black(r, c)
+                # If owners domain is empty and it's not already sea (and not land), force sea.
+                if cell.owners == 0 and not cell.is_land and cell.state != CellState.SEA:
+                    self.model.force_sea(r, c)
                     return StepResult(changed_cells=[(r, c)])
         return None
 
@@ -385,7 +385,7 @@ class NurikabeSolver:
             # 2. Bottleneck: Force cells that are in ALL valid extensions
             if common_set:
                 for r, c in common_set:
-                    if self.model.cells[r][c].state == CellState.BLACK: 
+                    if self.model.cells[r][c].state == CellState.SEA: 
                         continue
                     
                     forced_land = self.model.force_land(r, c)
@@ -403,13 +403,13 @@ class NurikabeSolver:
 
         return None
 
-    @solver_rule(priority=9, name="G9 Global Black Connectivity (Articulation Point)",
+    @solver_rule(priority=9, name="G9 Global Sea Connectivity (Articulation Point)",
                  message="Global Sea Connectivity: Cell (%d,%d) is a mandatory articulation point.")
-    def try_rule_black_mandatory_expansion(self) -> Optional[StepResult]:
-        # 1. Identify all connected components of current black cells
-        black_components = self.model.get_all_components(self.model.is_black_certain)
+    def try_rule_sea_mandatory_expansion(self) -> Optional[StepResult]:
+        # 1. Identify all connected components of current sea cells
+        sea_components = self.model.get_all_components(self.model.is_sea_certain)
 
-        if len(black_components) < 2:
+        if len(sea_components) < 2:
             return None
 
         # 2. Potential sea consists of all cells that are not certain land
@@ -419,15 +419,15 @@ class NurikabeSolver:
             for c in range(self.model.cols):
                 if not self.model.is_land_certain(r, c):
                     potential_sea.add((r, c))
-                    if not self.model.is_black_certain(r, c):
+                    if not self.model.is_sea_certain(r, c):
                         candidates.append((r, c))
 
         if not candidates:
             return None
 
-        # Map each black cell to its component index for fast lookup
+        # Map each sea cell to its component index for fast lookup
         cell_to_comp_idx = {}
-        for idx, comp in enumerate(black_components):
+        for idx, comp in enumerate(sea_components):
             for cell in comp:
                 cell_to_comp_idx[cell] = idx
 
@@ -444,12 +444,12 @@ class NurikabeSolver:
         comp_partitions = [] # List of sets of component indices
         assigned_comps = set()
         
-        for i in range(len(black_components)):
+        for i in range(len(sea_components)):
             if i in assigned_comps:
                 continue
             
             # BFS from component i to find all connected components
-            reached = get_reachable_component_indices(list(black_components[i])[0])
+            reached = get_reachable_component_indices(list(sea_components[i])[0])
             comp_partitions.append(reached)
             assigned_comps.update(reached)
 
@@ -464,23 +464,23 @@ class NurikabeSolver:
             for partition in active_partitions:
                 # Pick a representative component from the partition
                 start_comp_idx = next(iter(partition))
-                start_cell = list(black_components[start_comp_idx])[0]
-                other_targets = [list(black_components[i])[0] for i in partition if i != start_comp_idx]
+                start_cell = list(sea_components[start_comp_idx])[0]
+                other_targets = [list(sea_components[i])[0] for i in partition if i != start_comp_idx]
                 
                 if self.model.is_mandatory_for_connectivity(cand, start_cell, other_targets, potential_sea):
                     # Split detected!
                     tr, tc = cand
-                    if self.model.cells[tr][tc].state != CellState.BLACK:
-                        self.model.force_black(tr, tc)
+                    if self.model.cells[tr][tc].state != CellState.SEA:
+                        self.model.force_sea(tr, tc)
                         return StepResult(
                             changed_cells=[(tr, tc)],
                             format_args=(tr, tc)
                         )
         return None
 
-    @solver_rule(priority=10, name="G10 Island Completion: common neighbor of last candidates -> black",
-                 message="Island %d needs 1 cell; either %s or %s will complete it. Their common neighbor (%d,%d) must be black.")
-    def try_rule_island_completion_common_neighbor_black(self) -> Optional[StepResult]:
+    @solver_rule(priority=10, name="G10 Island Completion: common neighbor of last candidates -> sea",
+                 message="Island %d needs 1 cell; either %s or %s will complete it. Their common neighbor (%d,%d) must be sea.")
+    def try_rule_island_completion_common_neighbor_sea(self) -> Optional[StepResult]:
         for isl in self.model.islands:
             iid = isl.island_id
             clue = isl.clue
@@ -508,8 +508,8 @@ class NurikabeSolver:
                 for xr, xc in common:
                     if (xr, xc) not in component and (xr, xc) not in candidates:
                         cell_x = self.model.cells[xr][xc]
-                        if not cell_x.is_land and cell_x.state != CellState.BLACK:
-                            self.model.force_black(xr, xc)
+                        if not cell_x.is_land and cell_x.state != CellState.SEA:
+                            self.model.force_sea(xr, xc)
                             return StepResult(
                                 changed_cells=[(xr, xc)],
                                 format_args=(iid, c_list[0], c_list[1], xr, xc)
@@ -537,7 +537,7 @@ class NurikabeSolver:
                 continue
             
             def obstacle_predicate(nr, nc):
-                # Obstacles: certain black cells, or cells that CANNOT be owned by this island
+                # Obstacles: certain sea cells, or cells that CANNOT be owned by this island
                 return not self.model.can_be_land(nr, nc, iid)
 
             reachable = self.model.get_reachable_cells(current_fixed, remaining, obstacle_predicate)

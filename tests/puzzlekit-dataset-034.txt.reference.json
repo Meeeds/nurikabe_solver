@@ -22,13 +22,13 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK"
+      "SEA"
     ],
     [
       "UNKNOWN",
       "UNKNOWN",
       "CLUE(3)",
-      "BLACK",
+      "SEA",
       "CLUE(3)",
       "UNKNOWN",
       "UNKNOWN",
@@ -68,9 +68,9 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
-      "BLACK"
+      "SEA"
     ],
     [
       "CLUE(3)",
@@ -99,7 +99,7 @@
     [
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -116,18 +116,18 @@
       "CLUE(3)",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
-      "BLACK"
+      "SEA"
     ]
   ],
   "is_fully_solved": false,
   "number_of_cell_found": 21,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 1,
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 1,
     "G1b Separation: match neighbor owners": 31,
     "G5 Distance Pruning (Enhanced)": 1,
-    "G6 Empty domain -> black": 6
+    "G6 Empty domain -> sea": 6
   },
   "steps_total": 39
 }

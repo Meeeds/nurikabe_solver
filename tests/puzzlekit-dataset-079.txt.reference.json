@@ -2,7 +2,7 @@
   "final_grid": [
     [
       "CLUE(8)",
-      "BLACK",
+      "SEA",
       "CLUE(8)",
       "UNKNOWN",
       "UNKNOWN",
@@ -14,7 +14,7 @@
     ],
     [
       "LAND(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -42,7 +42,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -53,9 +53,9 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
@@ -66,7 +66,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -103,7 +103,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "CLUE(8)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
@@ -113,8 +113,8 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
       "CLUE(8)",
       "LAND(8)",
       "UNKNOWN",
@@ -124,12 +124,12 @@
   "is_fully_solved": false,
   "number_of_cell_found": 20,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 3,
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 3,
     "G1b Separation: match neighbor owners": 26,
-    "G3 Closure: complete island forces black neighbors": 4,
+    "G3 Closure: complete island forces sea neighbors": 4,
     "G5 Distance Pruning (Enhanced)": 15,
     "G7 Generic Mandatory Expansion": 3,
-    "G9 Global Black Connectivity (Articulation Point)": 2
+    "G9 Global Sea Connectivity (Articulation Point)": 2
   },
   "steps_total": 53
 }

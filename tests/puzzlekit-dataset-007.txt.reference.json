@@ -2,9 +2,9 @@
   "final_grid": [
     [
       "CLUE(4)",
-      "BLACK",
+      "SEA",
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -14,8 +14,8 @@
     ],
     [
       "LAND(1)",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -38,7 +38,7 @@
     ],
     [
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "CLUE(2)",
@@ -53,8 +53,8 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -64,12 +64,12 @@
       "CLUE(10)",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "CLUE(3)",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(5)"
     ],
     [
@@ -77,12 +77,12 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(3)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "CLUE(4)",
-      "BLACK"
+      "SEA"
     ],
     [
       "UNKNOWN",
@@ -94,7 +94,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK"
+      "SEA"
     ],
     [
       "UNKNOWN",
@@ -124,13 +124,13 @@
   "is_fully_solved": false,
   "number_of_cell_found": 31,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 7,
-    "G10 Island Completion: common neighbor of last candidates -> black": 1,
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 7,
+    "G10 Island Completion: common neighbor of last candidates -> sea": 1,
     "G1b Separation: match neighbor owners": 32,
-    "G3 Closure: complete island forces black neighbors": 3,
+    "G3 Closure: complete island forces sea neighbors": 3,
     "G5 Distance Pruning (Enhanced)": 14,
     "G7 Generic Mandatory Expansion": 4,
-    "G9 Global Black Connectivity (Articulation Point)": 3
+    "G9 Global Sea Connectivity (Articulation Point)": 3
   },
   "steps_total": 64
 }

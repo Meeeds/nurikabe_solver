@@ -1,110 +1,110 @@
 {
   "final_grid": [
     [
-      "BLACK",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
-      "BLACK",
-      "BLACK"
+      "SEA",
+      "SEA",
+      "SEA"
     ],
     [
-      "BLACK",
+      "SEA",
       "LAND(5)",
-      "BLACK",
+      "SEA",
       "LAND(MULTIPLE)",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
       "LAND(4)",
-      "BLACK"
+      "SEA"
     ],
     [
-      "BLACK",
+      "SEA",
       "LAND(5)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
       "LAND(4)",
-      "BLACK"
+      "SEA"
     ],
     [
-      "BLACK",
+      "SEA",
       "LAND(5)",
-      "BLACK",
+      "SEA",
       "LAND(1)",
       "CLUE(4)",
-      "BLACK",
+      "SEA",
       "LAND(2)",
-      "BLACK",
+      "SEA",
       "LAND(4)",
-      "BLACK"
+      "SEA"
     ],
     [
-      "BLACK",
+      "SEA",
       "LAND(5)",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
       "CLUE(3)",
       "LAND(2)",
-      "BLACK",
+      "SEA",
       "LAND(4)",
-      "BLACK"
+      "SEA"
     ],
     [
-      "BLACK",
+      "SEA",
       "LAND(5)",
-      "BLACK",
+      "SEA",
       "LAND(3)",
       "CLUE(2)",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
       "LAND(4)",
-      "BLACK"
+      "SEA"
     ],
     [
-      "BLACK",
+      "SEA",
       "LAND(5)",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
       "CLUE(14)",
       "LAND(4)",
       "LAND(4)",
       "LAND(4)",
-      "BLACK"
+      "SEA"
     ],
     [
-      "BLACK",
+      "SEA",
       "LAND(5)",
       "LAND(5)",
       "LAND(5)",
       "CLUE(10)",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
       "UNKNOWN",
-      "BLACK"
+      "SEA"
     ],
     [
-      "BLACK",
-      "BLACK",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
       "CLUE(2)",
       "LAND(6)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN"
     ],
@@ -114,9 +114,9 @@
       "LAND(7)",
       "LAND(7)",
       "CLUE(5)",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN"
     ]
@@ -124,15 +124,15 @@
   "is_fully_solved": false,
   "number_of_cell_found": 86,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 13,
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 13,
     "G1b Separation: match neighbor owners": 26,
-    "G3 Closure: complete island forces black neighbors": 7,
-    "G4 Anti-2x2: 3 blacks -> land": 3,
+    "G3 Closure: complete island forces sea neighbors": 7,
+    "G4 Anti-Pool: 3 seas -> land": 3,
     "G5 Distance Pruning (Enhanced)": 14,
-    "G6 Empty domain -> black": 17,
+    "G6 Empty domain -> sea": 17,
     "G7 Generic Mandatory Expansion": 19,
     "G7b Global Brute Force Intersection & Pruning": 1,
-    "G9 Global Black Connectivity (Articulation Point)": 15
+    "G9 Global Sea Connectivity (Articulation Point)": 15
   },
   "steps_total": 115
 }

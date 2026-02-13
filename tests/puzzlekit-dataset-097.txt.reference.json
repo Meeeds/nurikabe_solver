@@ -3,26 +3,26 @@
     [
       "CLUE(2)",
       "LAND(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN"
     ],
     [
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
     ],
     [
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
     ],
     [
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "CLUE(6)",
       "UNKNOWN",
@@ -39,9 +39,9 @@
   "is_fully_solved": false,
   "number_of_cell_found": 9,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 1,
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 1,
     "G1b Separation: match neighbor owners": 5,
-    "G3 Closure: complete island forces black neighbors": 4,
+    "G3 Closure: complete island forces sea neighbors": 4,
     "G5 Distance Pruning (Enhanced)": 1,
     "G7 Generic Mandatory Expansion": 1
   },

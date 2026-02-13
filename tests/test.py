@@ -63,8 +63,8 @@ def serialize_grid(model: NurikabeModel) -> List[List[str]]:
         for c in range(model.cols):
             if model.is_clue(r, c):
                 row_state.append(f"CLUE({model.clues[r][c]})")
-            elif model.is_black_certain(r, c):
-                row_state.append("BLACK")
+            elif model.is_sea_certain(r, c):
+                row_state.append("SEA")
             elif model.is_land_certain(r, c):
                 # Distinguish if it has an assigned owner or just land
                 owners = model.cells[r][c].owners.to_ids()
@@ -124,7 +124,7 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
     cells_found = 0
     for r in range(model.rows):
         for c in range(model.cols):
-            if model.is_black_certain(r, c) or model.is_land_certain(r, c):
+            if model.is_sea_certain(r, c) or model.is_land_certain(r, c):
                 cells_found += 1
             else:
                 is_solved = False

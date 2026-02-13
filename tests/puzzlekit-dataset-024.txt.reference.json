@@ -15,8 +15,8 @@
       "UNKNOWN",
       "UNKNOWN",
       "CLUE(3)",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
       "LAND(3)",
       "UNKNOWN",
       "UNKNOWN",
@@ -25,11 +25,11 @@
     [
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "CLUE(4)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN"
     ],
@@ -37,9 +37,9 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "BLACK",
+      "SEA",
       "CLUE(10)",
-      "BLACK",
+      "SEA",
       "CLUE(6)",
       "UNKNOWN",
       "UNKNOWN"
@@ -50,7 +50,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "LAND(4)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
@@ -81,11 +81,11 @@
   "is_fully_solved": false,
   "number_of_cell_found": 15,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 6,
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 6,
     "G1b Separation: match neighbor owners": 9,
     "G5 Distance Pruning (Enhanced)": 12,
     "G7 Generic Mandatory Expansion": 2,
-    "G9 Global Black Connectivity (Articulation Point)": 2
+    "G9 Global Sea Connectivity (Articulation Point)": 2
   },
   "steps_total": 31
 }

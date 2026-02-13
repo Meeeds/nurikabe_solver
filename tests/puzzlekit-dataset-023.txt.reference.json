@@ -2,9 +2,9 @@
   "final_grid": [
     [
       "CLUE(3)",
-      "BLACK",
+      "SEA",
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "CLUE(10)",
       "UNKNOWN",
       "UNKNOWN",
@@ -12,9 +12,9 @@
     ],
     [
       "LAND(1)",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -22,7 +22,7 @@
     ],
     [
       "LAND(1)",
-      "BLACK",
+      "SEA",
       "LAND(4)",
       "UNKNOWN",
       "UNKNOWN",
@@ -31,17 +31,17 @@
       "UNKNOWN"
     ],
     [
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "CLUE(4)",
-      "BLACK",
+      "SEA",
       "CLUE(5)",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
     ],
     [
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -54,14 +54,14 @@
   "is_fully_solved": false,
   "number_of_cell_found": 17,
   "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> black": 3,
+    "G1 Separation: neighbor of >=2 fixed owners -> sea": 3,
     "G1b Separation: match neighbor owners": 14,
-    "G3 Closure: complete island forces black neighbors": 3,
-    "G4 Anti-2x2: 3 blacks -> land": 1,
+    "G3 Closure: complete island forces sea neighbors": 3,
+    "G4 Anti-Pool: 3 seas -> land": 1,
     "G5 Distance Pruning (Enhanced)": 7,
-    "G6 Empty domain -> black": 1,
+    "G6 Empty domain -> sea": 1,
     "G7 Generic Mandatory Expansion": 2,
-    "G9 Global Black Connectivity (Articulation Point)": 2
+    "G9 Global Sea Connectivity (Articulation Point)": 2
   },
   "steps_total": 33
 }

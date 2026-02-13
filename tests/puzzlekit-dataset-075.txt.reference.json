@@ -1,29 +1,29 @@
 {
   "final_grid": [
     [
-      "BLACK",
+      "SEA",
       "LAND(1)",
       "CLUE(2)",
-      "BLACK",
+      "SEA",
       "UNKNOWN"
     ],
     [
-      "BLACK",
-      "BLACK",
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
       "UNKNOWN"
     ],
     [
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "LAND(MULTIPLE)",
       "UNKNOWN",
       "CLUE(3)"
     ],
     [
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
@@ -40,11 +40,11 @@
   "number_of_cell_found": 15,
   "rules_triggered": {
     "G1b Separation: match neighbor owners": 5,
-    "G3 Closure: complete island forces black neighbors": 5,
-    "G4 Anti-2x2: 3 blacks -> land": 2,
+    "G3 Closure: complete island forces sea neighbors": 5,
+    "G4 Anti-Pool: 3 seas -> land": 2,
     "G5 Distance Pruning (Enhanced)": 2,
-    "G6 Empty domain -> black": 2,
-    "G9 Global Black Connectivity (Articulation Point)": 2
+    "G6 Empty domain -> sea": 2,
+    "G9 Global Sea Connectivity (Articulation Point)": 2
   },
   "steps_total": 18
 }

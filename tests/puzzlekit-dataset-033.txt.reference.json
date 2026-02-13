@@ -1,8 +1,8 @@
 {
   "final_grid": [
     [
-      "BLACK",
-      "BLACK",
+      "SEA",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -14,7 +14,7 @@
     ],
     [
       "CLUE(1)",
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -25,7 +25,7 @@
       "UNKNOWN"
     ],
     [
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -109,7 +109,7 @@
       "UNKNOWN"
     ],
     [
-      "BLACK",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -125,10 +125,10 @@
   "number_of_cell_found": 14,
   "rules_triggered": {
     "G1b Separation: match neighbor owners": 28,
-    "G3 Closure: complete island forces black neighbors": 3,
+    "G3 Closure: complete island forces sea neighbors": 3,
     "G5 Distance Pruning (Enhanced)": 12,
-    "G6 Empty domain -> black": 1,
-    "G9 Global Black Connectivity (Articulation Point)": 1
+    "G6 Empty domain -> sea": 1,
+    "G9 Global Sea Connectivity (Articulation Point)": 1
   },
   "steps_total": 45
 }

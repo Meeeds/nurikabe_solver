@@ -73,3 +73,16 @@ Run one Test :
   ```bash
   python tests/test.py <grid_file> --mode test
   ```
+
+
+## Cell state
+Summary of Representation from class CellState and OwnerMask
+  ┌─────────────────────────────────────────────────────────┬───────────────────────────────────────────────────────────────┐
+  │ Condition                                               │ Representation in Cell                                        │
+  ├─────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+  │ Possible States: Black OR Island $X$                    │ state = CellState.UNKNOWN, owners = {Island X}                │
+  │ Definitively Sea                                        │ state = CellState.SEA, owners = {} (empty)                    │
+  │ Definitively Island $X$                                 │ state = CellState.LAND, owners = {Island X}                   │
+  │ Possible States: Sea   OR {Island $X$, Island $Y$, ...} │ state = CellState.UNKNOWN, owners = {Island X, Island Y, ...} │
+  └─────────────────────────────────────────────────────────┴───────────────────────────────────────────────────────────────┘
+
