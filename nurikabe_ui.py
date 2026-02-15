@@ -272,14 +272,14 @@ def main() -> None:
 
 
     controls_win = pygame_gui.elements.UIWindow(
-        pygame.Rect(20, 20, 260, 320),
+        pygame.Rect(20, 20, 260, 360),
         ui_manager,
         window_display_title="Controls",
         resizable=True
     )
     controls_win.close_window_button.hide()
     log_win = pygame_gui.elements.UIWindow(
-        pygame.Rect(20, 360, 520, 360),
+        pygame.Rect(20, 400, 520, 360),
         ui_manager,
         window_display_title="Log",
         resizable=True
@@ -294,7 +294,7 @@ def main() -> None:
     )
     editor_win.close_window_button.hide()
 
-    controls_win.set_minimum_dimensions((260, 320))
+    controls_win.set_minimum_dimensions((260, 360))
     log_win.set_minimum_dimensions((520, 260))
     editor_win.set_minimum_dimensions((340, 600))
 
@@ -302,10 +302,11 @@ def main() -> None:
     btn_step = pygame_gui.elements.UIButton(pygame.Rect(10, 56, 240, 36), "Step", ui_manager, container=controls_win)
     btn_next_cell = pygame_gui.elements.UIButton(pygame.Rect(10, 102, 240, 36), "Next Cell", ui_manager, container=controls_win)
     btn_10steps = pygame_gui.elements.UIButton(pygame.Rect(10, 148, 240, 36), "10Steps", ui_manager, container=controls_win)
-    btn_reset = pygame_gui.elements.UIButton(pygame.Rect(10, 194, 240, 36), "Reset", ui_manager, container=controls_win)
+    btn_prev = pygame_gui.elements.UIButton(pygame.Rect(10, 194, 240, 36), "Previous", ui_manager, container=controls_win)
+    btn_reset = pygame_gui.elements.UIButton(pygame.Rect(10, 240, 240, 36), "Reset", ui_manager, container=controls_win)
 
     lbl_hint = pygame_gui.elements.UILabel(
-        pygame.Rect(10, 240, 240, 60),
+        pygame.Rect(10, 286, 240, 60),
         "Pan: drag with LMB\nZoom: mouse wheel\nClick: release without drag",
         ui_manager,
         container=controls_win
@@ -472,9 +473,13 @@ def main() -> None:
     max_undo = 200
 
     def push_undo() -> None:
-        undo_stack.append(state.model.snapshot())
+        undo_stack.append({
+            "snapshot": state.model.snapshot(),
+            "last_step_msg": state.last_step_msg,
+            "affected_cells": list(state.affected_cells)
+        })
         if len(undo_stack) > max_undo:
-            del undo_stack[:20]
+            del undo_stack[0]
 
     def sync_worker() -> None:
         worker.send(WorkerCommand(kind="sync_state", payload={"state": state.model.snapshot()}))
@@ -547,6 +552,8 @@ def main() -> None:
             if "state" in res.payload:
                 snap = res.payload["state"]
                 if isinstance(snap, dict):
+                    if res.kind == "stepped":
+                        push_undo()
                     apply_worker_state(snap)
             step = res.payload.get("step_result")
             if isinstance(step, dict):
@@ -554,6 +561,9 @@ def main() -> None:
                 rule = step.get("rule", "")
                 full_msg = f"[{rule}] {msg}".strip()
                 if msg or rule:
+                    # If state wasn't in payload but message is, we still might want an undo point
+                    if "state" not in res.payload:
+                        push_undo()
                     log_append(full_msg)
                     state.last_step_msg = full_msg
                     lbl_last_msg.set_text(full_msg)
@@ -646,25 +656,35 @@ def main() -> None:
                     save_editor_grid_to_file(editor, inp_filename.get_text(), log_append, files_list)
 
                 elif event.ui_element == btn_step:
-                    push_undo()
                     worker.send(WorkerCommand(kind="step"))
 
                 elif event.ui_element == btn_next_cell:
-                    push_undo()
                     worker.send(WorkerCommand(kind="next_cell"))
 
                 elif event.ui_element == btn_10steps:
-                    push_undo()
                     for _ in range(10):
                         worker.send(WorkerCommand(kind="step"))
 
+                elif event.ui_element == btn_prev:
+                    if undo_stack:
+                        entry = undo_stack.pop()
+                        apply_worker_state(entry["snapshot"])
+                        state.last_step_msg = entry["last_step_msg"]
+                        lbl_last_msg.set_text(state.last_step_msg)
+                        state.affected_cells = entry["affected_cells"]
+                        sync_worker()
+                        log_append("Reverted to previous state.")
+                    else:
+                        log_append("Nothing to undo.")
+
                 elif event.ui_element == btn_reset:
                     if undo_stack:
-                        snap0 = undo_stack[0]
+                        entry0 = undo_stack[0]
                         undo_stack.clear()
-                        apply_worker_state(snap0)
-                        state.solver = state.solver_class(state.model)
-                        state.affected_cells.clear()
+                        apply_worker_state(entry0["snapshot"])
+                        state.last_step_msg = entry0["last_step_msg"]
+                        lbl_last_msg.set_text(state.last_step_msg)
+                        state.affected_cells = entry0["affected_cells"]
                         sync_worker()
                         log_append("Reset to first undo snapshot.")
                         lbl_last_msg.set_text("Reset to first undo snapshot.")
@@ -813,11 +833,13 @@ def main() -> None:
             btn_step.disable()
             btn_next_cell.disable()
             btn_10steps.disable()
+            btn_prev.disable()
             btn_reset.disable()
         else:
             btn_step.enable()
             btn_next_cell.enable()
             btn_10steps.enable()
+            btn_prev.enable()
             btn_reset.enable()
 
         ui_manager.update(time_delta)
