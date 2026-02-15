@@ -124,12 +124,12 @@
   "is_fully_solved": true,
   "number_of_cell_found": 100,
   "rules_triggered": {
-    "B0 Distance Pruning": 13,
-    "R0 Empty domain -> Sea": 42,
+    "B0 Distance Pruning": 12,
+    "R0 Empty domain -> Sea": 43,
     "R1 Anti 2x2": 9,
-    "R2 Neighbor Domain Restriction": 40,
+    "R2 Neighbor Domain Restriction": 42,
     "R3 Mandatory Expansion": 21,
-    "R4 Global Sea Connectivity": 12
+    "R4 Global Sea Connectivity": 11
   },
-  "steps_total": 137
+  "steps_total": 138
 }

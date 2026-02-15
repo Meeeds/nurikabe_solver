@@ -368,13 +368,13 @@
   "is_fully_solved": false,
   "number_of_cell_found": 186,
   "rules_triggered": {
-    "B0 Distance Pruning": 84,
-    "R0 Empty domain -> Sea": 93,
+    "B0 Distance Pruning": 83,
+    "R0 Empty domain -> Sea": 95,
     "R1 Anti 2x2": 12,
-    "R2 Neighbor Domain Restriction": 152,
+    "R2 Neighbor Domain Restriction": 154,
     "R3 Mandatory Expansion": 26,
-    "R4 Global Sea Connectivity": 12,
-    "R5 Generalized Theorem": 3
+    "R4 Global Sea Connectivity": 11,
+    "R5 Generalized Theorem": 2
   },
-  "steps_total": 382
+  "steps_total": 383
 }
