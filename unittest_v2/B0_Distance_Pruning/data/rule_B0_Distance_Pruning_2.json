@@ -1227,7 +1227,7 @@
         ],
         [
           0,
-          20864
+          20608
         ],
         [
           0,
@@ -1273,7 +1273,7 @@
         ],
         [
           0,
-          20864
+          20608
         ],
         [
           0,
@@ -1319,7 +1319,7 @@
         ],
         [
           0,
-          20736
+          20480
         ]
       ],
       [
@@ -1536,25 +1536,47 @@
     "last_step": {
       "changed_cells": [
         [
-          6,
-          6
-        ],
-        [
-          8,
+          4,
           8
-        ],
-        [
-          7,
-          7
-        ],
-        [
-          9,
-          9
         ]
       ],
       "message": "Pruned potential owners based on reachability (B0)",
       "rule": "B0 Distance Pruning"
     }
   },
-  "source_puzzle": "grid_test_4.nu.txt"
+  "source_puzzle": "grid_test_4.nu.txt",
+  "last_step": {
+    "changed_cells": [
+      [
+        8,
+        8
+      ],
+      [
+        7,
+        7
+      ],
+      [
+        9,
+        9
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        6,
+        6
+      ],
+      [
+        7,
+        8
+      ]
+    ],
+    "message": "Pruned potential owners based on Steiner Tree connectivity (B0)",
+    "rule": "B0 Distance Pruning"
+  }
 }

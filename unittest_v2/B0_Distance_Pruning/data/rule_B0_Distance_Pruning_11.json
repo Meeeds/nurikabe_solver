@@ -4184,29 +4184,39 @@
     "last_step": {
       "changed_cells": [
         [
-          16,
+          13,
           13
-        ],
-        [
-          15,
-          13
-        ],
-        [
-          14,
-          12
-        ],
-        [
-          15,
-          12
-        ],
-        [
-          14,
-          11
         ]
       ],
-      "message": "Pruned potential owners based on reachability (B0)",
-      "rule": "B0 Distance Pruning"
+      "message": "Restricted owners of (13,13) to match adjacent land",
+      "rule": "R2 Neighbor Domain Restriction"
     }
   },
-  "source_puzzle": "puzzlekit-dataset-090.txt"
+  "source_puzzle": "puzzlekit-dataset-090.txt",
+  "last_step": {
+    "changed_cells": [
+      [
+        16,
+        13
+      ],
+      [
+        15,
+        13
+      ],
+      [
+        14,
+        12
+      ],
+      [
+        15,
+        12
+      ],
+      [
+        14,
+        11
+      ]
+    ],
+    "message": "Pruned potential owners based on Steiner Tree connectivity (B0)",
+    "rule": "B0 Distance Pruning"
+  }
 }

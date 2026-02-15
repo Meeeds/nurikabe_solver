@@ -54,7 +54,7 @@
   "is_fully_solved": false,
   "number_of_cell_found": 17,
   "rules_triggered": {
-    "B0 Distance Pruning": 9,
+    "B0 Distance Pruning (Steiner Tree)": 9,
     "R0 Empty domain -> Sea": 7,
     "R1 Anti 2x2": 1,
     "R2 Neighbor Domain Restriction": 18,

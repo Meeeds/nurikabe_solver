@@ -28,7 +28,7 @@
   "is_fully_solved": false,
   "number_of_cell_found": 2,
   "rules_triggered": {
-    "B0 Distance Pruning": 1,
+    "B0 Distance Pruning (Steiner Tree)": 1,
     "R0 Empty domain -> Sea": 1
   },
   "steps_total": 2

@@ -3051,7 +3051,7 @@
         ],
         [
           0,
-          65536
+          0
         ],
         [
           2,
@@ -3133,15 +3133,15 @@
         ],
         [
           0,
-          65536
+          0
         ],
         [
           0,
-          65536
+          0
         ],
         [
           0,
-          8454144
+          8388608
         ],
         [
           1,
@@ -3219,7 +3219,7 @@
         ],
         [
           0,
-          8454144
+          8388608
         ],
         [
           0,
@@ -4185,16 +4185,46 @@
       "changed_cells": [
         [
           19,
-          8
-        ],
-        [
-          18,
-          7
+          6
         ]
       ],
-      "message": "Pruned potential owners based on reachability (B0)",
-      "rule": "B0 Distance Pruning"
+      "message": "R3: Forced land/owner at (19, 6) to connect core of island 52",
+      "rule": "R3 Mandatory Expansion"
     }
   },
-  "source_puzzle": "puzzlekit-dataset-090.txt"
+  "source_puzzle": "puzzlekit-dataset-090.txt",
+  "last_step": {
+    "changed_cells": [
+      [
+        7,
+        4
+      ],
+      [
+        19,
+        8
+      ],
+      [
+        18,
+        7
+      ],
+      [
+        6,
+        4
+      ],
+      [
+        7,
+        6
+      ],
+      [
+        7,
+        5
+      ],
+      [
+        8,
+        5
+      ]
+    ],
+    "message": "Pruned potential owners based on Steiner Tree connectivity (B0)",
+    "rule": "B0 Distance Pruning"
+  }
 }

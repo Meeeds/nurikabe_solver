@@ -138,21 +138,21 @@
       "UNKNOWN",
       "UNKNOWN",
       "CLUE(5)",
-      "UNKNOWN",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "SEA"
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 101,
+  "number_of_cell_found": 102,
   "rules_triggered": {
-    "B0 Distance Pruning": 31,
-    "R0 Empty domain -> Sea": 54,
+    "B0 Distance Pruning (Steiner Tree)": 24,
+    "R0 Empty domain -> Sea": 56,
     "R1 Anti 2x2": 10,
-    "R2 Neighbor Domain Restriction": 45,
+    "R2 Neighbor Domain Restriction": 38,
     "R3 Mandatory Expansion": 16,
-    "R4 Global Sea Connectivity": 5
+    "R4 Global Sea Connectivity": 4
   },
-  "steps_total": 161
+  "steps_total": 148
 }

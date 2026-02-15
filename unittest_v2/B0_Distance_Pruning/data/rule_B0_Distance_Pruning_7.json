@@ -817,7 +817,7 @@
         ],
         [
           0,
-          16
+          0
         ],
         [
           0,
@@ -859,7 +859,7 @@
         ],
         [
           0,
-          80
+          64
         ],
         [
           0,
@@ -1104,13 +1104,31 @@
     "last_step": {
       "changed_cells": [
         [
-          4,
-          1
+          5,
+          5
         ]
       ],
-      "message": "Pruned potential owners based on reachability (B0)",
-      "rule": "B0 Distance Pruning"
+      "message": "R3: Forced land/owner at (5, 5) to connect core of island 5",
+      "rule": "R3 Mandatory Expansion"
     }
   },
-  "source_puzzle": "puzzlekit-dataset-015.txt"
+  "source_puzzle": "puzzlekit-dataset-015.txt",
+  "last_step": {
+    "changed_cells": [
+      [
+        3,
+        2
+      ],
+      [
+        4,
+        1
+      ],
+      [
+        4,
+        2
+      ]
+    ],
+    "message": "Pruned potential owners based on Steiner Tree connectivity (B0)",
+    "rule": "B0 Distance Pruning"
+  }
 }

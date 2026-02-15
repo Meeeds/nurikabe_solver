@@ -1105,20 +1105,30 @@
       "changed_cells": [
         [
           5,
-          3
-        ],
-        [
-          6,
-          2
-        ],
-        [
-          4,
-          2
+          1
         ]
       ],
-      "message": "Pruned potential owners based on reachability (B0)",
-      "rule": "B0 Distance Pruning"
+      "message": "Forced land at (5,1) to avoid 2x2 sea pool",
+      "rule": "R1 Anti 2x2"
     }
   },
-  "source_puzzle": "puzzlekit-dataset-001.txt"
+  "source_puzzle": "puzzlekit-dataset-001.txt",
+  "last_step": {
+    "changed_cells": [
+      [
+        5,
+        3
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        4,
+        2
+      ]
+    ],
+    "message": "Pruned potential owners based on Steiner Tree connectivity (B0)",
+    "rule": "B0 Distance Pruning"
+  }
 }

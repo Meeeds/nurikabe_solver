@@ -703,23 +703,23 @@
         ],
         [
           0,
-          6
+          4
         ],
         [
           0,
-          2
+          0
         ],
         [
           0,
-          2
+          0
         ],
         [
           0,
-          2
+          0
         ],
         [
           0,
-          2
+          0
         ]
       ],
       [
@@ -749,7 +749,7 @@
         ],
         [
           0,
-          2
+          0
         ],
         [
           2,
@@ -761,7 +761,7 @@
         ],
         [
           0,
-          2
+          0
         ]
       ],
       [
@@ -803,7 +803,7 @@
         ],
         [
           0,
-          2
+          0
         ]
       ],
       [
@@ -833,7 +833,7 @@
         ],
         [
           0,
-          2
+          0
         ],
         [
           0,
@@ -845,7 +845,7 @@
         ],
         [
           0,
-          2
+          0
         ]
       ],
       [
@@ -875,7 +875,7 @@
         ],
         [
           0,
-          50
+          48
         ],
         [
           0,
@@ -921,7 +921,7 @@
         ],
         [
           0,
-          34
+          32
         ],
         [
           1,
@@ -1105,24 +1105,82 @@
       "changed_cells": [
         [
           6,
-          2
-        ],
-        [
-          6,
-          3
-        ],
-        [
-          5,
           4
-        ],
-        [
-          7,
-          3
         ]
       ],
-      "message": "Pruned potential owners based on reachability (B0)",
-      "rule": "B0 Distance Pruning"
+      "message": "Restricted owners of (6,4) to match adjacent land",
+      "rule": "R2 Neighbor Domain Restriction"
     }
   },
-  "source_puzzle": "puzzlekit-dataset-012.txt"
+  "source_puzzle": "puzzlekit-dataset-012.txt",
+  "last_step": {
+    "changed_cells": [
+      [
+        0,
+        7
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        0,
+        9
+      ],
+      [
+        5,
+        7
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        2,
+        9
+      ],
+      [
+        3,
+        9
+      ],
+      [
+        0,
+        5
+      ],
+      [
+        3,
+        6
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        0,
+        8
+      ],
+      [
+        6,
+        3
+      ],
+      [
+        1,
+        9
+      ]
+    ],
+    "message": "Pruned potential owners based on Steiner Tree connectivity (B0)",
+    "rule": "B0 Distance Pruning"
+  }
 }

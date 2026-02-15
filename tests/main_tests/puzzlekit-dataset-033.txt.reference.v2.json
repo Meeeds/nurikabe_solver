@@ -124,7 +124,7 @@
   "is_fully_solved": false,
   "number_of_cell_found": 14,
   "rules_triggered": {
-    "B0 Distance Pruning": 12,
+    "B0 Distance Pruning (Steiner Tree)": 12,
     "R0 Empty domain -> Sea": 4,
     "R2 Neighbor Domain Restriction": 28,
     "R4 Global Sea Connectivity": 1
