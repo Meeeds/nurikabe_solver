@@ -25,13 +25,18 @@ def print_test_comparison_summary(results: List[Dict[str, Any]]):
     print(header)
     print("-" * width)
     
-    for res in sorted(results, key=lambda x: x['elapsed'], reverse=True):
+    for res in sorted(results, key=lambda x: x.get('elapsed', 0), reverse=True):
         name = res['name']
-        cur = res.get('cur_cells', '-')
-        ref = res.get('ref_cells', '-')
-        common = res.get('common', '-')
-        ref_only = res.get('ref_only', '-')
-        cur_only = res.get('cur_only', '-')
+        cur = res.get('cur_cells')
+        if cur is None: cur = '-'
+        ref = res.get('ref_cells')
+        if ref is None: ref = '-'
+        common = res.get('common')
+        if common is None: common = '-'
+        ref_only = res.get('ref_only')
+        if ref_only is None: ref_only = '-'
+        cur_only = res.get('cur_only')
+        if cur_only is None: cur_only = '-'
         
         delta_str = "-"
         if isinstance(cur, int) and isinstance(ref, int):
