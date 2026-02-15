@@ -4,7 +4,6 @@ import argparse
 import sys
 import time
 import glob
-from collections import Counter
 from typing import Dict, Any, List
 
 # Add the project root to the system path
@@ -20,20 +19,12 @@ SOLVER_TIMEOUT = 30 # Seconds
 # Global variable to store the selected solver class
 SOLVER_CLASS = NurikabeSolver
 
-# Master list of rules defined in the solver and model
-KNOWN_RULES = []
-
-def update_known_rules(solver_class):
-    global KNOWN_RULES
-    KNOWN_RULES = sorted(set(solver_class.RULE_NAMES) | {"BROKEN_NURIKABE_RULES"})
-
-GLOBAL_RULE_COUNTS = Counter()
 NEW_CELLS_FOUND = 0
 CELLS_NOW_NOT_FOUND = 0
 EXCLUDED_FILES = []
 
 def print_global_stats():
-    """Prints a summary of rule applications across all tests."""
+    """Prints a summary of cell discovery across all tests."""
     print("\n" + "="*100)
     print(f"{'GLOBAL EXECUTION SUMMARY':^100}")
     print("="*100)
@@ -52,27 +43,6 @@ def print_global_stats():
             print(f"    {f}")
         print(f"    {'-'*100}")
 
-    print(f"\n    {'Rule Application Statistics':^100}")
-    print(f"    {'Rule Name':<85} | {'Applications':>10}")
-    print(f"    {'-'*85}-+-{'-'*10}")
-    
-    # Sort by application count descending, then by name
-    sorted_stats = sorted(
-        [(name, GLOBAL_RULE_COUNTS[name]) for name in KNOWN_RULES],
-        key=lambda x: (-x[1], x[0])
-    )
-    
-    for name, count in sorted_stats:
-        status = "" if count > 0 else "  [NEVER TRIGGERED]"
-        print(f"    {name:<85} | {count:>10}{status}")
-    
-    # Also check for any rules that appeared but aren't in KNOWN_RULES (safety)
-    unknown_rules = set(GLOBAL_RULE_COUNTS.keys()) - set(KNOWN_RULES) - {"None"}
-    if unknown_rules:
-        print(f"    {'-'*85}-+-{'-'*10}")
-        for name in sorted(unknown_rules):
-            print(f"    {name:<85}*| {GLOBAL_RULE_COUNTS[name]:>10}  [UNKNOWN RULE]")
-            
     print("="*100 + "\n")
 
 def serialize_grid(model: NurikabeModel) -> List[List[str]]:
@@ -113,7 +83,6 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
 
     solver = SOLVER_CLASS(model)
     
-    rule_counts = Counter()
     steps_taken = 0
     
     start_time = time.time()
@@ -121,17 +90,12 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
         result = solver.step()
         
         if result.rule == "BROKEN_NURIKABE_RULES":
-            rule_counts["BROKEN_NURIKABE_RULES"] += 1
-            GLOBAL_RULE_COUNTS["BROKEN_NURIKABE_RULES"] += 1
             return None, f"CRITICAL ERROR: Contradiction detected! {result.message}"
 
         # The solver returns rule="None" when no more rules can be applied
         if result.rule == "None":
             break
         
-        rule_name = result.rule
-        rule_counts[rule_name] += 1
-        GLOBAL_RULE_COUNTS[rule_name] += 1
         steps_taken += 1
 
         if time.time() - start_time > SOLVER_TIMEOUT:
@@ -149,7 +113,6 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
                 is_solved = False
 
     return {
-        "rules_triggered": dict(rule_counts),
         "steps_total": steps_taken,
         "is_fully_solved": is_solved,
         "number_of_cell_found": cells_found,
@@ -233,10 +196,9 @@ def check_regression_with_result(grid_path: str, current_result: Dict[str, Any],
 
     # Comparison Logic
     grid_match = current_result["final_grid"] == reference_result["final_grid"]
-    rules_match = current_result["rules_triggered"] == reference_result["rules_triggered"]
     cells_found_match = current_result.get("number_of_cell_found") == reference_result.get("number_of_cell_found")
     
-    if grid_match and rules_match and cells_found_match:
+    if grid_match and cells_found_match:
         print(f"TEST PASSED: '{grid_path}' matches reference exactly.")
         return True, reference_result, metrics
     else:
@@ -260,26 +222,6 @@ def check_regression_with_result(grid_path: str, current_result: Dict[str, Any],
                 print(f"  CRITICAL REGRESSION: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
                 CELLS_NOW_NOT_FOUND += reference_result.get('number_of_cell_found') - current_result['number_of_cell_found']
         
-        if not rules_match:
-            print("  WARNING: Rule usage counts differ (logic path changed).")
-            ref_rules = reference_result["rules_triggered"]
-            cur_rules = current_result["rules_triggered"]
-            all_rule_names = sorted(set(ref_rules.keys()) | set(cur_rules.keys()))
-            
-            print(f"    {'Rule Name':<60} | {'Ref':>5} | {'Cur':>5} | {'Diff':>5}")
-            print(f"    {'-'*80}-+-{'-'*5}-+-{'-'*5}-+-{'-'*5}")
-            for name in all_rule_names:
-                ref_val = ref_rules.get(name, 0)
-                cur_val = cur_rules.get(name, 0)
-                diff = cur_val - ref_val
-                diff_str = f"{diff:+d}" if diff != 0 else "0"
-                print(f"    {name:<80} | {ref_val:>5} | {cur_val:>5} | {diff_str:>5}")
-            
-            print(f"    {'-'*80}-+-{'-'*5}-+-{'-'*5}-+-{'-'*5}")
-            ref_total = reference_result.get('steps_total', sum(ref_rules.values()))
-            cur_total = current_result['steps_total']
-            print(f"    {'TOTAL STEPS':<80} | {ref_total:>5} | {cur_total:>5} | {cur_total - reference_result.get('steps_total', ref_total):>+5}")
-            
         return False, reference_result, metrics
 
 if __name__ == "__main__":
@@ -298,8 +240,6 @@ if __name__ == "__main__":
     else:
         SOLVER_CLASS = NurikabeSolver
     
-    update_known_rules(SOLVER_CLASS)
-
     files_to_process = []
 
     # Determine the target directory or file

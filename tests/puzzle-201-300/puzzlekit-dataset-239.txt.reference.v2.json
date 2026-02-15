@@ -276,7 +276,7 @@
       "LAND(23)",
       "LAND(23)",
       "SEA",
-      "UNKNOWN",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "SEA",
@@ -366,14 +366,6 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 306,
-  "rules_triggered": {
-    "B0 Distance Pruning (Steiner Tree)": 61,
-    "R0 Empty domain -> Sea": 152,
-    "R1 Anti 2x2": 25,
-    "R2 Neighbor Domain Restriction": 158,
-    "R3 Mandatory Expansion": 80,
-    "R4 Global Sea Connectivity": 12
-  },
-  "steps_total": 488
+  "number_of_cell_found": 307,
+  "steps_total": 490
 }
