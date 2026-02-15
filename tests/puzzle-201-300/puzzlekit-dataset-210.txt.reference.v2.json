@@ -1,7 +1,7 @@
 {
   "final_grid": [
     [
-      "UNKNOWN",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -21,7 +21,7 @@
       "UNKNOWN"
     ],
     [
-      "UNKNOWN",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -181,7 +181,7 @@
       "CLUE(4)"
     ],
     [
-      "UNKNOWN",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -202,14 +202,14 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 62,
+  "number_of_cell_found": 65,
   "rules_triggered": {
-    "B0 Distance Pruning (Steiner Tree)": 39,
-    "R0 Empty domain -> Sea": 22,
-    "R2 Neighbor Domain Restriction": 80,
+    "B0 Distance Pruning (Steiner Tree)": 38,
+    "R0 Empty domain -> Sea": 26,
+    "R2 Neighbor Domain Restriction": 76,
     "R3 Mandatory Expansion": 13,
     "R4 Global Sea Connectivity": 6,
-    "R5 Generalized Theorem": 3
+    "R5 Generalized Theorem": 2
   },
-  "steps_total": 163
+  "steps_total": 161
 }

@@ -1,46 +1,46 @@
 {
   "final_grid": [
     [
-      "UNKNOWN",
+      "LAND(1)",
       "CLUE(2)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "CLUE(3)",
-      "UNKNOWN",
       "SEA",
-      "UNKNOWN"
+      "LAND(3)",
+      "LAND(3)",
+      "SEA",
+      "CLUE(3)",
+      "LAND(2)",
+      "SEA",
+      "LAND(4)"
     ],
     [
       "SEA",
-      "UNKNOWN",
+      "SEA",
       "SEA",
       "CLUE(3)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(2)",
+      "SEA",
       "CLUE(2)"
     ],
     [
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "LAND(5)",
       "CLUE(3)",
       "SEA",
-      "UNKNOWN",
+      "LAND(6)",
       "CLUE(2)",
-      "UNKNOWN",
+      "SEA",
       "SEA",
       "SEA",
       "SEA"
     ],
     [
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(5)",
+      "SEA",
+      "SEA",
       "SEA",
       "SEA",
       "SEA",
@@ -50,9 +50,9 @@
     ],
     [
       "SEA",
-      "UNKNOWN",
       "SEA",
-      "UNKNOWN",
+      "SEA",
+      "LAND(9)",
       "SEA",
       "LAND(8)",
       "CLUE(2)",
@@ -61,9 +61,9 @@
       "SEA"
     ],
     [
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "LAND(11)",
+      "SEA",
       "CLUE(2)",
       "SEA",
       "SEA",
@@ -73,9 +73,9 @@
       "CLUE(2)"
     ],
     [
-      "UNKNOWN",
+      "SEA",
       "CLUE(3)",
-      "UNKNOWN",
+      "LAND(11)",
       "SEA",
       "CLUE(3)",
       "SEA",
@@ -85,9 +85,9 @@
       "SEA"
     ],
     [
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA",
       "SEA",
       "LAND(12)",
       "SEA",
@@ -97,9 +97,9 @@
       "LAND(14)"
     ],
     [
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "LAND(15)",
+      "LAND(15)",
       "SEA",
       "LAND(12)",
       "SEA",
@@ -109,10 +109,10 @@
       "CLUE(3)"
     ],
     [
-      "UNKNOWN",
+      "SEA",
       "CLUE(3)",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
       "SEA",
       "SEA",
       "LAND(16)",
@@ -121,16 +121,15 @@
       "SEA"
     ]
   ],
-  "is_fully_solved": false,
-  "number_of_cell_found": 64,
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
   "rules_triggered": {
     "B0 Distance Pruning (Steiner Tree)": 8,
-    "R0 Empty domain -> Sea": 34,
-    "R1 Anti 2x2": 6,
-    "R2 Neighbor Domain Restriction": 16,
-    "R3 Mandatory Expansion": 4,
-    "R4 Global Sea Connectivity": 2,
-    "R5 Generalized Theorem": 2
+    "R0 Empty domain -> Sea": 57,
+    "R1 Anti 2x2": 16,
+    "R2 Neighbor Domain Restriction": 12,
+    "R3 Mandatory Expansion": 8,
+    "R4 Global Sea Connectivity": 3
   },
-  "steps_total": 72
+  "steps_total": 104
 }

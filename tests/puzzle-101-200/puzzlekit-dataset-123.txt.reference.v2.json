@@ -16,11 +16,11 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(3)",
+      "LAND(3)",
       "CLUE(7)",
       "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
       "CLUE(7)"
     ],
     [
@@ -40,11 +40,11 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
+      "SEA",
       "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "LAND(3)",
+      "SEA",
+      "LAND(4)"
     ],
     [
       "LAND(1)",
@@ -66,8 +66,8 @@
       "CLUE(2)",
       "UNKNOWN",
       "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "SEA",
+      "LAND(4)"
     ],
     [
       "LAND(1)",
@@ -87,10 +87,10 @@
       "UNKNOWN",
       "SEA",
       "UNKNOWN",
+      "SEA",
       "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "SEA",
+      "LAND(4)"
     ],
     [
       "LAND(1)",
@@ -112,8 +112,8 @@
       "SEA",
       "UNKNOWN",
       "CLUE(3)",
-      "UNKNOWN",
-      "UNKNOWN"
+      "SEA",
+      "LAND(4)"
     ],
     [
       "LAND(1)",
@@ -134,9 +134,9 @@
       "CLUE(2)",
       "UNKNOWN",
       "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "LAND(12)",
+      "SEA",
+      "LAND(4)"
     ],
     [
       "UNKNOWN",
@@ -159,7 +159,7 @@
       "SEA",
       "UNKNOWN",
       "SEA",
-      "UNKNOWN"
+      "LAND(4)"
     ],
     [
       "SEA",
@@ -181,38 +181,38 @@
       "SEA",
       "CLUE(4)",
       "UNKNOWN",
+      "SEA",
+      "SEA"
+    ],
+    [
+      "SEA",
+      "LAND(20)",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "LAND(16)",
+      "LAND(16)",
+      "LAND(16)",
+      "LAND(16)",
+      "LAND(16)",
+      "LAND(16)",
+      "LAND(16)",
+      "LAND(16)",
+      "LAND(16)",
+      "SEA",
+      "SEA",
       "UNKNOWN",
+      "LAND(17)",
+      "LAND(17)",
       "SEA"
     ],
     [
       "SEA",
       "LAND(20)",
       "UNKNOWN",
-      "SEA",
-      "SEA",
-      "SEA",
-      "LAND(16)",
-      "LAND(16)",
-      "LAND(16)",
-      "LAND(16)",
-      "LAND(16)",
-      "LAND(16)",
-      "LAND(16)",
-      "LAND(16)",
-      "LAND(16)",
-      "SEA",
-      "SEA",
       "UNKNOWN",
-      "UNKNOWN",
-      "LAND(17)",
-      "SEA"
-    ],
-    [
-      "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(18)",
       "CLUE(3)",
       "SEA",
       "LAND(16)",
@@ -268,9 +268,9 @@
       "LAND(16)",
       "SEA",
       "CLUE(2)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(23)",
+      "SEA",
+      "LAND(25)",
       "UNKNOWN",
       "SEA",
       "LAND(21)",
@@ -290,12 +290,12 @@
       "LAND(16)",
       "SEA",
       "SEA",
-      "UNKNOWN",
       "SEA",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
       "CLUE(3)",
       "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
       "SEA",
       "SEA"
     ],
@@ -312,13 +312,13 @@
       "CLUE(10)",
       "SEA",
       "CLUE(5)",
+      "LAND(27)",
+      "LAND(27)",
+      "LAND(27)",
+      "LAND(27)",
+      "SEA",
       "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(30)",
       "SEA",
       "LAND(31)"
     ],
@@ -334,12 +334,12 @@
       "UNKNOWN",
       "UNKNOWN",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
       "CLUE(3)",
       "UNKNOWN",
       "SEA",
@@ -347,15 +347,14 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 213,
+  "number_of_cell_found": 254,
   "rules_triggered": {
-    "B0 Distance Pruning (Steiner Tree)": 67,
-    "R0 Empty domain -> Sea": 88,
-    "R1 Anti 2x2": 20,
-    "R2 Neighbor Domain Restriction": 130,
-    "R3 Mandatory Expansion": 63,
-    "R4 Global Sea Connectivity": 7,
-    "R5 Generalized Theorem": 4
+    "B0 Distance Pruning (Steiner Tree)": 58,
+    "R0 Empty domain -> Sea": 115,
+    "R1 Anti 2x2": 27,
+    "R2 Neighbor Domain Restriction": 126,
+    "R3 Mandatory Expansion": 76,
+    "R4 Global Sea Connectivity": 5
   },
-  "steps_total": 379
+  "steps_total": 407
 }

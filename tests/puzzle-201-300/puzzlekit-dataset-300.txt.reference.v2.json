@@ -10,7 +10,7 @@
       "SEA",
       "UNKNOWN",
       "UNKNOWN",
-      "UNKNOWN"
+      "SEA"
     ],
     [
       "SEA",
@@ -122,14 +122,14 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 89,
+  "number_of_cell_found": 90,
   "rules_triggered": {
-    "B0 Distance Pruning (Steiner Tree)": 30,
-    "R0 Empty domain -> Sea": 43,
-    "R1 Anti 2x2": 8,
-    "R2 Neighbor Domain Restriction": 48,
-    "R3 Mandatory Expansion": 21,
+    "B0 Distance Pruning (Steiner Tree)": 26,
+    "R0 Empty domain -> Sea": 44,
+    "R1 Anti 2x2": 7,
+    "R2 Neighbor Domain Restriction": 44,
+    "R3 Mandatory Expansion": 22,
     "R4 Global Sea Connectivity": 7
   },
-  "steps_total": 157
+  "steps_total": 150
 }

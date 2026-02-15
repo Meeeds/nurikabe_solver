@@ -1,35 +1,36 @@
 {
   "final_grid": [
     [
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
     ],
     [
-      "UNKNOWN",
+      "SEA",
       "CLUE(4)",
-      "UNKNOWN",
-      "UNKNOWN"
+      "LAND(1)",
+      "SEA"
     ],
     [
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "SEA",
+      "LAND(1)",
+      "LAND(1)",
+      "SEA"
     ],
     [
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA",
       "SEA"
     ]
   ],
-  "is_fully_solved": false,
-  "number_of_cell_found": 2,
+  "is_fully_solved": true,
+  "number_of_cell_found": 16,
   "rules_triggered": {
     "B0 Distance Pruning (Steiner Tree)": 1,
-    "R0 Empty domain -> Sea": 1
+    "R0 Empty domain -> Sea": 12,
+    "R1 Anti 2x2": 3
   },
-  "steps_total": 2
+  "steps_total": 16
 }
