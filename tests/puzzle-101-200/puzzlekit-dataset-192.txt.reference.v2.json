@@ -103,7 +103,7 @@
   "is_fully_solved": false,
   "number_of_cell_found": 46,
   "rules_triggered": {
-    "B0 Distance Pruning": 8,
+    "B0 Distance Pruning (Steiner Tree)": 8,
     "R0 Empty domain -> Sea": 20,
     "R1 Anti 2x2": 3,
     "R2 Neighbor Domain Restriction": 13,

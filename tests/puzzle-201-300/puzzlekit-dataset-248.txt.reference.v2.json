@@ -8,8 +8,8 @@
       "LAND(1)",
       "LAND(1)",
       "CLUE(8)",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "LAND(2)",
       "CLUE(2)"
     ],
     [
@@ -18,11 +18,11 @@
       "LAND(1)",
       "SEA",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(1)",
+      "LAND(1)",
       "SEA",
-      "UNKNOWN"
+      "SEA",
+      "SEA"
     ],
     [
       "CLUE(2)",
@@ -30,22 +30,22 @@
       "SEA",
       "CLUE(1)",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
       "SEA",
-      "UNKNOWN"
+      "SEA",
+      "LAND(8)",
+      "SEA",
+      "LAND(7)"
     ],
     [
       "SEA",
       "CLUE(3)",
       "SEA",
       "SEA",
-      "UNKNOWN",
+      "SEA",
       "CLUE(5)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "LAND(8)",
+      "SEA",
       "CLUE(2)"
     ],
     [
@@ -54,9 +54,9 @@
       "SEA",
       "LAND(6)",
       "LAND(6)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(6)",
+      "SEA",
+      "LAND(8)",
       "SEA",
       "SEA"
     ],
@@ -67,7 +67,7 @@
       "LAND(6)",
       "SEA",
       "SEA",
-      "UNKNOWN",
+      "SEA",
       "CLUE(4)",
       "SEA",
       "CLUE(1)"
@@ -79,9 +79,9 @@
       "SEA",
       "CLUE(1)",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(13)",
+      "SEA",
+      "SEA",
       "SEA"
     ],
     [
@@ -90,11 +90,11 @@
       "LAND(11)",
       "SEA",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "SEA",
+      "LAND(13)",
+      "LAND(13)",
+      "LAND(13)",
+      "SEA"
     ],
     [
       "CLUE(2)",
@@ -103,10 +103,10 @@
       "SEA",
       "LAND(14)",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "LAND(13)",
       "CLUE(6)",
-      "UNKNOWN"
+      "SEA"
     ],
     [
       "LAND(12)",
@@ -116,20 +116,20 @@
       "LAND(14)",
       "CLUE(5)",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "SEA",
+      "SEA",
+      "SEA"
     ]
   ],
-  "is_fully_solved": false,
-  "number_of_cell_found": 68,
+  "is_fully_solved": true,
+  "number_of_cell_found": 100,
   "rules_triggered": {
-    "B0 Distance Pruning": 18,
-    "R0 Empty domain -> Sea": 30,
-    "R1 Anti 2x2": 4,
-    "R2 Neighbor Domain Restriction": 43,
-    "R3 Mandatory Expansion": 13,
-    "R4 Global Sea Connectivity": 7
+    "B0 Distance Pruning (Steiner Tree)": 20,
+    "R0 Empty domain -> Sea": 47,
+    "R1 Anti 2x2": 10,
+    "R2 Neighbor Domain Restriction": 41,
+    "R3 Mandatory Expansion": 20,
+    "R4 Global Sea Connectivity": 9
   },
-  "steps_total": 115
+  "steps_total": 147
 }

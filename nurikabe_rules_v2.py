@@ -1,9 +1,11 @@
-from typing import Optional, List, Tuple, Set, Dict, Any
-from nurikabe_model import NurikabeModel, StepResult, CellState, OwnerMask
+from typing import Optional, List
+from nurikabe_model import NurikabeModel, StepResult
+from IslandSteinerPropagator import IslandSteinerPropagator
+
 
 class NurikabeSolverV2:
     RULE_NAMES: List[str] = [
-        "B0 Distance Pruning",
+        "B0 Distance Pruning (Steiner Tree)",
         "R0 Empty domain -> Sea",
         "R1 Anti 2x2",
         "R2 Neighbor Domain Restriction",
@@ -40,36 +42,22 @@ class NurikabeSolverV2:
         return StepResult([], "No more V2 rules", "None")
 
     def try_B0(self) -> Optional[StepResult]:
-        """B0 - Distance pruning and global consistency."""
+        """B0 - Distance pruning and global consistency (Steiner Tree)."""
         changed_cells = []
-        all_cores = self.model.get_all_island_core_cells()
-        
         for isl in self.model.islands:
             iid = isl.island_id
-            clue = isl.clue
-            core = set(all_cores.get(iid, []))
-            if not core: continue
+            propagator = IslandSteinerPropagator(self.model, iid)
+            reductions, contradiction = propagator.run()
             
-            # Max possible expansion steps from the core
-            max_extra = clue - len(core)
+            if contradiction:
+                return StepResult([], f"Contradiction: Island {iid} cannot connect its components or reach size {isl.clue}", "BROKEN_NURIKABE_RULES")
             
-            def obstacle_predicate(nr, nc):
-                if self.model.is_sea_certain(nr, nc): return True
-                if self.model.is_clue(nr, nc) and (nr, nc) not in core: return True
-                if not self.model.cells[nr][nc].owners.has(iid): return True
-                return False
-
-            reachable = self.model.get_reachable_cells(core, max_extra, obstacle_predicate)
-            
-            for r in range(self.model.rows):
-                for c in range(self.model.cols):
-                    if (r, c) not in reachable:
-                        if self.model.cells[r][c].owners.has(iid):
-                            if self.model.remove_owner(r, c, iid):
-                                changed_cells.append((r, c))
+            for r, c in reductions:
+                if self.model.remove_owner(r, c, iid):
+                    changed_cells.append((r, c))
                                 
         if changed_cells:
-            return StepResult(list(set(changed_cells)), "Pruned potential owners based on reachability (B0)")
+            return StepResult(list(set(changed_cells)), "Pruned potential owners based on Steiner Tree connectivity (B0)")
         return None
 
     def try_R0(self) -> Optional[StepResult]:

@@ -5,11 +5,11 @@
       "SEA",
       "SEA",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA"
     ],
     [
       "SEA",
@@ -18,28 +18,28 @@
       "CLUE(1)",
       "SEA",
       "CLUE(5)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "LAND(3)",
+      "LAND(3)",
+      "SEA"
     ],
     [
       "SEA",
       "SEA",
-      "UNKNOWN",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
       "SEA",
-      "UNKNOWN"
+      "SEA",
+      "LAND(3)",
+      "SEA",
+      "SEA",
+      "SEA"
     ],
     [
       "SEA",
       "LAND(5)",
       "LAND(5)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(5)",
+      "SEA",
+      "LAND(3)",
       "SEA",
       "CLUE(3)",
       "SEA"
@@ -47,10 +47,10 @@
     [
       "SEA",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "LAND(5)",
       "CLUE(5)",
-      "UNKNOWN",
+      "SEA",
       "SEA",
       "LAND(4)",
       "SEA"
@@ -59,9 +59,9 @@
       "SEA",
       "CLUE(3)",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "LAND(8)",
       "SEA",
       "LAND(4)",
       "SEA"
@@ -70,10 +70,10 @@
       "SEA",
       "LAND(6)",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "LAND(7)",
+      "SEA",
+      "LAND(8)",
+      "SEA",
       "SEA",
       "SEA"
     ],
@@ -92,22 +92,22 @@
       "SEA",
       "SEA",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "SEA",
+      "SEA",
       "SEA",
       "SEA"
     ]
   ],
-  "is_fully_solved": false,
-  "number_of_cell_found": 51,
+  "is_fully_solved": true,
+  "number_of_cell_found": 81,
   "rules_triggered": {
-    "B0 Distance Pruning": 11,
-    "R0 Empty domain -> Sea": 36,
-    "R1 Anti 2x2": 3,
-    "R2 Neighbor Domain Restriction": 18,
-    "R3 Mandatory Expansion": 3
+    "B0 Distance Pruning (Steiner Tree)": 13,
+    "R0 Empty domain -> Sea": 57,
+    "R1 Anti 2x2": 9,
+    "R2 Neighbor Domain Restriction": 9,
+    "R3 Mandatory Expansion": 6
   },
-  "steps_total": 71
+  "steps_total": 94
 }

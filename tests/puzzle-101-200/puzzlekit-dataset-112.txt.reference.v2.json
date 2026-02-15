@@ -327,7 +327,7 @@
   "is_fully_solved": true,
   "number_of_cell_found": 289,
   "rules_triggered": {
-    "B0 Distance Pruning": 1,
+    "B0 Distance Pruning (Steiner Tree)": 1,
     "R0 Empty domain -> Sea": 203
   },
   "steps_total": 204
