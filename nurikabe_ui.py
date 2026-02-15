@@ -282,6 +282,7 @@ def main() -> None:
         pygame.Rect(20, 400, 520, 360),
         ui_manager,
         window_display_title="Log",
+        visible=False,
         resizable=True
     )
     log_win.close_window_button.hide()
@@ -338,7 +339,7 @@ def main() -> None:
         pygame.Rect(20, -40, 60, 30),
         "Log",
         ui_manager,
-        visible=False,
+        visible=True,
         anchors={"left": "left", "bottom": "bottom"}
     )
 
