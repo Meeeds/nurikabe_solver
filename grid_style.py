@@ -3,7 +3,7 @@
 # Cell States
 COLOR_CLUE = (255, 255, 255)
 COLOR_SEA = (20, 20, 20)   # Sea
-COLOR_LAND = (235, 235, 235)    # Island (not a clue)
+COLOR_LAND = (255, 255, 255)    # Island (not a clue)
 COLOR_UNKNOWN = (180, 180, 180)
 
 # Lines and Outlines

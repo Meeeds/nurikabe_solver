@@ -58,7 +58,7 @@ class NurikabeSolverV2:
                     changed_cells.append((r, c))
                                 
         if changed_cells:
-            return StepResult(list(set(changed_cells)), "Pruned potential owners based on Steiner Tree connectivity (B0) including 2x2 pool responsibilities")
+            return StepResult(list(set(changed_cells)), "Pruned potential owners")
         return None
 
     def try_R0(self) -> Optional[StepResult]:
