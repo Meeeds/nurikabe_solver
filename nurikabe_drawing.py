@@ -78,6 +78,8 @@ def draw_grid(
                     pygame.draw.rect(screen, grid_style.COLOR_SEA, rect)
                 elif model.is_land_certain(r, c):
                     pygame.draw.rect(screen, grid_style.COLOR_LAND, rect)
+                    dot_radius = max(1, int(cell_size * 0.1))
+                    pygame.draw.circle(screen, grid_style.COLOR_SEA, rect.center, dot_radius)
                 else:
                     pygame.draw.rect(screen, grid_style.COLOR_UNKNOWN, rect)
 

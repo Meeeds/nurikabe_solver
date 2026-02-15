@@ -272,16 +272,17 @@ def main() -> None:
 
 
     controls_win = pygame_gui.elements.UIWindow(
-        pygame.Rect(20, 20, 260, 320),
+        pygame.Rect(20, 20, 260, 360),
         ui_manager,
         window_display_title="Controls",
         resizable=True
     )
     controls_win.close_window_button.hide()
     log_win = pygame_gui.elements.UIWindow(
-        pygame.Rect(20, 360, 520, 360),
+        pygame.Rect(20, 400, 520, 360),
         ui_manager,
         window_display_title="Log",
+        visible=False,
         resizable=True
     )
     log_win.close_window_button.hide()
@@ -294,7 +295,7 @@ def main() -> None:
     )
     editor_win.close_window_button.hide()
 
-    controls_win.set_minimum_dimensions((260, 320))
+    controls_win.set_minimum_dimensions((260, 360))
     log_win.set_minimum_dimensions((520, 260))
     editor_win.set_minimum_dimensions((340, 600))
 
@@ -302,10 +303,11 @@ def main() -> None:
     btn_step = pygame_gui.elements.UIButton(pygame.Rect(10, 56, 240, 36), "Step", ui_manager, container=controls_win)
     btn_next_cell = pygame_gui.elements.UIButton(pygame.Rect(10, 102, 240, 36), "Next Cell", ui_manager, container=controls_win)
     btn_10steps = pygame_gui.elements.UIButton(pygame.Rect(10, 148, 240, 36), "10Steps", ui_manager, container=controls_win)
-    btn_reset = pygame_gui.elements.UIButton(pygame.Rect(10, 194, 240, 36), "Reset", ui_manager, container=controls_win)
+    btn_prev = pygame_gui.elements.UIButton(pygame.Rect(10, 194, 240, 36), "Previous", ui_manager, container=controls_win)
+    btn_reset = pygame_gui.elements.UIButton(pygame.Rect(10, 240, 240, 36), "Reset", ui_manager, container=controls_win)
 
     lbl_hint = pygame_gui.elements.UILabel(
-        pygame.Rect(10, 240, 240, 60),
+        pygame.Rect(10, 286, 240, 60),
         "Pan: drag with LMB\nZoom: mouse wheel\nClick: release without drag",
         ui_manager,
         container=controls_win
@@ -324,6 +326,27 @@ def main() -> None:
         ui_manager,
         container=log_win,
         anchors={"left": "left", "bottom": "bottom"}
+    )
+    btn_collapse_log = pygame_gui.elements.UIButton(
+        pygame.Rect(-130, -40, 120, 30),
+        "Collapse",
+        ui_manager,
+        container=log_win,
+        anchors={"right": "right", "bottom": "bottom"}
+    )
+
+    btn_expand_log = pygame_gui.elements.UIButton(
+        pygame.Rect(20, -40, 60, 30),
+        "Log",
+        ui_manager,
+        visible=True,
+        anchors={"left": "left", "bottom": "bottom"}
+    )
+
+    lbl_last_msg = pygame_gui.elements.UITextBox(
+        html_text="Ready.",
+        relative_rect=pygame.Rect(0, 0, 600, 40),
+        manager=ui_manager,
     )
 
     lbl_rows = pygame_gui.elements.UILabel(pygame.Rect(10, 10, 60, 26), "Rows:", ui_manager, container=editor_win)
@@ -451,9 +474,13 @@ def main() -> None:
     max_undo = 200
 
     def push_undo() -> None:
-        undo_stack.append(state.model.snapshot())
+        undo_stack.append({
+            "snapshot": state.model.snapshot(),
+            "last_step_msg": state.last_step_msg,
+            "affected_cells": list(state.affected_cells)
+        })
         if len(undo_stack) > max_undo:
-            del undo_stack[:20]
+            del undo_stack[0]
 
     def sync_worker() -> None:
         worker.send(WorkerCommand(kind="sync_state", payload={"state": state.model.snapshot()}))
@@ -505,6 +532,9 @@ def main() -> None:
     lmb_down_over_ui = False
     lmb_down_mode = MODE_MAIN
 
+    log_collapsed = False
+    log_original_height = 360
+
     model_for_editor = NurikabeModel()
 
     running = True
@@ -516,18 +546,28 @@ def main() -> None:
             if res is None:
                 break
             if res.kind == "error":
-                log_append(res.payload.get("message", "Worker error."))
+                msg = res.payload.get("message", "Worker error.")
+                log_append(msg)
+                lbl_last_msg.set_text(msg)
                 continue
             if "state" in res.payload:
                 snap = res.payload["state"]
                 if isinstance(snap, dict):
+                    if res.kind == "stepped":
+                        push_undo()
                     apply_worker_state(snap)
             step = res.payload.get("step_result")
             if isinstance(step, dict):
                 msg = step.get("message", "")
                 rule = step.get("rule", "")
+                full_msg = f"[{rule}] {msg}".strip()
                 if msg or rule:
-                    log_append(f"[{rule}] {msg}".strip())
+                    # If state wasn't in payload but message is, we still might want an undo point
+                    if "state" not in res.payload:
+                        push_undo()
+                    log_append(full_msg)
+                    state.last_step_msg = full_msg
+                    lbl_last_msg.set_text(full_msg)
                 state.affected_cells = step.get("changed_cells", [])
 
         for event in pygame.event.get():
@@ -545,17 +585,27 @@ def main() -> None:
                 if event.ui_element == btn_clear_log:
                     log_clear()
 
+                elif event.ui_element == btn_collapse_log:
+                    log_win.hide()
+                    btn_expand_log.show()
+
+                elif event.ui_element == btn_expand_log:
+                    log_win.show()
+                    btn_expand_log.hide()
+
                 elif event.ui_element == btn_edit:
                     editor_win.show()
                     editor_win.close_window_button.hide()
                     state.mode = MODE_EDITOR
                     update_selected_cell_info(editor, lbl_selected_cell_info)
                     log_append("Editor opened.")
+                    lbl_last_msg.set_text("Editor opened.")
 
                 elif event.ui_element == btn_close_editor:
                     editor_win.hide()
                     state.mode = MODE_MAIN
                     log_append("Editor closed.")
+                    lbl_last_msg.set_text("Editor closed.")
 
                 elif event.ui_element == btn_new:
                     try:
@@ -570,6 +620,7 @@ def main() -> None:
                         center_camera_on_model(model_for_editor)
                         update_selected_cell_info(editor, lbl_selected_cell_info)
                         log_append(f"New grid {r}x{c}.")
+                        lbl_last_msg.set_text(f"New grid {r}x{c}.")
                     except ValueError:
                         log_append("Invalid rows/cols.")
 
@@ -581,6 +632,7 @@ def main() -> None:
                         editor.selected = None
                         update_selected_cell_info(editor, lbl_selected_cell_info)
                         log_append("All clues cleared in editor grid.")
+                        lbl_last_msg.set_text("All clues cleared.")
                     else:
                         log_append("No editor grid to clear.")
 
@@ -592,6 +644,7 @@ def main() -> None:
                         center_camera_on_model(state.model)
                         sync_worker()
                         log_append("Grid loaded into solver.")
+                        lbl_last_msg.set_text("Grid loaded into solver.")
 
                         # Close editor
                         editor_win.hide()
@@ -604,27 +657,38 @@ def main() -> None:
                     save_editor_grid_to_file(editor, inp_filename.get_text(), log_append, files_list)
 
                 elif event.ui_element == btn_step:
-                    push_undo()
                     worker.send(WorkerCommand(kind="step"))
 
                 elif event.ui_element == btn_next_cell:
-                    push_undo()
                     worker.send(WorkerCommand(kind="next_cell"))
 
                 elif event.ui_element == btn_10steps:
-                    push_undo()
                     for _ in range(10):
                         worker.send(WorkerCommand(kind="step"))
 
+                elif event.ui_element == btn_prev:
+                    if undo_stack:
+                        entry = undo_stack.pop()
+                        apply_worker_state(entry["snapshot"])
+                        state.last_step_msg = entry["last_step_msg"]
+                        lbl_last_msg.set_text(state.last_step_msg)
+                        state.affected_cells = entry["affected_cells"]
+                        sync_worker()
+                        log_append("Reverted to previous state.")
+                    else:
+                        log_append("Nothing to undo.")
+
                 elif event.ui_element == btn_reset:
                     if undo_stack:
-                        snap0 = undo_stack[0]
+                        entry0 = undo_stack[0]
                         undo_stack.clear()
-                        apply_worker_state(snap0)
-                        state.solver = state.solver_class(state.model)
-                        state.affected_cells.clear()
+                        apply_worker_state(entry0["snapshot"])
+                        state.last_step_msg = entry0["last_step_msg"]
+                        lbl_last_msg.set_text(state.last_step_msg)
+                        state.affected_cells = entry0["affected_cells"]
                         sync_worker()
                         log_append("Reset to first undo snapshot.")
+                        lbl_last_msg.set_text("Reset to first undo snapshot.")
                     else:
                         log_append("Nothing to reset (undo empty).")
 
@@ -770,14 +834,29 @@ def main() -> None:
             btn_step.disable()
             btn_next_cell.disable()
             btn_10steps.disable()
+            btn_prev.disable()
             btn_reset.disable()
         else:
             btn_step.enable()
             btn_next_cell.enable()
             btn_10steps.enable()
+            btn_prev.enable()
             btn_reset.enable()
 
         ui_manager.update(time_delta)
+
+        # Update last message position to be below the grid
+        if state.model.rows > 0 and state.model.cols > 0:
+            # Calculate grid bottom in screen space
+            grid_bottom_world = state.model.rows * base_cell_size
+            grid_center_x_world = (state.model.cols * base_cell_size) / 2
+            
+            sx, sy = camera.world_to_screen(grid_center_x_world, grid_bottom_world)
+            
+            # Position the message box centered below the grid
+            msg_w = lbl_last_msg.relative_rect.width
+            msg_h = lbl_last_msg.relative_rect.height
+            lbl_last_msg.set_relative_position((int(sx - msg_w / 2), int(sy + 10)))
 
         screen.fill(grid_style.COLOR_BG)
 

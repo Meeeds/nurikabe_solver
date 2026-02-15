@@ -30,19 +30,41 @@ class IslandSteinerPropagator:
         if valid_groups is None:
             return [], True
 
+        budget = self.target_size - len(core_set)
+        if budget < 0: return [], True
+
+        reductions = set()
+        
+        # 1. Always try to prune based on Core Steiner Tree if possible (strong pruning)
+        num_cores = len(core_components)
+        if num_cores > 0:
+            if num_cores == 1:
+                r_core, contra = self._solve_single_terminal(core_components[0], budget)
+            elif num_cores <= self.MAX_EXACT_TERMINALS:
+                r_core, contra = self._solve_exact(core_components, budget)
+            else:
+                # Should we do something here? best_effort on cores is same as _solve_best_effort below
+                r_core, contra = [], False
+            
+            if contra: return [], True
+            reductions.update(r_core)
+
+        # 2. Now consider mandatory groups
+        if not valid_groups:
+            return list(reductions), False
+
         terminals = core_components + valid_groups
         k = len(terminals)
-        budget = self.target_size - len(core_set)
-
-        if budget < 0: return [], True
-        if k == 0: return [], False
         
-        if k == 1:
-            return self._solve_single_terminal(terminals[0], budget)
-
         if k <= self.MAX_EXACT_TERMINALS:
-            return self._solve_exact(terminals, budget)
-        return self._solve_best_effort(terminals, budget)
+            r_all, contra = self._solve_exact(terminals, budget)
+        else:
+            r_all, contra = self._solve_best_effort(terminals, budget)
+            
+        if contra: return [], True
+        reductions.update(r_all)
+
+        return list(reductions), False
 
     def _prepare_context(self):
         rows, cols = self.model.rows, self.model.cols
@@ -156,26 +178,50 @@ class IslandSteinerPropagator:
                         heapq.heappush(pq, (nd, nr, nc))
 
     def _solve_best_effort(self, terminals, budget) -> Tuple[List[Tuple[int, int]], bool]:
-        dists = self.compute_dijkstra(terminals[0])
-        max_dist = 0
-        for i in range(1, len(terminals)):
-            best = min((dists[r][c] for r, c in terminals[i]), default=self.inf)
-            if best == self.inf: return [], True
-            max_dist = max(max_dist, best)
+        # terminals[0] is at least one core component. 
+        # Actually, let's use all core components for the distance base.
+        core_indices = [i for i, t in enumerate(terminals) if any(self._is_core[r][c] for r, c in t)]
+        if not core_indices:
+            # Should not happen as core is always added first
+            return [], False
+            
+        core_combined = set().union(*(terminals[i] for i in core_indices))
+        core_dists = self.compute_dijkstra(core_combined)
         
-        if max_dist > budget:
+        # 1. Contradiction check: can each terminal reach the core?
+        max_reach_dist = 0
+        for i in range(len(terminals)):
+            if i in core_indices: continue
+            best = min((core_dists[r][c] for r, c in terminals[i]), default=self.inf)
+            if best == self.inf: return [], True
+            max_reach_dist = max(max_reach_dist, best)
+        
+        # This is a very loose lower bound for Steiner Tree, but safe.
+        if max_reach_dist > budget:
             return [], True
             
+        # 2. Pruning
+        # A cell is only useful if it's within budget of the core 
+        # AND it's not too far from SOME terminal.
         all_terminals_set = set().union(*terminals)
         combined_dists = self.compute_dijkstra(all_terminals_set)
+        
         reductions = []
         for r in range(self.model.rows):
             for c in range(self.model.cols):
                 if not self._is_traversable(r, c): continue
+                if self._is_core[r][c]: continue
+                
+                # If it's too far from the core, it's useless
+                if core_dists[r][c] > budget:
+                    reductions.append((r, c))
+                    continue
+                    
+                # If it's too far from ANY terminal, it's also useless
                 if combined_dists[r][c] > budget:
                     reductions.append((r, c))
                     
-        return reductions, False
+        return list(set(reductions)), False
 
     def get_connected_components(self, cells_set: Set[Tuple[int, int]]) -> List[Set[Tuple[int, int]]]:
         visited = set()

@@ -367,14 +367,5 @@
   ],
   "is_fully_solved": false,
   "number_of_cell_found": 205,
-  "rules_triggered": {
-    "B0 Distance Pruning (Steiner Tree)": 61,
-    "R0 Empty domain -> Sea": 84,
-    "R1 Anti 2x2": 11,
-    "R2 Neighbor Domain Restriction": 160,
-    "R3 Mandatory Expansion": 44,
-    "R4 Global Sea Connectivity": 22,
-    "R5 Generalized Theorem": 4
-  },
   "steps_total": 386
 }
