@@ -369,11 +369,11 @@
   "number_of_cell_found": 332,
   "rules_triggered": {
     "B0 Distance Pruning": 108,
-    "R0 Empty domain -> Sea": 136,
+    "R0 Empty domain -> Sea": 138,
     "R1 Anti 2x2": 22,
-    "R2 Neighbor Domain Restriction": 207,
+    "R2 Neighbor Domain Restriction": 210,
     "R3 Mandatory Expansion": 89,
-    "R4 Global Sea Connectivity": 47
+    "R4 Global Sea Connectivity": 45
   },
-  "steps_total": 609
+  "steps_total": 612
 }

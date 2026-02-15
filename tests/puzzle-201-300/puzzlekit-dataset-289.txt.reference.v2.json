@@ -125,12 +125,11 @@
   "number_of_cell_found": 97,
   "rules_triggered": {
     "B0 Distance Pruning": 19,
-    "R0 Empty domain -> Sea": 45,
+    "R0 Empty domain -> Sea": 48,
     "R1 Anti 2x2": 8,
-    "R2 Neighbor Domain Restriction": 41,
+    "R2 Neighbor Domain Restriction": 43,
     "R3 Mandatory Expansion": 16,
-    "R4 Global Sea Connectivity": 13,
-    "R5 Generalized Theorem": 1
+    "R4 Global Sea Connectivity": 11
   },
-  "steps_total": 143
+  "steps_total": 145
 }

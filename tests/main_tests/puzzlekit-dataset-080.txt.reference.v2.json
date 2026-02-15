@@ -79,7 +79,7 @@
       "SEA",
       "UNKNOWN",
       "UNKNOWN",
-      "LAND(MULTIPLE)",
+      "LAND(8)",
       "SEA",
       "SEA",
       "SEA"
@@ -124,12 +124,12 @@
   "is_fully_solved": false,
   "number_of_cell_found": 85,
   "rules_triggered": {
-    "B0 Distance Pruning": 15,
+    "B0 Distance Pruning": 16,
     "R0 Empty domain -> Sea": 31,
     "R1 Anti 2x2": 3,
-    "R2 Neighbor Domain Restriction": 72,
+    "R2 Neighbor Domain Restriction": 74,
     "R3 Mandatory Expansion": 29,
     "R4 Global Sea Connectivity": 12
   },
-  "steps_total": 162
+  "steps_total": 165
 }

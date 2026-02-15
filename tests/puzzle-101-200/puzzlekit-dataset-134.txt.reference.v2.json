@@ -262,10 +262,10 @@
     "B0 Distance Pruning": 30,
     "R0 Empty domain -> Sea": 117,
     "R1 Anti 2x2": 9,
-    "R2 Neighbor Domain Restriction": 90,
+    "R2 Neighbor Domain Restriction": 91,
     "R3 Mandatory Expansion": 36,
     "R4 Global Sea Connectivity": 6,
     "R5 Generalized Theorem": 2
   },
-  "steps_total": 290
+  "steps_total": 291
 }

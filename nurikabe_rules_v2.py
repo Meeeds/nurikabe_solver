@@ -101,7 +101,7 @@ class NurikabeSolverV2:
         """R2 - Domain restriction by neighbors."""
         for r in range(self.model.rows):
             for c in range(self.model.cols):
-                if not self.model.cells[r][c].is_unknown:
+                if self.model.is_sea_certain(r, c):
                     continue
                 
                 changed = False

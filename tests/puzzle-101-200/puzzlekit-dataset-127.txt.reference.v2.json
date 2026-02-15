@@ -334,10 +334,10 @@
   "is_fully_solved": false,
   "number_of_cell_found": 247,
   "rules_triggered": {
-    "B0 Distance Pruning": 67,
+    "B0 Distance Pruning": 66,
     "R0 Empty domain -> Sea": 123,
     "R1 Anti 2x2": 20,
-    "R2 Neighbor Domain Restriction": 158,
+    "R2 Neighbor Domain Restriction": 159,
     "R3 Mandatory Expansion": 46,
     "R4 Global Sea Connectivity": 16,
     "R5 Generalized Theorem": 1

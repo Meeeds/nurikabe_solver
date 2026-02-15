@@ -124,13 +124,12 @@
   "is_fully_solved": false,
   "number_of_cell_found": 68,
   "rules_triggered": {
-    "B0 Distance Pruning": 20,
-    "R0 Empty domain -> Sea": 35,
+    "B0 Distance Pruning": 19,
+    "R0 Empty domain -> Sea": 37,
     "R1 Anti 2x2": 7,
-    "R2 Neighbor Domain Restriction": 26,
+    "R2 Neighbor Domain Restriction": 28,
     "R3 Mandatory Expansion": 8,
-    "R4 Global Sea Connectivity": 5,
-    "R5 Generalized Theorem": 1
+    "R4 Global Sea Connectivity": 4
   },
-  "steps_total": 102
+  "steps_total": 103
 }
