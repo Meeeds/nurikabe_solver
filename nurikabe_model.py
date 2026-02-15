@@ -414,6 +414,20 @@ class NurikabeModel:
                 return True
         return False
 
+    def is_mandatory_for_connectivity_to_set(self, cell: Tuple[int, int], start_node: Tuple[int, int], target_set: Set[Tuple[int, int]], potential_area: Set[Tuple[int, int]]) -> bool:
+        """
+        Returns True if 'cell' is mandatory for 'start_node' to reach AT LEAST ONE cell 
+        in 'target_set' within 'potential_area' (excluding 'cell').
+        """
+        if cell == start_node: return True
+        
+        def predicate(r, c):
+            if (r, c) == cell: return False
+            return (r, c) in potential_area
+            
+        reachable = self.get_connected_component(start_node[0], start_node[1], predicate)
+        return not any(target in reachable for target in target_set)
+
     def is_mandatory_for_reach_size(self, cell: Tuple[int, int], start_nodes: Iterable[Tuple[int, int]], target_size: int, potential_area: Set[Tuple[int, int]]) -> bool:
         """
         Returns True if 'cell' is mandatory for the 'start_nodes' component to be able 
@@ -502,6 +516,36 @@ class NurikabeModel:
                     if iid in cores:
                         cores[iid].append((r, c))
         return cores
+
+    def get_exclusive_2x2_pools(self, island_id: int) -> List[Set[Tuple[int, int]]]:
+        """
+        Returns a list of sets, each set being a 2x2 block that currently has NO land
+        and can ONLY be saved by island_id (i.e., no other island can own any of its cells).
+        """
+        exclusive_pools = []
+        for r in range(self.rows - 1):
+            for c in range(self.cols - 1):
+                block = [(r, c), (r + 1, c), (r, c + 1), (r + 1, c + 1)]
+                
+                # If block already has land, it's not a pool threat
+                if any(self.is_land_certain(rr, cc) for rr, cc in block):
+                    continue
+                
+                # Check if ANY island other than 'island_id' can save this block
+                can_be_saved_by_others = False
+                for rr, cc in block:
+                    if self.is_sea_certain(rr, cc):
+                        continue
+                    # A cell can be saved by another island if its mask has bits other than island_id
+                    other_owners = self.cells[rr][cc].owners.bits & ~(1 << (island_id - 1))
+                    if other_owners != 0:
+                        can_be_saved_by_others = True
+                        break
+                
+                if not can_be_saved_by_others:
+                    # This 2x2 is the exclusive responsibility of island_id
+                    exclusive_pools.append(set(block))
+        return exclusive_pools
 
     def cycle_state(self, r: int, c: int, forward: bool = True) -> None:
         if self.is_clue(r, c):

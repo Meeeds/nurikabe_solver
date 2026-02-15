@@ -74,7 +74,7 @@
     ],
     [
       "UNKNOWN",
-      "UNKNOWN",
+      "LAND(8)",
       "CLUE(4)",
       "SEA",
       "LAND(6)",
@@ -111,7 +111,7 @@
     [
       "UNKNOWN",
       "SEA",
-      "UNKNOWN",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
@@ -122,12 +122,12 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 50,
+  "number_of_cell_found": 52,
   "rules_triggered": {
-    "B0 Distance Pruning (Steiner Tree)": 16,
-    "R0 Empty domain -> Sea": 16,
-    "R2 Neighbor Domain Restriction": 54,
-    "R3 Mandatory Expansion": 12,
+    "B0 Distance Pruning (Steiner Tree)": 15,
+    "R0 Empty domain -> Sea": 17,
+    "R2 Neighbor Domain Restriction": 53,
+    "R3 Mandatory Expansion": 13,
     "R4 Global Sea Connectivity": 8,
     "R5 Generalized Theorem": 1
   },

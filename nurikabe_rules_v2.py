@@ -46,18 +46,19 @@ class NurikabeSolverV2:
         changed_cells = []
         for isl in self.model.islands:
             iid = isl.island_id
+            exclusive_2x2 = self.model.get_exclusive_2x2_pools(iid)
             propagator = IslandSteinerPropagator(self.model, iid)
-            reductions, contradiction = propagator.run()
+            reductions, contradiction = propagator.run(mandatory_groups=exclusive_2x2)
             
             if contradiction:
-                return StepResult([], f"Contradiction: Island {iid} cannot connect its components or reach size {isl.clue}", "BROKEN_NURIKABE_RULES")
+                return StepResult([], f"Contradiction: Island {iid} cannot connect its components, reach 2x2 responsibilities, or reach size {isl.clue}", "BROKEN_NURIKABE_RULES")
             
             for r, c in reductions:
                 if self.model.remove_owner(r, c, iid):
                     changed_cells.append((r, c))
                                 
         if changed_cells:
-            return StepResult(list(set(changed_cells)), "Pruned potential owners based on Steiner Tree connectivity (B0)")
+            return StepResult(list(set(changed_cells)), "Pruned potential owners based on Steiner Tree connectivity (B0) including 2x2 pool responsibilities")
         return None
 
     def try_R0(self) -> Optional[StepResult]:
@@ -111,6 +112,9 @@ class NurikabeSolverV2:
             core = list(self.model.get_island_core_cells(iid))
             if not core: continue
             
+            # Identify 2x2 pools that ONLY this island can save
+            exclusive_2x2 = self.model.get_exclusive_2x2_pools(iid)
+            
             potential_area = set()
             for r in range(self.model.rows):
                 for c in range(self.model.cols):
@@ -127,13 +131,21 @@ class NurikabeSolverV2:
                     if changed_land or changed_owner:
                         return StepResult([p], f"R3: Forced land/owner at {p} for island {iid} to reach size {clue}")
                 
-                # 2. Mandatory for connectivity of core cells (connect disjoint parts)
+                # 2. Mandatory for connectivity of core cells
                 if len(core) > 1:
                     if self.model.is_mandatory_for_connectivity(p, core[0], core[1:], potential_area):
                         changed_land = self.model.force_land(p[0], p[1])
                         changed_owner = self.model.force_owner(p[0], p[1], iid)
                         if changed_land or changed_owner:
                             return StepResult([p], f"R3: Forced land/owner at {p} to connect core of island {iid}")
+                
+                # 3. Mandatory for connectivity to exclusive 2x2 pools
+                for block_set in exclusive_2x2:
+                    if self.model.is_mandatory_for_connectivity_to_set(p, core[0], block_set, potential_area):
+                        changed_land = self.model.force_land(p[0], p[1])
+                        changed_owner = self.model.force_owner(p[0], p[1], iid)
+                        if changed_land or changed_owner:
+                            return StepResult([p], f"R3: Forced land/owner at {p} for island {iid} to prevent exclusive 2x2 pool")
         return None
 
     def try_R4(self) -> Optional[StepResult]:

@@ -19,7 +19,7 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
       "UNKNOWN",
       "UNKNOWN",
       "SEA"
@@ -30,42 +30,6 @@
       "CLUE(3)",
       "SEA",
       "CLUE(3)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
-    ],
-    [
-      "CLUE(3)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "CLUE(3)",
-      "UNKNOWN"
-    ],
-    [
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "CLUE(3)",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
-    ],
-    [
-      "UNKNOWN",
-      "UNKNOWN",
-      "CLUE(3)",
-      "UNKNOWN",
-      "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
       "SEA",
@@ -81,8 +45,44 @@
       "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN",
+      "CLUE(3)",
+      "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)",
+      "UNKNOWN",
+      "UNKNOWN",
       "UNKNOWN",
       "UNKNOWN"
+    ],
+    [
+      "UNKNOWN",
+      "UNKNOWN",
+      "CLUE(3)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "SEA"
+    ],
+    [
+      "CLUE(3)",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "UNKNOWN",
+      "SEA",
+      "UNKNOWN",
+      "SEA"
     ],
     [
       "UNKNOWN",
@@ -122,11 +122,11 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 21,
+  "number_of_cell_found": 26,
   "rules_triggered": {
-    "B0 Distance Pruning (Steiner Tree)": 1,
-    "R0 Empty domain -> Sea": 7,
-    "R2 Neighbor Domain Restriction": 32
+    "B0 Distance Pruning (Steiner Tree)": 5,
+    "R0 Empty domain -> Sea": 12,
+    "R2 Neighbor Domain Restriction": 30
   },
-  "steps_total": 40
+  "steps_total": 47
 }
