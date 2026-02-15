@@ -206,10 +206,10 @@
   "rules_triggered": {
     "B0 Distance Pruning (Steiner Tree)": 36,
     "R0 Empty domain -> Sea": 84,
-    "R1 Anti 2x2": 19,
-    "R2 Neighbor Domain Restriction": 81,
-    "R3 Mandatory Expansion": 30,
+    "R1 Anti 2x2": 17,
+    "R2 Neighbor Domain Restriction": 88,
+    "R3 Mandatory Expansion": 32,
     "R4 Global Sea Connectivity": 14
   },
-  "steps_total": 264
+  "steps_total": 271
 }

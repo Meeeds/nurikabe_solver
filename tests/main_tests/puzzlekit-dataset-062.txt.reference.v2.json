@@ -41,7 +41,7 @@
       "SEA",
       "CLUE(1)",
       "SEA",
-      "LAND(MULTIPLE)",
+      "LAND(6)",
       "LAND(6)",
       "CLUE(13)",
       "UNKNOWN",
@@ -262,9 +262,9 @@
     "B0 Distance Pruning (Steiner Tree)": 64,
     "R0 Empty domain -> Sea": 103,
     "R1 Anti 2x2": 25,
-    "R2 Neighbor Domain Restriction": 102,
+    "R2 Neighbor Domain Restriction": 104,
     "R3 Mandatory Expansion": 27,
     "R4 Global Sea Connectivity": 8
   },
-  "steps_total": 329
+  "steps_total": 331
 }

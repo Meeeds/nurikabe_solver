@@ -231,10 +231,10 @@
     "B0 Distance Pruning (Steiner Tree)": 29,
     "R0 Empty domain -> Sea": 60,
     "R1 Anti 2x2": 5,
-    "R2 Neighbor Domain Restriction": 70,
+    "R2 Neighbor Domain Restriction": 72,
     "R3 Mandatory Expansion": 4,
     "R4 Global Sea Connectivity": 4,
     "R5 Generalized Theorem": 1
   },
-  "steps_total": 173
+  "steps_total": 175
 }

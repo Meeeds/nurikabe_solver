@@ -13,6 +13,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from nurikabe_model import NurikabeModel
 from nurikabe_rules import NurikabeSolver
 from nurikabe_rules_v2 import NurikabeSolverV2
+from tests.test_utils import print_test_comparison_summary, print_execution_times
 
 SOLVER_TIMEOUT = 30 # Seconds
 
@@ -188,22 +189,48 @@ def run_and_print_stats(grid_path: str) -> bool:
     print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
     return True
 
-def check_regression_with_result(grid_path: str, current_result: Dict[str, Any], model_name: str) -> bool:
-    """Compares current solver result with existing reference JSON."""
+def check_regression_with_result(grid_path: str, current_result: Dict[str, Any], model_name: str) -> tuple[bool, Dict[str, Any] | None, Dict[str, int]]:
+    """
+    Compares current solver result with existing reference JSON. 
+    Returns (passed, reference_result, diff_metrics).
+    """
     global NEW_CELLS_FOUND, CELLS_NOW_NOT_FOUND
 
     ref_path = get_reference_path(grid_path, model_name)
+    metrics = {'common': 0, 'cur_only': 0, 'ref_only': 0}
     
     try:
         with open(ref_path, 'r') as f:
             reference_result = json.load(f)
     except FileNotFoundError:
         print(f"Error for '{grid_path}': Reference file '{ref_path}' not found. Run in 'generate' mode first.")
-        return False
+        return False, None, metrics
     except json.JSONDecodeError:
         print(f"Error for '{grid_path}': Reference file '{ref_path}' is not a valid JSON.")
-        return False
+        return False, None, metrics
     
+    # Cell-by-cell comparison for detailed metrics
+    grid1 = reference_result["final_grid"]
+    grid2 = current_result["final_grid"]
+    rows = len(grid1)
+    cols = len(grid1[0])
+    
+    for r in range(rows):
+        for c in range(cols):
+            s1 = grid1[r][c]
+            s2 = grid2[r][c]
+            
+            # Normalize LAND(X) to LAND for comparison
+            type1 = "LAND" if s1.startswith("LAND") else s1
+            type2 = "LAND" if s2.startswith("LAND") else s2
+            
+            if type1 != "UNKNOWN" and type2 == "UNKNOWN":
+                metrics['ref_only'] += 1
+            elif type1 == "UNKNOWN" and type2 != "UNKNOWN":
+                metrics['cur_only'] += 1
+            elif type1 != "UNKNOWN" and type2 != "UNKNOWN":
+                metrics['common'] += 1
+
     # Comparison Logic
     grid_match = current_result["final_grid"] == reference_result["final_grid"]
     rules_match = current_result["rules_triggered"] == reference_result["rules_triggered"]
@@ -211,19 +238,26 @@ def check_regression_with_result(grid_path: str, current_result: Dict[str, Any],
     
     if grid_match and rules_match and cells_found_match:
         print(f"TEST PASSED: '{grid_path}' matches reference exactly.")
-        return True
+        return True, reference_result, metrics
     else:
         print(f"TEST FAILED: '{grid_path}' output mismatch.")
         
         if not grid_match:
-            print("  CRITICAL: Final grid state differs!")
+            print("  WARNING Final grid state differs!")
+            if reference_result.get('is_fully_solved') and not current_result['is_fully_solved']:
+                print("CRITICAL REGRESSION, grid was previously solved, now it is not")
+            elif not reference_result.get('is_fully_solved') and current_result['is_fully_solved']:
+                print("IMPROVEMENT, grid was previously not solved, now it is solved :)")
+                
             print(f" reference_result[is_fully_solved] = {reference_result.get('is_fully_solved')} current_result[is_fully_solved] = {current_result['is_fully_solved']}")
         
         if not cells_found_match:
-            print(f"  CRITICAL: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
+            
             if current_result['number_of_cell_found'] > reference_result.get('number_of_cell_found'):
+                print(f"  IMPROVEMENT: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
                 NEW_CELLS_FOUND += current_result['number_of_cell_found'] - reference_result.get('number_of_cell_found')
             else:
+                print(f"  CRITICAL REGRESSION: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
                 CELLS_NOW_NOT_FOUND += reference_result.get('number_of_cell_found') - current_result['number_of_cell_found']
         
         if not rules_match:
@@ -244,9 +278,9 @@ def check_regression_with_result(grid_path: str, current_result: Dict[str, Any],
             print(f"    {'-'*80}-+-{'-'*5}-+-{'-'*5}-+-{'-'*5}")
             ref_total = reference_result.get('steps_total', sum(ref_rules.values()))
             cur_total = current_result['steps_total']
-            print(f"    {'TOTAL STEPS':<80} | {ref_total:>5} | {cur_total:>5} | {cur_total - ref_total:>+5}")
+            print(f"    {'TOTAL STEPS':<80} | {ref_total:>5} | {cur_total:>5} | {cur_total - reference_result.get('steps_total', ref_total):>+5}")
             
-        return False
+        return False, reference_result, metrics
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Nurikabe Solver Test Runner")
@@ -287,20 +321,27 @@ if __name__ == "__main__":
 
     # Process files
     all_tests_passed = True
-    execution_times = []
+    test_results = []
     for test_file in sorted(files_to_process):
         test_name = os.path.basename(test_file)
         print(f"\n--- Processing {test_name} ---")
         start_time = time.time()
         
         passed = False
+        res_data = {
+            'name': test_name,
+            'cur_cells': None,
+            'ref_cells': None,
+            'status': 'FAIL'
+        }
+
         if args.mode == "generate":
-            # Check for timeout manually here or handle it in generate_reference
             current_result, error_msg = run_solver(test_file)
             if error_msg == "TIMEOUT":
                 print(f"EXCLUDED (TIMEOUT > {SOLVER_TIMEOUT}s): {test_file}")
                 EXCLUDED_FILES.append(test_file)
-                passed = True # Don't fail the whole run for a timeout
+                passed = True
+                res_data['status'] = 'TIMEOUT'
             elif error_msg:
                 print(f"Error for {test_file}: {error_msg}")
                 passed = False
@@ -310,12 +351,15 @@ if __name__ == "__main__":
                     json.dump(current_result, f, indent=2, sort_keys=True)
                 print(f"Success: Reference generated for '{test_file}' and saved to '{ref_path}'")
                 passed = True
+                res_data['status'] = 'GEN'
+                res_data['cur_cells'] = current_result['number_of_cell_found']
         elif args.mode == "stats":
             result, error_msg = run_solver(test_file)
             if error_msg == "TIMEOUT":
                 print(f"EXCLUDED (TIMEOUT > {SOLVER_TIMEOUT}s): {test_file}")
                 EXCLUDED_FILES.append(test_file)
                 passed = True
+                res_data['status'] = 'TIMEOUT'
             elif error_msg:
                 print(f"Error for {test_file}: {error_msg}")
                 passed = False
@@ -323,20 +367,32 @@ if __name__ == "__main__":
                 print(f"Results for '{test_file}':")
                 print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
                 passed = True
+                res_data['status'] = 'STATS'
+                res_data['cur_cells'] = result['number_of_cell_found']
         else: # mode == "test"
             current_result, error_msg = run_solver(test_file)
             if error_msg == "TIMEOUT":
                 print(f"EXCLUDED (TIMEOUT > {SOLVER_TIMEOUT}s): {test_file}")
                 EXCLUDED_FILES.append(test_file)
                 passed = True
+                res_data['status'] = 'TIMEOUT'
             elif error_msg:
                 print(f"Error for {test_file}: {error_msg}")
                 passed = False
             else:
-                passed = check_regression_with_result(test_file, current_result, args.model)
+                passed, reference_result, metrics = check_regression_with_result(test_file, current_result, args.model)
+                res_data['cur_cells'] = current_result['number_of_cell_found']
+                if reference_result:
+                    res_data['ref_cells'] = reference_result.get('number_of_cell_found')
+                res_data['common'] = metrics['common']
+                res_data['cur_only'] = metrics['cur_only']
+                res_data['ref_only'] = metrics['ref_only']
+                res_data['status'] = 'PASS' if passed else 'FAIL'
         
         elapsed = time.time() - start_time
-        execution_times.append((test_name, elapsed))
+        res_data['elapsed'] = elapsed
+        test_results.append(res_data)
+
         if args.verbose:
             print(f"Elapsed time: {elapsed:.3f}s")
         
@@ -344,15 +400,11 @@ if __name__ == "__main__":
             all_tests_passed = False
 
     if args.verbose:
-        # Print summary of execution times
-        print("\n" + "="*70)
-        print(f"{'TESTS SORTED BY ELAPSED TIME':^70}")
-        print("="*70)
-        print(f"    {'Test File':<50} | {'Duration':>10}")
-        print(f"    {'-'*50}-+-{'-'*10}")
-        for name, elapsed in sorted(execution_times, key=lambda x: x[1], reverse=True):
-            print(f"    {name:<50} | {elapsed:>9.3f}s")
-        print("="*70 + "\n")
+        execution_times = [(r['name'], r['elapsed']) for r in test_results]
+        if args.mode == "test":
+            print_test_comparison_summary(test_results)
+        else:
+            print_execution_times(execution_times)
 
         print_global_stats()
 
