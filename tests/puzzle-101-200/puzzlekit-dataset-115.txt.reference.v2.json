@@ -201,9 +201,9 @@
   "rules_triggered": {
     "B0 Distance Pruning (Steiner Tree)": 28,
     "R0 Empty domain -> Sea": 55,
-    "R1 Anti 2x2": 5,
+    "R1 Anti 2x2": 4,
     "R2 Neighbor Domain Restriction": 101,
-    "R3 Mandatory Expansion": 67,
+    "R3 Mandatory Expansion": 68,
     "R4 Global Sea Connectivity": 21,
     "R5 Generalized Theorem": 1
   },

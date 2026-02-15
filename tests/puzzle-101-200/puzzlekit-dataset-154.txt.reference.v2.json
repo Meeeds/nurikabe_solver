@@ -1,20 +1,20 @@
 {
   "final_grid": [
     [
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
       "CLUE(5)",
       "UNKNOWN",
       "UNKNOWN",
-      "UNKNOWN"
+      "SEA"
     ],
     [
+      "SEA",
+      "LAND(1)",
+      "LAND(1)",
       "UNKNOWN",
       "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+      "SEA"
     ],
     [
       "SEA",
@@ -50,14 +50,14 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 23,
+  "number_of_cell_found": 30,
   "rules_triggered": {
-    "B0 Distance Pruning (Steiner Tree)": 3,
-    "R0 Empty domain -> Sea": 9,
+    "B0 Distance Pruning (Steiner Tree)": 6,
+    "R0 Empty domain -> Sea": 17,
     "R1 Anti 2x2": 2,
-    "R2 Neighbor Domain Restriction": 12,
-    "R3 Mandatory Expansion": 2,
-    "R4 Global Sea Connectivity": 5
+    "R2 Neighbor Domain Restriction": 6,
+    "R3 Mandatory Expansion": 4,
+    "R4 Global Sea Connectivity": 2
   },
-  "steps_total": 33
+  "steps_total": 37
 }

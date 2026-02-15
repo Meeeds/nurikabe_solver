@@ -185,7 +185,7 @@
       "CLUE(1)",
       "SEA",
       "CLUE(2)",
-      "UNKNOWN"
+      "SEA"
     ],
     [
       "LAND(31)",
@@ -197,11 +197,11 @@
       "CLUE(2)",
       "SEA",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "LAND(28)",
       "SEA",
       "SEA",
-      "UNKNOWN",
+      "LAND(25)",
       "SEA"
     ],
     [
@@ -217,7 +217,7 @@
       "LAND(28)",
       "LAND(28)",
       "CLUE(5)",
-      "UNKNOWN",
+      "SEA",
       "SEA",
       "CLUE(1)"
     ],
@@ -232,9 +232,9 @@
       "SEA",
       "SEA",
       "SEA",
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN",
+      "SEA",
+      "SEA",
+      "LAND(33)",
       "SEA",
       "SEA"
     ],
@@ -250,21 +250,21 @@
       "CLUE(4)",
       "LAND(32)",
       "SEA",
-      "UNKNOWN",
+      "LAND(33)",
       "LAND(33)",
       "CLUE(4)",
-      "UNKNOWN"
+      "SEA"
     ]
   ],
-  "is_fully_solved": false,
-  "number_of_cell_found": 215,
+  "is_fully_solved": true,
+  "number_of_cell_found": 225,
   "rules_triggered": {
-    "B0 Distance Pruning (Steiner Tree)": 47,
-    "R0 Empty domain -> Sea": 113,
-    "R1 Anti 2x2": 27,
-    "R2 Neighbor Domain Restriction": 97,
-    "R3 Mandatory Expansion": 34,
-    "R4 Global Sea Connectivity": 8
+    "B0 Distance Pruning (Steiner Tree)": 30,
+    "R0 Empty domain -> Sea": 121,
+    "R1 Anti 2x2": 34,
+    "R2 Neighbor Domain Restriction": 74,
+    "R3 Mandatory Expansion": 31,
+    "R4 Global Sea Connectivity": 6
   },
-  "steps_total": 326
+  "steps_total": 296
 }
