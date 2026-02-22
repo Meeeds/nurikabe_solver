@@ -122,12 +122,5 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 21,
-  "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> sea": 1,
-    "G1b Separation: match neighbor owners": 31,
-    "G5 Distance Pruning (Enhanced)": 1,
-    "G6 Empty domain -> sea": 6
-  },
-  "steps_total": 39
+  "number_of_cell_found": 21
 }

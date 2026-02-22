@@ -290,6 +290,5 @@
     ]
   ],
   "is_fully_solved": true,
-  "number_of_cell_found": 256,
-  "steps_total": 412
+  "number_of_cell_found": 256
 }

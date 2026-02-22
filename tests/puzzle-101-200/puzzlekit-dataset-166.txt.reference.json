@@ -65,13 +65,5 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 13,
-  "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> sea": 4,
-    "G1b Separation: match neighbor owners": 13,
-    "G5 Distance Pruning (Enhanced)": 4,
-    "G7 Generic Mandatory Expansion": 2,
-    "G9 Global Sea Connectivity (Articulation Point)": 1
-  },
-  "steps_total": 24
+  "number_of_cell_found": 13
 }

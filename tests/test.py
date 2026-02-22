@@ -83,8 +83,6 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
 
     solver = SOLVER_CLASS(model)
     
-    steps_taken = 0
-    
     start_time = time.time()
     while True:
         result = solver.step()
@@ -96,8 +94,6 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
         if result.rule == "None":
             break
         
-        steps_taken += 1
-
         if time.time() - start_time > SOLVER_TIMEOUT:
             return None, "TIMEOUT"
 
@@ -113,7 +109,6 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
                 is_solved = False
 
     return {
-        "steps_total": steps_taken,
         "is_fully_solved": is_solved,
         "number_of_cell_found": cells_found,
         "final_grid": serialize_grid(model)
@@ -138,7 +133,7 @@ def generate_reference(grid_path: str, model_name: str) -> bool:
         json.dump(result, f, indent=2, sort_keys=True)
     
     print(f"Success: Reference generated for '{grid_path}' and saved to '{ref_path}'")
-    print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
+    print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}")
     return True
 
 def run_and_print_stats(grid_path: str) -> bool:
@@ -149,7 +144,7 @@ def run_and_print_stats(grid_path: str) -> bool:
         return False
     
     print(f"Results for '{grid_path}':")
-    print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
+    print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}")
     return True
 
 def check_regression_with_result(grid_path: str, current_result: Dict[str, Any], model_name: str) -> tuple[bool, Dict[str, Any] | None, Dict[str, int]]:
@@ -305,7 +300,7 @@ if __name__ == "__main__":
                 passed = False
             else:
                 print(f"Results for '{test_file}':")
-                print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
+                print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}")
                 passed = True
                 res_data['status'] = 'STATS'
                 res_data['cur_cells'] = result['number_of_cell_found']

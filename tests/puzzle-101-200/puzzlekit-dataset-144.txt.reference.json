@@ -50,13 +50,5 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 16,
-  "rules_triggered": {
-    "G1b Separation: match neighbor owners": 6,
-    "G3 Closure: complete island forces sea neighbors": 7,
-    "G5 Distance Pruning (Enhanced)": 2,
-    "G6 Empty domain -> sea": 2,
-    "G9 Global Sea Connectivity (Articulation Point)": 1
-  },
-  "steps_total": 18
+  "number_of_cell_found": 16
 }

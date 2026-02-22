@@ -26,10 +26,5 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 2,
-  "rules_triggered": {
-    "G5 Distance Pruning (Enhanced)": 1,
-    "G6 Empty domain -> sea": 1
-  },
-  "steps_total": 2
+  "number_of_cell_found": 2
 }
