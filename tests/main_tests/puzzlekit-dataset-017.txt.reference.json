@@ -122,12 +122,5 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 30,
-  "rules_triggered": {
-    "G10 Island Completion: common neighbor of last candidates -> sea": 2,
-    "G1b Separation: match neighbor owners": 34,
-    "G3 Closure: complete island forces sea neighbors": 12,
-    "G5 Distance Pruning (Enhanced)": 6
-  },
-  "steps_total": 54
+  "number_of_cell_found": 30
 }

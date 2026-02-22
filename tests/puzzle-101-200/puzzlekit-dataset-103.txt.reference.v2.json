@@ -442,6 +442,5 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 150,
-  "steps_total": 315
+  "number_of_cell_found": 150
 }

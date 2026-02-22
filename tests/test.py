@@ -4,7 +4,9 @@ import argparse
 import sys
 import time
 import glob
-from typing import Dict, Any, List
+import multiprocessing
+import concurrent.futures
+from typing import Dict, Any, List, Tuple
 
 # Add the project root to the system path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -15,15 +17,11 @@ from nurikabe_rules_v2 import NurikabeSolverV2
 from tests.test_utils import print_test_comparison_summary, print_execution_times
 
 SOLVER_TIMEOUT = 30 # Seconds
+NUM_THREADS = 4 # Default, can be overridden by cpu_count()
 
-# Global variable to store the selected solver class
-SOLVER_CLASS = NurikabeSolver
+# NEW_CELLS_FOUND, CELLS_NOW_NOT_FOUND, EXCLUDED_FILES are managed in main
 
-NEW_CELLS_FOUND = 0
-CELLS_NOW_NOT_FOUND = 0
-EXCLUDED_FILES = []
-
-def print_global_stats():
+def print_global_stats(new_cells, lost_cells, excluded_files):
     """Prints a summary of cell discovery across all tests."""
     print("\n" + "="*100)
     print(f"{'GLOBAL EXECUTION SUMMARY':^100}")
@@ -32,14 +30,14 @@ def print_global_stats():
     # Print cumulative cell discovery stats
     print(f"    {'Global Cell Discovery Delta':<85} | {'Value':>10}")
     print(f"    {'-'*85}-+-{'-'*10}")
-    print(f"    {'New cells found (IMPROVEMENT)':<85} | {NEW_CELLS_FOUND:>10}")
-    print(f"    {'Cells now not found (REGRESSION)':<85} | {CELLS_NOW_NOT_FOUND:>10}")
+    print(f"    {'New cells found (IMPROVEMENT)':<85} | {new_cells:>10}")
+    print(f"    {'Cells now not found (REGRESSION)':<85} | {lost_cells:>10}")
     print(f"    {'-'*85}-+-{'-'*10}")
 
-    if EXCLUDED_FILES:
+    if excluded_files:
         print(f"\n    {'Excluded Files (Timed out > 30s)':^100}")
         print(f"    {'-'*100}")
-        for f in sorted(EXCLUDED_FILES):
+        for f in sorted(excluded_files):
             print(f"    {f}")
         print(f"    {'-'*100}")
 
@@ -67,7 +65,7 @@ def serialize_grid(model: NurikabeModel) -> List[List[str]]:
         grid_state.append(row_state)
     return grid_state
 
-def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
+def run_solver(grid_path: str, solver_class) -> tuple[Dict[str, Any] | None, str | None]:
     """Loads a grid, runs the solver to completion, and returns the result stats."""
     model = NurikabeModel()
     
@@ -81,9 +79,7 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
     if not success:
         return None, f"Error parsing grid: {msg}"
 
-    solver = SOLVER_CLASS(model)
-    
-    steps_taken = 0
+    solver = solver_class(model)
     
     start_time = time.time()
     while True:
@@ -96,8 +92,6 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
         if result.rule == "None":
             break
         
-        steps_taken += 1
-
         if time.time() - start_time > SOLVER_TIMEOUT:
             return None, "TIMEOUT"
 
@@ -113,7 +107,6 @@ def run_solver(grid_path: str) -> tuple[Dict[str, Any] | None, str | None]:
                 is_solved = False
 
     return {
-        "steps_total": steps_taken,
         "is_fully_solved": is_solved,
         "number_of_cell_found": cells_found,
         "final_grid": serialize_grid(model)
@@ -125,40 +118,15 @@ def get_reference_path(grid_path: str, model_name: str) -> str:
         return grid_path + ".reference.v2.json"
     return grid_path + ".reference.json"
 
-def generate_reference(grid_path: str, model_name: str) -> bool:
-    """Runs solver and saves the result as a reference JSON."""
-    result, error_msg = run_solver(grid_path)
-    if error_msg:
-        print(f"Error for {grid_path}: {error_msg}")
-        return False
-        
-    ref_path = get_reference_path(grid_path, model_name)
-    
-    with open(ref_path, 'w') as f:
-        json.dump(result, f, indent=2, sort_keys=True)
-    
-    print(f"Success: Reference generated for '{grid_path}' and saved to '{ref_path}'")
-    print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
-    return True
-
-def run_and_print_stats(grid_path: str) -> bool:
-    """Runs solver and prints result stats without saving."""
-    result, error_msg = run_solver(grid_path)
-    if error_msg:
-        print(f"Error for {grid_path}: {error_msg}")
-        return False
-    
-    print(f"Results for '{grid_path}':")
-    print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
-    return True
-
-def check_regression_with_result(grid_path: str, current_result: Dict[str, Any], model_name: str) -> tuple[bool, Dict[str, Any] | None, Dict[str, int]]:
+def check_regression_with_result(grid_path: str, current_result: Dict[str, Any], model_name: str) -> tuple[bool, Dict[str, Any] | None, Dict[str, int], List[str], int, int]:
     """
     Compares current solver result with existing reference JSON. 
-    Returns (passed, reference_result, diff_metrics).
+    Returns (passed, reference_result, diff_metrics, logs, new_cells_found, cells_now_not_found).
     """
-    global NEW_CELLS_FOUND, CELLS_NOW_NOT_FOUND
-
+    logs = []
+    new_cells_found = 0
+    cells_now_not_found = 0
+    
     ref_path = get_reference_path(grid_path, model_name)
     metrics = {'common': 0, 'cur_only': 0, 'ref_only': 0}
     
@@ -166,11 +134,11 @@ def check_regression_with_result(grid_path: str, current_result: Dict[str, Any],
         with open(ref_path, 'r') as f:
             reference_result = json.load(f)
     except FileNotFoundError:
-        print(f"Error for '{grid_path}': Reference file '{ref_path}' not found. Run in 'generate' mode first.")
-        return False, None, metrics
+        logs.append(f"Error for '{grid_path}': Reference file '{ref_path}' not found. Run in 'generate' mode first.")
+        return False, None, metrics, logs, 0, 0
     except json.JSONDecodeError:
-        print(f"Error for '{grid_path}': Reference file '{ref_path}' is not a valid JSON.")
-        return False, None, metrics
+        logs.append(f"Error for '{grid_path}': Reference file '{ref_path}' is not a valid JSON.")
+        return False, None, metrics, logs, 0, 0
     
     # Cell-by-cell comparison for detailed metrics
     grid1 = reference_result["final_grid"]
@@ -199,32 +167,123 @@ def check_regression_with_result(grid_path: str, current_result: Dict[str, Any],
     cells_found_match = current_result.get("number_of_cell_found") == reference_result.get("number_of_cell_found")
     
     if grid_match and cells_found_match:
-        print(f"TEST PASSED: '{grid_path}' matches reference exactly.")
-        return True, reference_result, metrics
+        logs.append(f"TEST PASSED: '{grid_path}' matches reference exactly.")
+        return True, reference_result, metrics, logs, 0, 0
     else:
-        print(f"TEST FAILED: '{grid_path}' output mismatch.")
+        logs.append(f"TEST FAILED: '{grid_path}' output mismatch.")
         
         if not grid_match:
-            print("  WARNING Final grid state differs!")
+            logs.append("  WARNING Final grid state differs!")
             if reference_result.get('is_fully_solved') and not current_result['is_fully_solved']:
-                print("CRITICAL REGRESSION, grid was previously solved, now it is not")
+                logs.append("CRITICAL REGRESSION, grid was previously solved, now it is not")
             elif not reference_result.get('is_fully_solved') and current_result['is_fully_solved']:
-                print("IMPROVEMENT, grid was previously not solved, now it is solved :)")
+                logs.append("IMPROVEMENT, grid was previously not solved, now it is solved :)")
                 
-            print(f" reference_result[is_fully_solved] = {reference_result.get('is_fully_solved')} current_result[is_fully_solved] = {current_result['is_fully_solved']}")
+            logs.append(f" reference_result[is_fully_solved] = {reference_result.get('is_fully_solved')} current_result[is_fully_solved] = {current_result['is_fully_solved']}")
         
         if not cells_found_match:
             
             if current_result['number_of_cell_found'] > reference_result.get('number_of_cell_found'):
-                print(f"  IMPROVEMENT: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
-                NEW_CELLS_FOUND += current_result['number_of_cell_found'] - reference_result.get('number_of_cell_found')
+                logs.append(f"  IMPROVEMENT: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
+                new_cells_found += current_result['number_of_cell_found'] - reference_result.get('number_of_cell_found')
             else:
-                print(f"  CRITICAL REGRESSION: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
-                CELLS_NOW_NOT_FOUND += reference_result.get('number_of_cell_found') - current_result['number_of_cell_found']
+                logs.append(f"  CRITICAL REGRESSION: Number of cells found differs! Ref: {reference_result.get('number_of_cell_found')}, Cur: {current_result['number_of_cell_found']}")
+                cells_now_not_found += reference_result.get('number_of_cell_found') - current_result['number_of_cell_found']
         
-        return False, reference_result, metrics
+        return False, reference_result, metrics, logs, new_cells_found, cells_now_not_found
+
+def process_test_file(test_file: str, mode: str, model_name: str, verbose: bool) -> tuple[bool, Dict[str, Any], List[str], int, int, str | None]:
+    """Runs a single test file and returns results + logs."""
+    test_name = os.path.basename(test_file)
+    logs = []
+    
+    # Determine solver class locally
+    if model_name == "v2":
+        solver_class = NurikabeSolverV2
+    else:
+        solver_class = NurikabeSolver
+
+    start_time = time.time()
+    current_result, error_msg = run_solver(test_file, solver_class)
+    elapsed = time.time() - start_time
+    
+    res_data = {
+        'name': test_name,
+        'cur_cells': None,
+        'ref_cells': None,
+        'status': 'FAIL',
+        'elapsed': elapsed
+    }
+    
+    passed = False
+    new_cells = 0
+    lost_cells = 0
+    excluded_file = None
+
+    logs.append(f"\n--- Processing {test_name} ---")
+    
+    if mode == "generate":
+        if error_msg == "TIMEOUT":
+            logs.append(f"EXCLUDED (TIMEOUT > {SOLVER_TIMEOUT}s): {test_file}")
+            excluded_file = test_file
+            passed = True
+            res_data['status'] = 'TIMEOUT'
+        elif error_msg:
+            logs.append(f"Error for {test_file}: {error_msg}")
+            passed = False
+        else:
+            ref_path = get_reference_path(test_file, model_name)
+            with open(ref_path, 'w') as f:
+                json.dump(current_result, f, indent=2, sort_keys=True)
+            logs.append(f"Success: Reference generated for '{test_file}' and saved to '{ref_path}'")
+            logs.append(f"Solved: {current_result['is_fully_solved']}, Cells found: {current_result['number_of_cell_found']}")
+            passed = True
+            res_data['status'] = 'GEN'
+            res_data['cur_cells'] = current_result['number_of_cell_found']
+
+    elif mode == "stats":
+        if error_msg == "TIMEOUT":
+            logs.append(f"EXCLUDED (TIMEOUT > {SOLVER_TIMEOUT}s): {test_file}")
+            excluded_file = test_file
+            passed = True
+            res_data['status'] = 'TIMEOUT'
+        elif error_msg:
+            logs.append(f"Error for {test_file}: {error_msg}")
+            passed = False
+        else:
+            logs.append(f"Results for '{test_file}':")
+            logs.append(f"Solved: {current_result['is_fully_solved']}, Cells found: {current_result['number_of_cell_found']}")
+            passed = True
+            res_data['status'] = 'STATS'
+            res_data['cur_cells'] = current_result['number_of_cell_found']
+
+    else: # mode == "test"
+        if error_msg == "TIMEOUT":
+            logs.append(f"EXCLUDED (TIMEOUT > {SOLVER_TIMEOUT}s): {test_file}")
+            excluded_file = test_file
+            passed = True
+            res_data['status'] = 'TIMEOUT'
+        elif error_msg:
+            logs.append(f"Error for {test_file}: {error_msg}")
+            passed = False
+        else:
+            passed, reference_result, metrics, sub_logs, new_cells, lost_cells = check_regression_with_result(test_file, current_result, model_name)
+            logs.extend(sub_logs)
+            res_data['cur_cells'] = current_result['number_of_cell_found']
+            if reference_result:
+                res_data['ref_cells'] = reference_result.get('number_of_cell_found')
+            res_data['common'] = metrics['common']
+            res_data['cur_only'] = metrics['cur_only']
+            res_data['ref_only'] = metrics['ref_only']
+            res_data['status'] = 'PASS' if passed else 'FAIL'
+
+    if verbose:
+        logs.append(f"Elapsed time: {elapsed:.3f}s")
+
+    return passed, res_data, logs, new_cells, lost_cells, excluded_file
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support() # Recommended for Windows/macOS spawn
     parser = argparse.ArgumentParser(description="Nurikabe Solver Test Runner")
     parser.add_argument("path", nargs='?', help="Path to a .txt grid file OR a directory containing .txt files. (Defaults to 'tests/' directory)")
     parser.add_argument("--mode", choices=["generate", "test", "stats"], default="test", 
@@ -234,11 +293,6 @@ if __name__ == "__main__":
                         help="Print summary of execution times and global rule statistics.")
     
     args = parser.parse_args()
-
-    if args.model == "v2":
-        SOLVER_CLASS = NurikabeSolverV2
-    else:
-        SOLVER_CLASS = NurikabeSolver
     
     files_to_process = []
 
@@ -262,82 +316,47 @@ if __name__ == "__main__":
     # Process files
     all_tests_passed = True
     test_results = []
-    for test_file in sorted(files_to_process):
-        test_name = os.path.basename(test_file)
-        print(f"\n--- Processing {test_name} ---")
-        start_time = time.time()
-        
-        passed = False
-        res_data = {
-            'name': test_name,
-            'cur_cells': None,
-            'ref_cells': None,
-            'status': 'FAIL'
+    
+    global_new_cells = 0
+    global_lost_cells = 0
+    global_excluded_files = []
+
+    print(f"Starting execution with {NUM_THREADS} processes...")
+    
+    # Use ProcessPoolExecutor instead of ThreadPoolExecutor
+    with concurrent.futures.ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
+        # Submit all tasks
+        futures = {
+            executor.submit(process_test_file, test_file, args.mode, args.model, args.verbose): test_file 
+            for test_file in sorted(files_to_process)
         }
-
-        if args.mode == "generate":
-            current_result, error_msg = run_solver(test_file)
-            if error_msg == "TIMEOUT":
-                print(f"EXCLUDED (TIMEOUT > {SOLVER_TIMEOUT}s): {test_file}")
-                EXCLUDED_FILES.append(test_file)
-                passed = True
-                res_data['status'] = 'TIMEOUT'
-            elif error_msg:
-                print(f"Error for {test_file}: {error_msg}")
-                passed = False
-            else:
-                ref_path = get_reference_path(test_file, args.model)
-                with open(ref_path, 'w') as f:
-                    json.dump(current_result, f, indent=2, sort_keys=True)
-                print(f"Success: Reference generated for '{test_file}' and saved to '{ref_path}'")
-                passed = True
-                res_data['status'] = 'GEN'
-                res_data['cur_cells'] = current_result['number_of_cell_found']
-        elif args.mode == "stats":
-            result, error_msg = run_solver(test_file)
-            if error_msg == "TIMEOUT":
-                print(f"EXCLUDED (TIMEOUT > {SOLVER_TIMEOUT}s): {test_file}")
-                EXCLUDED_FILES.append(test_file)
-                passed = True
-                res_data['status'] = 'TIMEOUT'
-            elif error_msg:
-                print(f"Error for {test_file}: {error_msg}")
-                passed = False
-            else:
-                print(f"Results for '{test_file}':")
-                print(f"Solved: {result['is_fully_solved']}, Cells found: {result['number_of_cell_found']}, Steps: {result['steps_total']}")
-                passed = True
-                res_data['status'] = 'STATS'
-                res_data['cur_cells'] = result['number_of_cell_found']
-        else: # mode == "test"
-            current_result, error_msg = run_solver(test_file)
-            if error_msg == "TIMEOUT":
-                print(f"EXCLUDED (TIMEOUT > {SOLVER_TIMEOUT}s): {test_file}")
-                EXCLUDED_FILES.append(test_file)
-                passed = True
-                res_data['status'] = 'TIMEOUT'
-            elif error_msg:
-                print(f"Error for {test_file}: {error_msg}")
-                passed = False
-            else:
-                passed, reference_result, metrics = check_regression_with_result(test_file, current_result, args.model)
-                res_data['cur_cells'] = current_result['number_of_cell_found']
-                if reference_result:
-                    res_data['ref_cells'] = reference_result.get('number_of_cell_found')
-                res_data['common'] = metrics['common']
-                res_data['cur_only'] = metrics['cur_only']
-                res_data['ref_only'] = metrics['ref_only']
-                res_data['status'] = 'PASS' if passed else 'FAIL'
         
-        elapsed = time.time() - start_time
-        res_data['elapsed'] = elapsed
-        test_results.append(res_data)
+        # Process results as they complete
+        for future in concurrent.futures.as_completed(futures):
+            test_file = futures[future]
+            try:
+                passed, res_data, logs, new_cells, lost_cells, excluded_file = future.result()
+                
+                # Print logs from the worker
+                for log in logs:
+                    print(log)
 
-        if args.verbose:
-            print(f"Elapsed time: {elapsed:.3f}s")
-        
-        if not passed:
-            all_tests_passed = False
+                if not passed:
+                    all_tests_passed = False
+                
+                test_results.append(res_data)
+                
+                # Update global stats
+                global_new_cells += new_cells
+                global_lost_cells += lost_cells
+                if excluded_file:
+                    global_excluded_files.append(excluded_file)
+
+            except Exception as exc:
+                print(f"Test '{test_file}' generated an exception: {exc}")
+                all_tests_passed = False
+                import traceback
+                traceback.print_exc()
 
     if args.verbose:
         execution_times = [(r['name'], r['elapsed']) for r in test_results]
@@ -346,7 +365,7 @@ if __name__ == "__main__":
         else:
             print_execution_times(execution_times)
 
-        print_global_stats()
+        print_global_stats(global_new_cells, global_lost_cells, global_excluded_files)
 
     if args.mode == "test" and len(files_to_process) > 1:
         if all_tests_passed:

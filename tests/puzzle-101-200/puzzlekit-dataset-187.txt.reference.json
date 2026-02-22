@@ -122,17 +122,5 @@
     ]
   ],
   "is_fully_solved": false,
-  "number_of_cell_found": 68,
-  "rules_triggered": {
-    "G1 Separation: neighbor of >=2 fixed owners -> sea": 10,
-    "G1b Separation: match neighbor owners": 19,
-    "G3 Closure: complete island forces sea neighbors": 10,
-    "G4 Anti-Pool: 3 seas -> land": 5,
-    "G5 Distance Pruning (Enhanced)": 13,
-    "G6 Empty domain -> sea": 16,
-    "G7 Generic Mandatory Expansion": 7,
-    "G7b Global Brute Force Intersection & Pruning": 1,
-    "G9 Global Sea Connectivity (Articulation Point)": 6
-  },
-  "steps_total": 87
+  "number_of_cell_found": 68
 }
