@@ -122,5 +122,10 @@
     ]
   ],
   "is_fully_solved": false,
+<<<<<<< HEAD
   "number_of_cell_found": 92
+=======
+  "number_of_cell_found": 92,
+  "steps_total": 143
+>>>>>>> master
 }

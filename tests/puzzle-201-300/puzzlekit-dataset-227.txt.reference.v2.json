@@ -202,5 +202,10 @@
     ]
   ],
   "is_fully_solved": false,
+<<<<<<< HEAD
   "number_of_cell_found": 146
+=======
+  "number_of_cell_found": 146,
+  "steps_total": 258
+>>>>>>> master
 }

@@ -308,5 +308,10 @@
     ]
   ],
   "is_fully_solved": false,
+<<<<<<< HEAD
   "number_of_cell_found": 233
+=======
+  "number_of_cell_found": 233,
+  "steps_total": 381
+>>>>>>> master
 }

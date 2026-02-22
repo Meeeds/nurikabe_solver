@@ -17,5 +17,10 @@
     ]
   ],
   "is_fully_solved": true,
+<<<<<<< HEAD
   "number_of_cell_found": 9
+=======
+  "number_of_cell_found": 9,
+  "steps_total": 10
+>>>>>>> master
 }

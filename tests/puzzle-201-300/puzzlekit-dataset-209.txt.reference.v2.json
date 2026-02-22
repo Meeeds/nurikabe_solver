@@ -366,5 +366,10 @@
     ]
   ],
   "is_fully_solved": false,
+<<<<<<< HEAD
   "number_of_cell_found": 264
+=======
+  "number_of_cell_found": 264,
+  "steps_total": 430
+>>>>>>> master
 }

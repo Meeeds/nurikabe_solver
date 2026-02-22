@@ -101,5 +101,10 @@
     ]
   ],
   "is_fully_solved": true,
+<<<<<<< HEAD
   "number_of_cell_found": 81
+=======
+  "number_of_cell_found": 81,
+  "steps_total": 88
+>>>>>>> master
 }
