@@ -110,10 +110,5 @@
     ]
   ],
   "is_fully_solved": false,
-<<<<<<< HEAD
   "number_of_cell_found": 57
-=======
-  "number_of_cell_found": 57,
-  "steps_total": 85
->>>>>>> master
 }

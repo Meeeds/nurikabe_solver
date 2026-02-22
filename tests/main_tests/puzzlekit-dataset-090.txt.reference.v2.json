@@ -442,10 +442,5 @@
     ]
   ],
   "is_fully_solved": true,
-<<<<<<< HEAD
   "number_of_cell_found": 400
-=======
-  "number_of_cell_found": 400,
-  "steps_total": 620
->>>>>>> master
 }

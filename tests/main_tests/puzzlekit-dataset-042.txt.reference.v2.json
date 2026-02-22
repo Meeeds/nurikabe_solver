@@ -26,10 +26,5 @@
     ]
   ],
   "is_fully_solved": true,
-<<<<<<< HEAD
   "number_of_cell_found": 16
-=======
-  "number_of_cell_found": 16,
-  "steps_total": 16
->>>>>>> master
 }
