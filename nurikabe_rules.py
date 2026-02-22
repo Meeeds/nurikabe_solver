@@ -121,10 +121,10 @@ class NurikabeSolver:
                     # touches at least two distinct fixed islands -> must be sea
                     changed = self.model.force_sea(r, c)
                     if changed:
-                        ids = sorted(list(fixed))[:3]
+                        labels = [OwnerMask.id_to_label(fid) for fid in sorted(list(fixed))[:3]]
                         return StepResult(
                             changed_cells=[(r, c)],
-                            format_args=(ids,)
+                            format_args=(labels,)
                         )
         return None
 
@@ -150,7 +150,7 @@ class NurikabeSolver:
         return None
 
     @solver_rule(priority=5, name="G3 Closure: complete island forces sea neighbors",
-                 message="Island %d is complete (%d/%d); neighbor (%d,%d) must be sea.")
+                 message="Island %s is complete (%d/%d); neighbor (%d,%d) must be sea.")
     def try_rule_close_complete_island(self) -> Optional[StepResult]:
         for isl in self.model.islands:
             iid = isl.island_id
@@ -171,7 +171,7 @@ class NurikabeSolver:
                                 self.model.force_sea(rr, cc)
                                 return StepResult(
                                     changed_cells=[(rr, cc)],
-                                    format_args=(iid, clue, clue, rr, cc)
+                                    format_args=(OwnerMask.id_to_label(iid), clue, clue, rr, cc)
                                 )
         return None
 
@@ -190,7 +190,7 @@ class NurikabeSolver:
         return None
 
     @solver_rule(priority=7, name="G7 Generic Mandatory Expansion",
-                 message="Island %d must include (%d,%d) to reach size %d (bottleneck detected).")
+                 message="Island %s must include (%d,%d) to reach size %d (bottleneck detected).")
     def try_rule_island_mandatory_expansion(self) -> Optional[StepResult]:
         for isl in self.model.islands:
             iid = isl.island_id
@@ -225,7 +225,7 @@ class NurikabeSolver:
                     self.model.force_owner(tr, tc, iid)
                     return StepResult(
                         changed_cells=[(tr, tc)],
-                        format_args=(iid, tr, tc, clue)
+                        format_args=(OwnerMask.id_to_label(iid), tr, tc, clue)
                     )
         return None
 
@@ -357,7 +357,7 @@ class NurikabeSolver:
         return union_added, common_added
 
     @solver_rule(priority=8, name="G7b Global Brute Force Intersection & Pruning",
-                 message="Brute force analysis for Island %d: pruned unreachable candidates / enforced bottlenecks.")
+                 message="Brute force analysis for Island %s: pruned unreachable candidates / enforced bottlenecks.")
     def try_rule_island_global_bottleneck(self) -> Optional[StepResult]:
         # "Brute Force" Intersection Rule
         for isl in self.model.islands:
@@ -398,7 +398,7 @@ class NurikabeSolver:
             if changed_list:
                 return StepResult(
                     changed_cells=changed_list,
-                    format_args=(iid,)
+                    format_args=(OwnerMask.id_to_label(iid),)
                 )
 
         return None
@@ -479,7 +479,7 @@ class NurikabeSolver:
         return None
 
     @solver_rule(priority=10, name="G10 Island Completion: common neighbor of last candidates -> sea",
-                 message="Island %d needs 1 cell; either %s or %s will complete it. Their common neighbor (%d,%d) must be sea.")
+                 message="Island %s needs 1 cell; either %s or %s will complete it. Their common neighbor (%d,%d) must be sea.")
     def try_rule_island_completion_common_neighbor_sea(self) -> Optional[StepResult]:
         for isl in self.model.islands:
             iid = isl.island_id
@@ -512,7 +512,7 @@ class NurikabeSolver:
                             self.model.force_sea(xr, xc)
                             return StepResult(
                                 changed_cells=[(xr, xc)],
-                                format_args=(iid, c_list[0], c_list[1], xr, xc)
+                                format_args=(OwnerMask.id_to_label(iid), c_list[0], c_list[1], xr, xc)
                             )
         return None
 

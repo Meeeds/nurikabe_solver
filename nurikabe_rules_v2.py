@@ -1,5 +1,5 @@
 from typing import Optional, List
-from nurikabe_model import NurikabeModel, StepResult
+from nurikabe_model import NurikabeModel, StepResult, OwnerMask
 from IslandSteinerPropagator import IslandSteinerPropagator
 
 
@@ -51,7 +51,8 @@ class NurikabeSolverV2:
             reductions, contradiction = propagator.run(mandatory_groups=exclusive_2x2)
             
             if contradiction:
-                return StepResult([], f"Contradiction: Island {iid} cannot connect its components, reach 2x2 responsibilities, or reach size {isl.clue}", "BROKEN_NURIKABE_RULES")
+                label = OwnerMask.id_to_label(iid)
+                return StepResult([], f"Contradiction: Island {label} cannot connect its components, reach 2x2 responsibilities, or reach size {isl.clue}", "BROKEN_NURIKABE_RULES")
             
             for r, c in reductions:
                 if self.model.remove_owner(r, c, iid):
@@ -129,7 +130,8 @@ class NurikabeSolverV2:
                     changed_land = self.model.force_land(p[0], p[1])
                     changed_owner = self.model.force_owner(p[0], p[1], iid)
                     if changed_land or changed_owner:
-                        return StepResult([p], f"R3: Forced land/owner at {p} for island {iid} to reach size {clue}")
+                        label = OwnerMask.id_to_label(iid)
+                        return StepResult([p], f"R3: Forced land/owner at {p} for island {label} to reach size {clue}")
                 
                 # 2. Mandatory for connectivity of core cells
                 if len(core) > 1:
@@ -137,7 +139,8 @@ class NurikabeSolverV2:
                         changed_land = self.model.force_land(p[0], p[1])
                         changed_owner = self.model.force_owner(p[0], p[1], iid)
                         if changed_land or changed_owner:
-                            return StepResult([p], f"R3: Forced land/owner at {p} to connect core of island {iid}")
+                            label = OwnerMask.id_to_label(iid)
+                            return StepResult([p], f"R3: Forced land/owner at {p} to connect core of island {label}")
                 
                 # 3. Mandatory for connectivity to exclusive 2x2 pools
                 for block_set in exclusive_2x2:
@@ -145,7 +148,8 @@ class NurikabeSolverV2:
                         changed_land = self.model.force_land(p[0], p[1])
                         changed_owner = self.model.force_owner(p[0], p[1], iid)
                         if changed_land or changed_owner:
-                            return StepResult([p], f"R3: Forced land/owner at {p} for island {iid} to prevent exclusive 2x2 pool")
+                            label = OwnerMask.id_to_label(iid)
+                            return StepResult([p], f"R3: Forced land/owner at {p} for island {label} to prevent exclusive 2x2 pool")
         return None
 
     def try_R4(self) -> Optional[StepResult]:
