@@ -79,6 +79,14 @@ class OwnerMask:
                 break
         return label
 
+    @staticmethod
+    def label_to_id(label: str) -> int:
+        """Converts a letter-based label (A, B, ..., Z, AA, AB, ...) back to a 1-based island_id."""
+        n = 0
+        for char in label:
+            n = n * 26 + (ord(char) - ord('A') + 1)
+        return n
+
     def to_labels(self) -> List[str]:
         """Returns a list of letter-based labels for the owners in the mask."""
         return [self.id_to_label(iid) for iid in self.to_ids()]

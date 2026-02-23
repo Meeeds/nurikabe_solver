@@ -7,7 +7,7 @@ import pygame
 # Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from nurikabe_model import NurikabeModel, CellState
+from nurikabe_model import NurikabeModel, CellState, OwnerMask
 from nurikabe_drawing import Camera, draw_grid
 import grid_style
 
@@ -38,7 +38,10 @@ def restore_model_from_string_grid(grid_strings):
                 model.force_land(r, c)
                 id_str = s[5:-1]
                 if id_str != "MULTIPLE":
-                    island_id = int(id_str)
+                    if id_str.isdigit():
+                        island_id = int(id_str)
+                    else:
+                        island_id = OwnerMask.label_to_id(id_str)
                     model.force_owner(r, c, island_id)
                 # else: multiple owners, already set by force_land
             elif s.startswith("CLUE("):
