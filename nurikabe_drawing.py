@@ -2,7 +2,7 @@ import math
 import pygame
 from dataclasses import dataclass
 from typing import Tuple, Optional, List
-from nurikabe_model import NurikabeModel
+from nurikabe_model import NurikabeModel, OwnerMask
 import grid_style
 
 @dataclass
@@ -101,17 +101,18 @@ def draw_grid(
                 if camera.zoom >= 1.0:
                     iid = model.island_by_pos.get((r, c))
                     if iid is not None:
-                        id_surf = small_font.render(str(iid), True, grid_style.COLOR_TEXT_DEBUG)
+                        label = OwnerMask.id_to_label(iid)
+                        id_surf = small_font.render(label, True, grid_style.COLOR_TEXT_DEBUG)
                         screen.blit(id_surf, (rect.x + 3, rect.y + 2))
             else:
                 if camera.zoom >= 1.0:
-                    ids = model.cells[r][c].owners.to_ids()
-                    if len(ids) == 0:
+                    labels = model.cells[r][c].owners.to_labels()
+                    if len(labels) == 0:
                         txt = "-"
-                    elif len(ids) > 3:
+                    elif len(labels) > 3:
                         txt = "*"
                     else:
-                        txt = ",".join(str(x) for x in ids)
+                        txt = ",".join(labels)
                     surf = small_font.render(txt, True, grid_style.COLOR_TEXT_DEBUG)
                     screen.blit(surf, (rect.x + 3, rect.y + 2))
 

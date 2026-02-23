@@ -25,7 +25,7 @@ from typing import Tuple, Optional, List, Dict, Any
 import pygame
 import pygame_gui
 
-from nurikabe_model import NurikabeModel
+from nurikabe_model import NurikabeModel, OwnerMask
 from nurikabe_rules import NurikabeSolver
 from nurikabe_rules_v2 import NurikabeSolverV2
 from nurikabe_worker import SolverWorker, WorkerCommand
@@ -165,13 +165,15 @@ def format_debug_cell(model: NurikabeModel, r: int, c: int) -> str:
     if not model.in_bounds(r, c):
         return "Out of bounds."
     if model.is_clue(r, c):
-        return f"Cell ({r},{c}) clue={model.clues[r][c]} island_id={model.island_by_pos.get((r,c), '-')}"
+        iid = model.island_by_pos.get((r,c), '-')
+        label = OwnerMask.id_to_label(iid) if isinstance(iid, int) else iid
+        return f"Cell ({r},{c}) clue={model.clues[r][c]} island_id={iid} label={label}"
     cell = model.cells[r][c]
     owners_bits = cell.owners
-    owners_ids = owners_bits.to_ids()
+    owners_labels = owners_bits.to_labels()
     return (
         f"Cell ({r},{c}) state={cell.state.name}\n"
-        f"owners_bits={owners_bits} owners_ids={owners_ids}\n"
+        f"owners_bits={owners_bits} owners_labels={owners_labels}\n"
         f"is_sea={cell.is_sea} is_land={cell.is_land}"
     )
 

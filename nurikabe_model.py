@@ -67,6 +67,30 @@ class OwnerMask:
             i += 1
         return ids
 
+    @staticmethod
+    def id_to_label(island_id: int) -> str:
+        """Converts a 1-based island_id to a letter-based label (A, B, ..., Z, AA, AB, ...)."""
+        label = ""
+        n = island_id - 1
+        while True:
+            label = chr(ord('A') + (n % 26)) + label
+            n = n // 26 - 1
+            if n < 0:
+                break
+        return label
+
+    @staticmethod
+    def label_to_id(label: str) -> int:
+        """Converts a letter-based label (A, B, ..., Z, AA, AB, ...) back to a 1-based island_id."""
+        n = 0
+        for char in label:
+            n = n * 26 + (ord(char) - ord('A') + 1)
+        return n
+
+    def to_labels(self) -> List[str]:
+        """Returns a list of letter-based labels for the owners in the mask."""
+        return [self.id_to_label(iid) for iid in self.to_ids()]
+
     def __bool__(self) -> bool:
         return self.bits != 0
 
